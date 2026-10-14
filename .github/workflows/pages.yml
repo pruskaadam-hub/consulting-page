@@ -34,6 +34,10 @@ jobs:
         run: npm test
       - name: Build and type check
         run: npm run build
+      - name: Install test browser
+        run: npx playwright install --with-deps chromium
+      - name: Validate pages and reservation flow without creating real bookings
+        run: npm run test:ui
       - name: Verify public Cal.com availability and browser access
         run: node scripts/verify-cal-config.mjs
       - name: Configure Pages

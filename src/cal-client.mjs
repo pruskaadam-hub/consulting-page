@@ -67,19 +67,31 @@ export async function loadSlots(options, {fetchImpl = fetch, signal} = {}) {
   if (!response.ok) throw new BookingError('Volné termíny se nepodařilo načíst. Zkus to znovu nebo mi napiš.');
   return parseSlots(await response.json(), options);
 }
-export function bookingPayload({username, eventTypeSlug, start, name, email, timeZone, topic, serviceId}) {
+export function bookingPayload({username, eventTypeSlug, start, name, email, timeZone, topic, serviceId, language = 'cs', consultationTopic = '', situation = '', horizon = '', financing = ''}) {
   identity(username, eventTypeSlug);
   const milliseconds = Date.parse(start);
   if (!Number.isFinite(milliseconds) || milliseconds <= Date.now()) throw new BookingError('Vyber prosím budoucí termín.', 'validation');
   if (!name?.trim() || name.trim().length > 100 || !email?.trim() || email.trim().length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) throw new BookingError('Vyplň prosím jméno a platný e-mail.', 'validation');
   new Intl.DateTimeFormat('cs-CZ', {timeZone});
   const packageNote = serviceId === 'package' ? 'Zvolená nabídka: balíček 3 × 50 minut za 4 050 Kč. Tento termín je první konzultace; další dvě včetně jednoho osobního setkání domluvíme samostatně.' : '';
-  const notes = [packageNote, topic?.trim().slice(0,1000)].filter(Boolean).join('\n\n');
+  const topics = {study:'Studium v zahraničí', career:'Práce a kariéra', project:'Vlastní projekt', other:'Jiné téma'};
+  const horizons = {soon:'Do 3 měsíců', year:'3–12 měsíců', later:'Později'};
+  if (!['cs','sk','en'].includes(language)) throw new BookingError('Vyber podporovaný jazyk.', 'validation');
+  if (serviceId === 'intro' && (!topics[consultationTopic] || !situation.trim() || situation.trim().length > 2000 || !horizons[horizon])) {
+    throw new BookingError('Doplň téma, svou situaci a časový horizont.', 'validation');
+  }
+  const intake = [
+    topics[consultationTopic] ? `Téma: ${topics[consultationTopic]}` : '',
+    situation.trim() ? `Situace: ${situation.trim().slice(0,2000)}` : '',
+    horizons[horizon] ? `Časový horizont: ${horizons[horizon]}` : '',
+    consultationTopic === 'study' && financing.trim() ? `Financování: ${financing.trim().slice(0,500)}` : '',
+  ].filter(Boolean).join('\n');
+  const notes = [packageNote, intake, topic?.trim().slice(0,1000)].filter(Boolean).join('\n\n');
   return {
     username, eventTypeSlug, start:new Date(milliseconds).toISOString(),
-    attendee:{name:name.trim(), email:email.trim(), timeZone, language:'cs'},
+    attendee:{name:name.trim(), email:email.trim(), timeZone, language},
     ...(notes ? {bookingFieldsResponses:{notes}} : {}),
-    metadata:{source:'consulting-page', service:serviceId || 'consultation'},
+    metadata:{source:'consulting-page', service:serviceId || 'consultation', ...(consultationTopic ? {topic:consultationTopic} : {}), language},
   };
 }
 export function parseBooking(payload) {

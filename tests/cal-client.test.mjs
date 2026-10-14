@@ -4,7 +4,7 @@ import {BookingError, dateKey, monthDays, slotsUrl, parseSlots, bookingPayload, 
 const identity={username:'adam-pruska',eventTypeSlug:'test-only-event'};
 const options={...identity,year:2030,month:5,timeZone:'Europe/Prague',expectedMinutes:30,now:0};
 const slot={start:'2030-06-04T08:00:00Z',end:'2030-06-04T08:30:00Z'};
-const attendee={...identity,start:slot.start,name:'Test visitor',email:'test@example.invalid',timeZone:'Europe/Prague',serviceId:'intro'};
+const attendee={...identity,start:slot.start,name:'Test visitor',email:'test@example.invalid',timeZone:'Europe/Prague',serviceId:'intro',consultationTopic:'study',situation:'Preparing an application to ETH.',horizon:'soon'};
 const response=(body,status=200)=>new Response(JSON.stringify(body),{status,headers:{'Content-Type':'application/json'}});
 
 test('Monday-first calendar handles a leap year and month boundaries',()=>{
@@ -44,7 +44,8 @@ test('API failures are separate from a valid month with no available times',asyn
 test('booking payload uses UTC and omits API keys and irrelevant personal data',()=>{
  const body=bookingPayload({...attendee,start:'2030-06-04T10:00:00+02:00',topic:' My question '});
  assert.equal(body.start,'2030-06-04T08:00:00.000Z');
- assert.equal(body.bookingFieldsResponses.notes,'My question');
+ assert.match(body.bookingFieldsResponses.notes,/Téma: Studium v zahraničí/);
+ assert.match(body.bookingFieldsResponses.notes,/My question/);
  assert.equal(body.attendee.email,'test@example.invalid');
  assert.equal(body.attendee.language,'cs');
  assert.equal('apiKey' in body,false);
@@ -73,4 +74,25 @@ test('a collision or uncertain network outcome never triggers an automatic booki
  calls=0;
  await assert.rejects(createBooking(attendee,{fetchImpl:async()=>{calls++;throw new TypeError('network');}}),error=>error.kind==='uncertain');
  assert.equal(calls,1);
+});
+
+
+test('intro qualification is required and preserves CTA topic in notes and metadata',()=>{
+ for(const invalid of [{consultationTopic:''},{situation:'  '},{horizon:''}]) {
+  assert.throws(()=>bookingPayload({...attendee,...invalid}),error=>error.kind==='validation');
+ }
+ const body=bookingPayload({...attendee,language:'sk',financing:'Swiss scholarship'});
+ assert.equal(body.metadata.topic,'study');
+ assert.equal(body.attendee.language,'sk');
+ assert.match(body.bookingFieldsResponses.notes,/Časový horizont: Do 3 měsíců/);
+ assert.match(body.bookingFieldsResponses.notes,/Financování: Swiss scholarship/);
+ const career=bookingPayload({...attendee,consultationTopic:'career',financing:'not relevant'});
+ assert.doesNotMatch(career.bookingFieldsResponses.notes,/Financování/);
+ assert.doesNotMatch(career.bookingFieldsResponses.notes,/not relevant/);
+});
+test('paid consultation keeps qualification optional and bundle identity survives',()=>{
+ const body=bookingPayload({...attendee,serviceId:'package',consultationTopic:'career',situation:'',horizon:''});
+ assert.match(body.bookingFieldsResponses.notes,/4 050 Kč/);
+ assert.equal(body.metadata.service,'package');
+ assert.equal(body.metadata.topic,'career');
 });

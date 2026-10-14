@@ -2,7 +2,8 @@
 // No booking is created, no credentials are used, no attendee data is sent.
 import { appendFile } from 'node:fs/promises';
 import { loadSlots } from '../src/cal-client.mjs';
-const origin='https://pruskaadam-hub.github.io';
+import { SITE_URL } from '../src/site-config.mjs';
+const origin=new URL(SITE_URL).origin;
 const username=process.env.VITE_CAL_USERNAME;
 const types=[['intro',process.env.VITE_CAL_INTRO_SLUG,30],['individual',process.env.VITE_CAL_INDIVIDUAL_SLUG,50],['package',process.env.VITE_CAL_PACKAGE_SLUG,50]];
 const now=new Date();
