@@ -91,7 +91,7 @@ export function Calendar({service, language, intentTopic, onTopicChange, onSubmi
     <label className="timezone-label">{t.timezone}<select value={timeZone} disabled={disabled} onChange={event=>setTimeZone(event.target.value)}>{zones.map(zone=><option key={zone} value={zone}>{zone.replaceAll('_',' ')}</option>)}</select></label>
     <div className="calendar-status" aria-live="polite">
       {loading && <p>{t.loading}</p>}
-      {error && <><p>{error}</p>{service.calSlug && <button className="text-link" type="button" onClick={()=>setRefresh(v=>v+1)}>{t.retry}</button>}<a className="text-link" href={`mailto:${content.email}?subject=${encodeURIComponent(service.title+' — '+t.emailSubject)}`}>{t.email} ↗</a></>}
+      {error && <><p>{error}</p>{service.calSlug && <button className="text-link" type="button" onClick={()=>setRefresh(v=>v+1)}>{t.retry}</button>}<a className="text-link" href={`mailto:${content.email}?subject=${encodeURIComponent(service.title+': '+t.emailSubject)}`}>{t.email} ↗</a></>}
       {!loading && !error && Object.keys(slots).length===0 && <p>{t.noSlots}</p>}
       {!loading && !error && Object.keys(slots).length>0 && !day && <p>{t.selectDay}</p>}
     </div>

@@ -479,3 +479,86 @@ button.text-link { background: transparent; border-top: 0; border-left: 0; borde
   .article-prose p, .article-prose li { font-size: 15px; }
   .footer-social { width: 100%; margin-top: 14px; flex-direction: row; flex-wrap: wrap; gap: 22px; }
 }
+
+/* Entire consultation cards are native links, including their CTA label. */
+.offer-card { cursor: pointer; }
+.offer-card[aria-disabled='true'] { cursor: wait; }
+.offer-card:focus-visible { outline: 3px solid var(--accent); outline-offset: 5px; }
+.offer-card .student-price { display: flex; flex-direction: column; gap: 6px; margin-top: 14px; }
+.student-price > span:first-child { font-size: 11px; color: var(--muted); }
+.student-price > strong { font-size: 23px; color: var(--accent-strong); letter-spacing: -.04em; }
+.student-price > .student-discount { width: fit-content; background: var(--accent-soft); color: var(--accent-strong); border-radius: 999px; padding: 4px 9px; font-size: 10px; }
+.card-topline { justify-content: flex-start; }
+.card-number { display: none; }
+
+/* Two confident typographic statements in the credibility strip. */
+.credential-card { min-height: 250px; }
+.credential-card .credential-large { font-size: clamp(104px, 9vw, 144px); line-height: .9; letter-spacing: -.08em; }
+.credential-card .credential-eth { font-size: clamp(72px, 6.5vw, 98px); letter-spacing: -.065em; }
+.credential-caption { font-size: 13px !important; margin-top: 18px !important; }
+.credential-card .swiss-mark, .credential-card .credential-symbol { margin-bottom: 22px; }
+
+.additional-services { display: grid; grid-template-columns: 1.25fr .8fr; gap: 40px; align-items: center; padding: 36px; border-radius: 24px; background: #fff; border: 1px solid #d2d3d5; margin-top: 40px; }
+.additional-services h3 { font-size: 34px; line-height: 1.1; margin-bottom: 18px; }
+.additional-services h4 { font-size: 19px; font-weight: 500; margin: 0 0 12px; letter-spacing: -.03em; }
+.additional-services p { color: var(--muted); font-size: 13px; margin: 0; }
+.additional-price .placeholder { display: block; color: var(--accent-strong); font-size: 15px; margin-top: 12px; }
+.additional-services .text-link { margin-top: 22px; font-size: 12px; }
+.payment-note { color: var(--muted); font-size: 12px; margin-top: 24px; }
+
+/* Media becomes a compact editorial directory. */
+.media-grid.media-compact { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.media-compact > a { display: grid; grid-template-columns: 68px minmax(0, 1fr) 28px; align-items: center; gap: 20px; border-radius: 16px; padding: 20px; min-height: 112px; }
+.media-compact .media-format { font-size: 10px; color: var(--accent-strong); background: #fff; border-radius: 999px; border: 1px solid #e3e4e5; padding: 7px 8px; text-align: center; }
+.media-compact .media-outlet { font-size: 11px; color: var(--muted); }
+.media-compact h3 { margin: 8px 0 0; font-size: 18px; line-height: 1.3; letter-spacing: -.035em; }
+.media-compact .media-arrow { color: var(--ink); width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; background: #e3e4e5; }
+.media-compact .media-arrow svg { width: 16px; height: 16px; }
+
+.blog-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.blog-card img { height: 195px; }
+.blog-card h3 { font-size: 24px; }
+.blog-card a > div { padding: 25px; }
+.blog-index h1 { font-size: 70px; margin-bottom: 0; }
+.related-articles { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.related-articles > a { padding: 28px; background: var(--surface); border-radius: 20px; display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+.related-articles h3 { font-size: 26px; line-height: 1.2; margin: 0; }
+.related-articles svg { flex-shrink: 0; }
+.authored-prose h2, .authored-prose h3 { font-size: 30px; line-height: 1.15; margin: 42px 0 20px; }
+.authored-prose hr { border: 0; border-top: 1px solid var(--line); margin: 34px 0; }
+.authored-prose > p:last-child { background: var(--surface); padding: 26px; border-radius: 20px; }
+.article-authored-cta { display: flex; width: fit-content; margin-top: 20px; color: #fff; text-decoration: none; }
+.authored-prose a:not(.button) { color: var(--accent-strong); text-decoration: underline; }
+.authored-prose table { width: 100%; border-collapse: collapse; margin: 26px 0; font-size: 13px; line-height: 1.6; table-layout: fixed; }
+.authored-prose th, .authored-prose td { text-align: left; vertical-align: top; border-bottom: 1px solid var(--line); padding: 13px 12px; overflow-wrap: anywhere; }
+.authored-prose th { color: var(--ink); background: var(--surface); font-weight: 500; }
+.authored-prose .editorial-todo { font-size: inherit; }
+@media (max-width: 1000px) {
+  .credential-card { min-height: 230px; }
+  .credential-card .credential-large { font-size: 110px; }
+  .credential-card .credential-eth { font-size: 82px; }
+  .blog-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .media-compact > a { grid-template-columns: 58px minmax(0, 1fr) 22px; gap: 12px; padding: 18px; }
+  .media-compact h3 { font-size: 17px; }
+  .additional-services { gap: 28px; }
+}
+@media (max-width: 650px) {
+  .credential-card { min-height: 205px; }
+  .credential-card .credential-large { font-size: 96px; }
+  .credential-card .credential-eth { font-size: clamp(52px, 16vw, 70px); }
+  .credential-caption { font-size: 11px !important; line-height: 1.65 !important; }
+  .media-grid.media-compact, .additional-services, .blog-grid, .related-articles { grid-template-columns: 1fr; }
+  .media-compact > a { min-height: 96px; padding: 18px; }
+  .media-compact h3 { font-size: 18px; }
+  .additional-services { padding: 26px; gap: 24px; }
+  .additional-services h3 { font-size: 29px; }
+  .additional-services h4 { font-size: 18px; }
+  .additional-price .placeholder { font-size: 14px; }
+  .related-articles > a { padding: 24px; }
+  .related-articles h3 { font-size: 24px; }
+  .authored-prose h2, .authored-prose h3 { font-size: 27px; }
+  .authored-prose > p:last-child { padding: 22px; }
+  .article-authored-cta { max-width: 100%; font-size: 11px; padding: 12px 18px; text-align: center; }
+  .authored-prose table { font-size: 11px; }
+  .authored-prose th, .authored-prose td { padding: 10px 8px; }
+}

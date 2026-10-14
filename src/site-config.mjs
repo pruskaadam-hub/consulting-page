@@ -7,3 +7,8 @@ export function pagePath(language = 'cs', slug = '') {
   return `${language === 'cs' ? '' : language + '/'}${slug ? 'clanky/' + slug + '/' : ''}`;
 }
 export function pageUrl(language = 'cs', slug = '') { return new URL(pagePath(language, slug), SITE_URL).href; }
+
+export function blogPath(language = 'cs', slug = '') {
+  return `${language === 'cs' ? '' : language + '/'}blog/${slug ? slug+'/' : ''}`;
+}
+export function blogUrl(language = 'cs', slug = '') { return new URL(blogPath(language,slug),SITE_URL).href; }

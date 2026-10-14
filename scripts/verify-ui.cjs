@@ -78,7 +78,8 @@ const path=require('node:path');
    await page.locator('select[name="horizon"]').selectOption('soon');
   }
  }
- const slugs=['','clanky/kulturni-rozdily-ve-svycarsku/','clanky/doktorat-ve-svycarsku/'];
+ const metadata=JSON.parse(await fs.readFile('src/blog/metadata.json','utf8'));
+ const slugs=['','clanky/kulturni-rozdily-ve-svycarsku/','clanky/doktorat-ve-svycarsku/','blog/',...metadata.map(post=>'blog/'+post.slug+'/')];
  for(const language of ['cs','sk','en']){
   const prefix=language==='cs'?'':language+'/';
   for(const slug of slugs){
@@ -99,6 +100,11 @@ const path=require('node:path');
    if(!slug){
     assert.equal(await page.locator('.help-card').count(),3);
     assert.equal(await page.locator('.expectations').count(),0);
+    assert.equal(await page.locator('.card-number').count(),0);
+    assert.equal(await page.locator('.blog-card').count(),5);
+    assert.equal(await page.locator('.credential-large').first().innerText(),'7');
+    assert.equal(await page.locator('.credential-eth').innerText(),'ETH');
+    assert.equal(await page.locator('.additional-services').isVisible(),true);
     assert.equal(await page.locator('.media-grid > a').count(),10);
     assert.equal(await page.locator('.native-calendar').count(),0);
     assert.equal(await page.locator('a[href^="mailto:"],a[href^="tel:"]').count(),0);
@@ -108,6 +114,23 @@ const path=require('node:path');
     assert.ok(comments>=8,'placeholder TODO comments');
     for(const summary of await page.locator('.faq-list summary').all()){await summary.click();assert.equal(await summary.evaluate(el=>el.parentElement.open),true);assert.ok(await summary.evaluate(el=>el.parentElement.querySelector('p').textContent.trim()));}
    }
+   if(slug.startsWith('blog/') && slug!=='blog/'){
+    const post=metadata.find(item=>slug==='blog/'+item.slug+'/');
+    assert.equal(await page.title(),post.title+' | Adam Pruška');
+    assert.equal(await page.locator('meta[name="description"]').getAttribute('content'),post.description);
+    const structured=JSON.parse(await page.locator('script[type="application/ld+json"]').textContent());
+    assert.equal(structured['@type'],'Article');assert.equal(structured.author.name,'Adam Pruška');
+    assert.equal('datePublished' in structured,false);
+    assert.equal(await page.locator('.related-articles > a').count(),2);
+    assert.equal(await page.locator('.authored-prose .article-authored-cta').count(),1);
+    assert.equal(await page.locator('.authored-prose .article-authored-cta').getAttribute('href'),'/consulting-page/'+prefix+(post.slug==='ceska-firma-ve-svycarsku'?'#firmy':'#rezervace'));
+    assert.equal((await page.locator('.authored-prose').innerText()).includes('Meta popis:'),false);
+    if(post.slug==='svycarske-cv')assert.equal(await page.locator('.authored-prose a[href$="/blog/prace-ve-svycarsku-entry-point/"]').count(),1);
+    for(const anchor of await page.locator('.related-articles > a').all()){
+      const target=await anchor.getAttribute('href');const response=await page.request.get(new URL(target,base).href);assert.equal(response.status(),200);
+    }
+   }
+   assert.doesNotMatch(await page.locator('body').innerText(),/[—–]/,'no long dashes in website text');
    await validate(language+'/'+slug);
   }
  }
@@ -153,7 +176,18 @@ const path=require('node:path');
    else assert.equal(await page.locator('.calendar-heading h3').innerText(),relative==='en/'?'Introductory consultation':relative==='sk/'?'Nezáväzná konzultácia':'Nezávazná konzultace');
   }
  }
- await go();await page.locator('.offer-card').last().getByRole('link').click();await selectTime();await intake();
+ await go();
+ for(const index of [1,2,0]){
+  const card=page.locator('a.offer-card').nth(index);
+  const title=await card.locator('h3').innerText();
+  await card.locator('h3').click();assert.equal(await page.locator('.calendar-heading h3').innerText(),title);
+  await card.focus();await page.keyboard.press('Enter');assert.equal(await page.locator('.calendar-heading h3').innerText(),title);
+ }
+ const studentIndividual=await page.locator('.offer-card').nth(1).locator('.student-price').innerText();
+ const studentPackage=await page.locator('.offer-card').nth(2).locator('.student-price').innerText();
+ assert.match(studentIndividual.replaceAll('\u00a0',' '),/1 296/);assert.match(studentIndividual,/28/);
+ assert.match(studentPackage.replaceAll('\u00a0',' '),/2 632,50/);assert.match(studentPackage,/35/);
+ await page.locator('.offer-card').last().click();await selectTime();await intake();
  await page.locator('.booking-form button[type="submit"]').click();await page.getByRole('heading',{name:'Máme domluveno.'}).waitFor();
  assert.equal(lastPayload.metadata.service,'package');assert.match(lastPayload.bookingFieldsResponses.notes,/4 050 Kč/);
  for(const [responseMode,selector] of [['pending','Ozvu se s potvrzením.'],['conflict','Tento termín už není volný'],['uncertain','Zkontroluj prosím e-mail']]){
@@ -193,5 +227,5 @@ const path=require('node:path');
  }
  assert.deepEqual(errors,[]);
  await browser.close();await new Promise(resolve=>server.close(resolve));
- console.log('PASS: 9 static pages, CZ/SK/EN metadata, 375/1280px, HTML validation, collapsed calendar, preserved topic and required intake, all consultation CTAs, safe booking states, contact reveal, 10 media links, article/language navigation, menu and reduced motion. All calendar responses mocked; no real booking created.');
+ console.log('PASS: 27 static pages, full-card and keyboard selection, exact student prices, five blog posts and JSON-LD, CZ/SK/EN metadata, 375/1280px, HTML validation, collapsed calendar, preserved topic and required intake, all consultation CTAs, safe booking states, contact reveal, 10 media links, article/language navigation, menu and reduced motion. All calendar responses mocked; no real booking created.');
 })().catch(error=>{console.error(error);process.exit(1)});

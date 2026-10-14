@@ -1,0 +1,62 @@
+[
+  {
+    "slug": "email-profesorovi-eth",
+    "title": "Jak napsat profesorovi na ETH, aby ti odpověděl",
+    "description": "Na doktorát ve Švýcarsku se nehlásíš přihláškou, ale e-mailem konkrétnímu člověku. Jak vybrat skupinu a napsat zprávu, která nezapadne mezi stovkami dalších.",
+    "language": "cs",
+    "image": "zurich.jpg",
+    "alt": "Pohled na Curych z Polyterrasse u ETH Zürich",
+    "related": [
+      "svycarske-cv",
+      "prace-ve-svycarsku-entry-point"
+    ]
+  },
+  {
+    "slug": "svycarske-cv",
+    "title": "Švýcarské CV: 7 rozdílů oproti českému",
+    "description": "České CV přeložené do angličtiny ve Švýcarsku často neprojde ani prvním sítem. Co personalisté v Curychu, Basileji nebo Ženěvě čekají a co naopak nesnesou.",
+    "language": "cs",
+    "image": "planning.jpg",
+    "alt": "Ilustrační fotografie rukou při úpravě pracovních dokumentů",
+    "related": [
+      "prace-ve-svycarsku-entry-point",
+      "akademie-nebo-prumysl"
+    ]
+  },
+  {
+    "slug": "prace-ve-svycarsku-entry-point",
+    "title": "Práce ve Švýcarsku z Česka: najdi svůj „entry point“",
+    "description": "Rozesílání CV z Česka do Švýcarska často končí tichem. Proč to tak je, jaké bariéry tě čekají a kudy vede cesta, která funguje.",
+    "language": "cs",
+    "image": "zurich.jpg",
+    "alt": "Pohled na Curych z Polyterrasse u ETH Zürich",
+    "related": [
+      "akademie-nebo-prumysl",
+      "ceska-firma-ve-svycarsku"
+    ]
+  },
+  {
+    "slug": "akademie-nebo-prumysl",
+    "title": "Akademie, nebo průmysl? Být kariérně ztracený nevadí",
+    "description": "Končíš doktorát nebo postdoc a nevíš, kam dál? Jak se rozhodnout mezi akademií a průmyslem, aniž by sis zavřel dveře, a proč to není rozhodnutí na celý život.",
+    "language": "cs",
+    "image": "mentoring.jpg",
+    "alt": "Ilustrační fotografie společné práce a plánování dalšího postupu",
+    "related": [
+      "ceska-firma-ve-svycarsku",
+      "email-profesorovi-eth"
+    ]
+  },
+  {
+    "slug": "ceska-firma-ve-svycarsku",
+    "title": "Česká firma ve Švýcarsku: jak získat první partnery",
+    "description": "Švýcarsko je bohatý, ale uzavřený trh. Co české firmy a startupy při vstupu nejvíc podceňují, jak oslovit první partnery a jak se prezentovat, aby vám věřili.",
+    "language": "cs",
+    "image": "consultation.jpg",
+    "alt": "Ilustrační fotografie rozhovoru dvou lidí při pracovním setkání",
+    "related": [
+      "email-profesorovi-eth",
+      "svycarske-cv"
+    ]
+  }
+]

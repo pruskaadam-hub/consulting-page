@@ -75,7 +75,7 @@ export function bookingPayload({username, eventTypeSlug, start, name, email, tim
   new Intl.DateTimeFormat('cs-CZ', {timeZone});
   const packageNote = serviceId === 'package' ? 'Zvolená nabídka: balíček 3 × 50 minut za 4 050 Kč. Tento termín je první konzultace; další dvě včetně jednoho osobního setkání domluvíme samostatně.' : '';
   const topics = {study:'Studium v zahraničí', career:'Práce a kariéra', project:'Vlastní projekt', other:'Jiné téma'};
-  const horizons = {soon:'Do 3 měsíců', year:'3–12 měsíců', later:'Později'};
+  const horizons = {soon:'Do 3 měsíců', year:'3 až 12 měsíců', later:'Později'};
   if (!['cs','sk','en'].includes(language)) throw new BookingError('Vyber podporovaný jazyk.', 'validation');
   if (serviceId === 'intro' && (!topics[consultationTopic] || !situation.trim() || situation.trim().length > 2000 || !horizons[horizon])) {
     throw new BookingError('Doplň téma, svou situaci a časový horizont.', 'validation');
