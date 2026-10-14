@@ -52,7 +52,7 @@ function App() {
   const [menuOpen, setMenuOpen] = useState(false);
   const closeMenu = () => setMenuOpen(false);
 
-  return <>
+  return <div className="site-shell">
     <a className="skip-link" href="#obsah">Přejít na obsah</a>
     {content.draft && <div className="draft-banner">První pracovní verze · texty a fotografie čekají na převzetí ze současného webu</div>}
     <header className="header wrap">
@@ -98,7 +98,7 @@ function App() {
       <div className="booking-wrap"><div className="wrap"><Booking /></div></div>
     </main>
     <footer className="footer wrap"><a className="brand" href="#"><span className="brand-mark" aria-hidden="true">ap.</span>{content.brand}</a><span>Mentoring & Consulting</span><a href="https://calendly.com/legal/privacy-notice" target="_blank" rel="noopener noreferrer">Ochrana údajů v Calendly <Arrow diagonal /></a></footer>
-  </>;
+  </div>;
 }
 
 createRoot(document.getElementById('root')!).render(<App />);

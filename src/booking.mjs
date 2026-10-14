@@ -20,6 +20,6 @@ export function calendlyEmbedUrl(value, domain) {
   url.searchParams.set('embed_type', 'Inline');
   if (domain) url.searchParams.set('embed_domain', domain);
   url.searchParams.set('hide_gdpr_banner', '0');
-  url.searchParams.set('primary_color', '243b35');
+  url.searchParams.set('primary_color', '9b471e');
   return url.toString();
 }
