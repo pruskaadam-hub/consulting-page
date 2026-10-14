@@ -75,3 +75,28 @@ Cena zůstává 1 800 Kč za individuální 50minutové setkání dle dosavadní
 nabídky, nikoli neurčitá hodinová sazba. Balíček dle předchozího zadání
 zůstává 3 × 50 minut za 4 050 Kč. Privátní 30minutová schůzka z dodaných
 ukázkových textů nepřidává další nezapojenou událost do veřejné nabídky.
+
+## Úpravy z 15. 10. 2026
+
+Vlastník dodal přiložený text s úpravami konverzního toku a doplnil zkušenost
+s konzultacemi pro studium a hledání práce ve Švýcarsku pro absolventy i
+zkušené profesionály. Dále dodal deset přesných mediálních odkazů, uložených
+v `src/media.ts`. Přístup na jejich domény byl v prostředí blokován (403),
+proto není předstíráno přečtení článků či ověření názvů videí. Známé názvy
+vycházejí z URL; videa a dokumenty mají neutrální popisky.
+
+Oba původní Wix články byly načteny v plném znění a redakčně upraveny do
+vlastních článkových podstránek s překlady SK/EN (`src/articles.mjs`). U
+historických finančních údajů v doktorandském článku není původní rozmezí
+platu z roku 2025 vydáváno za současnou nabídku; článek odkazuje na aktuální
+podmínky konkrétní pozice. Referencím nebyla přidána vymyšlená celá jména,
+fotografie ani výsledky. Neznámé výsledky a počty jsou označené k doplnění.
+
+Hero `adam-noir.png` je generativní stylová úprava skutečné fotografie
+41f758_465369fde4b140dba67f7e06aaedaf23~mv2.jpg dodané vlastníkem. Změna
+noir stylu a selektivní červené barevnosti byla výslovně požadovaná. Ostatní
+portréty a článkové fotografie jsou převzaté z Wix CDN.
+
+Vlastník upřesnil, že ze sociálních sítí chce jen LinkedIn, a požádal o
+lidsky čitelné kontakty se základním omezením automatického sběru. Přímé
+mailto/tel odkazy jsou v kontaktní sekci odhalené až po kliknutí.

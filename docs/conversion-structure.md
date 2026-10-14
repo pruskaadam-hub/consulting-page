@@ -4,22 +4,23 @@ Primární akce: **Rezervovat 30 minut zdarma**. Stejný cíl v hero, po scrollu
 ve sticky liště a na konci hlavního obsahu. Zájemce nemusí nejprve vybírat
 mezi třemi placenými alternativami.
 
-Doporučené pořadí a důvod:
+Aktuální pořadí a důvod:
 
-1. Hero: komu Adam pomáhá, s čím a jasná nabídka nezávazného úvodního setkání.
-2. Lišta zkušeností: 7+ let ve Švýcarsku, ETH Zürich, akademie/startupy/korporát,
-   první konzultace zdarma. Údaje dodané vlastníkem v tomto zadání.
-3. S čím můžu pomoct: konkrétní situace návštěvníka, nikoli obecný výčet dovedností.
-4. Co můžeš čekat: šest oblastí od kariéry a kontaktů po kulturu a vlastní projekt.
-5. Krátký medailonek: člověk, kterému návštěvník svěří svou situaci, ještě před cenami.
-6. Skutečné reference, pokud jsou dostupné: důvěra před rozhodnutím o rezervaci.
-7. Jak to funguje: tři srozumitelné kroky, počínaje nezávazným rozhovorem.
-8. Nabídka tří konzultací a **jeden** rezervační kalendář. Výběr nabídky mění
-   událost v témže kalendáři. Úvodní konzultace je předvolená.
-9. FAQ: zdarma/bez závazku, příprava, formát, balíček, změna termínu.
-10. Krátká závěrečná výzva, která vede ke stejnému kalendáři; neopakovat celou nabídku.
-11. Blog a ověřené zmínky v médiích jako sekundární cesta pro návštěvníky,
-    kteří se ještě nerozhodli. Blogové odkazy otevírat mimo hlavní rezervační tok.
+1. Hero: konkrétní situace (ETH, práce v Curychu, business v CH) a bezplatný úvod.
+2. Lišta zkušeností: Švýcarsko, ETH, tři pracovní prostředí a první setkání zdarma.
+3. Jedna sloučená sekce pomoci: studium, kariéra, firmy/projekty; témata původních
+   šesti bodů jsou rozpuštěná do těchto tří karet.
+4. Medailonek se zkušenostmi s konzultacemi pro absolventy i profesionály.
+5. Reference s podporou výsledku, role, celé identity a fotografie. Neznámé údaje
+   jsou viditelně označené k doplnění; počty nejsou vymyšlené.
+6. Tři kroky spolupráce začínající bezplatným rozhovorem.
+7. Firemní vstup s vykáním a individuální poptávkou; nevede do osobního kalendáře.
+8. Nabídky a rozbalovací kalendář, který je skrytý do interakce. Úvod je předvolený.
+9. Články jako důkaz odbornosti před FAQ, s vlastními podstránkami.
+10. FAQ včetně plateb; neznámé podmínky označené k doplnění.
+11. Závěrečná výzva ke stejnému úvodnímu setkání.
+12. Kontakty a LinkedIn jako přirozená alternativa k okamžité rezervaci.
+13. Adam v médiích: všech deset přesných odkazů dodaných vlastníkem.
 
 Medailonek a reference jsou posunuté před rezervace. Původní dvě sekce
 „rezervace“ a „vyber si konzultaci“ jsou propojené; opakované seznamy nabídek
@@ -31,7 +32,7 @@ lepší srozumitelnost a menší tření, nikoli zaručené zvýšení počtu re
 Na dostupných stránkách původního Wix webu a v RSS byly nalezeny dva skutečné
 články, e-mail a LinkedIn. Tři reference, vlastní portréty a rozšířené texty
 později dodal vlastník přímo v chatu. Reference se nyní zobrazují před
-rezervací. Mediální zmínky zůstávají připravené pro konkrétní odkazy.
+rezervací. Vlastník později dodal deset mediálních odkazů; jsou v závěrečné sekci.
 
 Balíček: 3 × 1 800 Kč = 5 400 Kč; sleva 25 % = 1 350 Kč; výsledná cena
 4 050 Kč. Délka 50 minut vychází z individuální konzultace. Jedno osobní
@@ -56,3 +57,12 @@ veřejný tok. Při chybě spojení zobrazit jasný stav a možnost kontaktovat 
 nikoli vymyšlené termíny. Chráněný firemní Outlook je nutné spravovat podle
 možností a pravidel jeho vlastníka; samotné připojení jiných účtů není důkazem
 kontroly všech kolizí.
+
+## Předání záměru a kvalifikace
+
+Studijní a kariérní karty předvyplní téma v kalendáři. Úvod vyžaduje situaci
+klienta a časový horizont; financování je volitelné pouze při studiu.
+Odpovědi se předávají v poznámce, identifikátor tématu také v metadatech.
+Cal.com se načítá teprve po otevření rezervace. Přesný seznam otázek,
+značek k doplnění, jazykových adres a postup pro doménu viz
+[owner-handoff.md](owner-handoff.md).

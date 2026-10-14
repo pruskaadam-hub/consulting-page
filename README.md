@@ -1,7 +1,10 @@
 # Adam Pruška — Mentoring & Consulting
 
 Česká responzivní landing page: React, TypeScript, Vite a vlastní rezervační
-rozhraní pro veřejné API Cal.com. Nová struktura je popsaná v
+rozhraní pro veřejné API Cal.com. Obsahuje češtinu, slovenštinu, angličtinu
+a dvě vlastní článkové podstránky v každém jazyce. Aktuální předání, seznam
+značek k doplnění a návody pro Cal.com/doménu jsou v
+[docs/owner-handoff.md](docs/owner-handoff.md). Původní struktura je popsaná v
 [docs/conversion-structure.md](docs/conversion-structure.md).
 
 ## Spuštění
@@ -16,7 +19,11 @@ npm run dev -- --port 5173
 
 `npm run build` provede kontrolu typů a produkční sestavení do `dist/`.
 Relativní cesty fungují pod `/consulting-page/` na GitHub Pages.
-`npm test` spustí testy časových pásem, dostupnosti a potvrzování rezervací.
+`npm test` spustí testy časových pásem, dostupnosti, kvalifikace a potvrzování rezervací.
+`npm run test:ui` po `npm run build` provede HTML validaci a prohlížečové testy
+všech devíti stránek na 375/1280 px s výhradně testovacími odpověďmi Cal.com.
+Prohlížeč: `npx playwright install chromium`, nebo nastavte
+`CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium` pro systémový Chromium.
 
 ## Cal.com: vlastní kalendář, bez iframe
 
@@ -51,7 +58,10 @@ Nastavte jejich skutečnou dostupnost a zapněte kontrolu kolizí u připojenýc
 kalendářů. Připojený účet sám o sobě neprokazuje, že každý kalendář kontroluje
 obsazenost. U chráněného firemního účtu jsou rozhodující oprávnění poskytovatele.
 
-Vlastní formulář podporuje základní jméno, e-mail a nepovinnou poznámku. Pokud
+Vlastní formulář podporuje jméno, e-mail a poznámku. U úvodu vyžaduje téma,
+popis situace a časový horizont; volitelné financování pouze pro studium.
+Odpovědi se spojují do `bookingFieldsResponses.notes`, téma a jazyk jsou
+také v metadatech. Záměr z karty či článku se předvyplní. Pokud
 událost vyžaduje další povinná pole, ověření e-mailu nebo platbu předem, je
 nutné rozšířit tento průchod podle konkrétního nastavení. Stránka nyní
 nevybírá platby a nepotvrzuje úhradu balíčku. Cena je nabídka služby.
@@ -84,8 +94,8 @@ POST se rezervace automaticky neopakuje a návštěvník je vyzván ke kontrole 
 Zdroj je https://pruskaadam4.wixstudio.com/pruska, jeho blog a údaje dodané
 vlastníkem. Zdroje viz [docs/content-sources.md](docs/content-sources.md).
 Tři reference klientů, medailonek, konkrétní texty a odkazy na Adamovy
-fotografie dodal vlastník. Mediální zmínky zůstávají připravené v
-`content.media` a bez podkladů se nezobrazují. Fotografie u doktorandského
+fotografie dodal vlastník. Deset mediálních odkazů je v `src/media.ts`.
+Fotografie u doktorandského
 článku je pohled z ETH Zürich převzatý z původního článku.
 
 Design používá švýcarskou červenou `#d52b1e`, šedou a černou. Úvod vyplňuje
