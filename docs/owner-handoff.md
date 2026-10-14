@@ -13,7 +13,8 @@ https://pruskaadam-hub.github.io/consulting-page/
 * Úvodní rezervace vyžaduje téma, situaci a časový horizont. Financování
   je nepovinné a zobrazuje se jen při studiu. Zvolený záměr je vidět vedle
   kalendáře a uloží se do poznámky a metadat rezervace.
-* Individuální konzultace ukazuje studentskou cenu 900 Kč. U placených nabídek
+* Individuální konzultace ukazuje studentskou cenu 1 296 Kč se slevou 28 %.
+  Studentský balíček stojí 2 632,50 Kč po slevě 35 % z běžných 4 050 Kč. U placených nabídek
   je konkrétní výstup: plán dalších kroků. Platební podmínky nejsou vymyšlené.
 * Medailonek zmiňuje pomoc se studiem i hledáním práce pro absolventy a
   zkušené profesionály. Přeformulovaná položka startupových zkušeností.
@@ -25,7 +26,9 @@ https://pruskaadam-hub.github.io/consulting-page/
   zdrojů zůstávají v jazyce zdroje, formáty a ovládání jsou přeložené.
 * Dva původní články mají vlastní podstránky ve všech třech jazycích. Jsou to
   redakční úpravy článků z Wixu, s odkazem na originál a relevantními fotografiemi.
-  Blog je před FAQ. Externí zdroje se otevírají v novém panelu.
+  Blog je před FAQ. Externí zdroje se otevírají v novém panelu. Nový přehled
+  `/blog/` představuje pět dodaných českých článků; české texty zůstávají
+  označené `lang="cs"` i při přepnutí jazyka okolního rozhraní.
 * Závěrečná sekce médií obsahuje všech deset dodaných odkazů. Nejsou přidávána
   neověřená loga ani názvy videí. Čtení těchto domén blokovala proxy; odkazy
   jsou převzaté od vlastníka a u videí/dokumentů mají neutrální popisky.
@@ -43,8 +46,8 @@ jsou záměrně viditelné v každé jazykové verzi, aby se neztratily při dop
 
 | Značka | Umístění | Co dodat |
 | --- | --- | --- |
-| `[DOPLNIT: studentská cena balíčku]` | `src/main.tsx`, nabídka balíčku | Skutečnou studentskou cenu a podmínky. Neodvozujeme kombinaci slev. |
-| `[DOPLNIT: cena / podmínky]` | `src/main.tsx`, pod ceníkem | Cenu nebo pravidla úprav CV a dokumentů. |
+| `[DOPLNIT: datum publikace]` | Nový blog, karty a záhlaví pěti článků | Skutečná data publikace; nevkládají se do JSON-LD, dokud nejsou známá. |
+| `[DOPLNIT: cena / podmínky]` | `src/main.tsx`, výrazný blok praktických služeb | Cenu nebo pravidla úprav CV a dokumentů. |
 | `[DOPLNIT: předem přes Cal.com / převodem na fakturu]` | `src/main.tsx`, pod ceníkem a platební FAQ | Zvolený způsob platby, splatnost a případné potřebné údaje. |
 | `[DOPLNIT: konkrétní výsledek]` | `src/main.tsx`, všechny tři reference | Skutečný výsledek pro každou referenci. |
 | `[DOPLNIT: počet]` | `src/main.tsx`, řádek nad referencemi, klienti | Doložitelný počet klientů. |
@@ -137,7 +140,7 @@ Wixu. Do té doby zůstává zdrojový odkaz beze změny.
 
 `npm test` kontroluje časová pásma, dostupnost, stavy potvrzení, kvalifikační
 pole a konzistentní jazykové adresy. `npm run build` provede TypeScript a
-vygeneruje devět samostatných HTML vstupů s vlastními metadaty.
+vygeneruje 27 samostatných HTML vstupů s vlastními metadaty.
 
 `npm run test:ui` spustí lokální statický server, otevře Chromium a ověří
 všechny stránky a konzultační CTA v češtině, slovenštině a angličtině.
@@ -149,3 +152,23 @@ Pro první instalaci prohlížeče: `npx playwright install chromium`.
 Pokud prostředí poskytuje systémový Chromium:
 `CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium npm run test:ui`.
 Nasazovací workflow provádí stejné kontroly před publikováním.
+
+## Nejnovější úpravy
+
+Karty pomoci nemají malé číslování. Zkušenosti zvýrazňuje velká 7 a velké ETH.
+Mediální odkazy mají kompaktní řádkové uspořádání ve dvou sloupcích, na mobilu
+v jednom. Celé karty konzultací jsou nativní odkazy, takže fungují kliknutím
+na libovolnou část i klávesou Enter. Během odesílání je změna nabídky blokovaná.
+Úprava CV a dokumentů je samostatný výrazný blok praktických služeb.
+
+Výpočty studentských cen jsou v `src/pricing.mjs`, všude se používá stejný
+zdroj. Balíček má 35% studentskou slevu ze standardní ceny balíčku 4 050 Kč.
+Konzultace má 28% studentskou slevu z 1 800 Kč. Částka balíčku se zobrazuje
+s haléři; nedochází k tichému zaokrouhlení na celé koruny.
+
+Živé texty webu včetně článků nepoužívají dlouhé pomlčky. Články byly podle
+následného upřesnění vlastníka upravené také: číselné rozsahy jsou slovem
+„až“, ukázkový předmět e-mailu používá dvojtečku. Ostatní dodané znění zůstává.
+
+Nové články a přesný seznam značek k ověření viz
+[blog-publication.md](blog-publication.md).

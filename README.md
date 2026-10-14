@@ -2,7 +2,8 @@
 
 Česká responzivní landing page: React, TypeScript, Vite a vlastní rezervační
 rozhraní pro veřejné API Cal.com. Obsahuje češtinu, slovenštinu, angličtinu
-a dvě vlastní článkové podstránky v každém jazyce. Aktuální předání, seznam
+a původní článkové podstránky v každém jazyce. Přehled `/blog/` přidává pět
+dodaných českých článků s vlastním HTML vstupem, JSON-LD a souvisejícími odkazy. Aktuální předání, seznam
 značek k doplnění a návody pro Cal.com/doménu jsou v
 [docs/owner-handoff.md](docs/owner-handoff.md). Původní struktura je popsaná v
 [docs/conversion-structure.md](docs/conversion-structure.md).
@@ -21,7 +22,7 @@ npm run dev -- --port 5173
 Relativní cesty fungují pod `/consulting-page/` na GitHub Pages.
 `npm test` spustí testy časových pásem, dostupnosti, kvalifikace a potvrzování rezervací.
 `npm run test:ui` po `npm run build` provede HTML validaci a prohlížečové testy
-všech devíti stránek na 375/1280 px s výhradně testovacími odpověďmi Cal.com.
+všech 27 stránek na 375/1280 px s výhradně testovacími odpověďmi Cal.com.
 Prohlížeč: `npx playwright install chromium`, nebo nastavte
 `CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium` pro systémový Chromium.
 

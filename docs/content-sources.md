@@ -100,3 +100,15 @@ portréty a článkové fotografie jsou převzaté z Wix CDN.
 Vlastník upřesnil, že ze sociálních sítí chce jen LinkedIn, a požádal o
 lidsky čitelné kontakty se základním omezením automatického sběru. Přímé
 mailto/tel odkazy jsou v kontaktní sekci odhalené až po kliknutí.
+
+## Další podklady z 15. 10. 2026
+
+Vlastník dodal pět kompletních českých článků s předepsanými slugs a meta
+popisy. Jsou uložené v `src/blog/*.md`; data pro karty, metadata a odkazy
+jsou v `src/blog/metadata.json`. Následně výslovně povolil přeformulovat také
+články tak, aby neobsahovaly dlouhé pomlčky. Rozsahy proto používají „až“.
+Datům publikace ani dvěma značkám k ověření nejsou přisuzované vymyšlené hodnoty.
+
+Vlastník změnil studentské slevy na 28 % u individuální konzultace a 35 %
+u balíčku. Nové částky jsou 1 296 Kč a 2 632,50 Kč. Nahrazují dřívější
+studentskou slevu 50 %, která je v tomto dokumentu uvedená jako historie zadání.
