@@ -24,7 +24,8 @@ Ověřeno 14. 10. 2026 na https://pruskaadam4.wixstudio.com/pruska.
   Nenastavujeme dostupnost, ceny ani délku v Calendly a neprovádíme rezervaci
   za uživatele. Před potvrzením jsou rozhodující údaje příslušné události.
 
-Nejsou doplněny neověřené kvalifikace, reference, e-mail ani portrét.
+Níže jsou doplněny nové podklady dodané vlastníkem; aktuální obsah vychází
+také z těchto pozdějších instrukcí.
 
 ## Přestavba struktury a Cal.com
 
@@ -39,11 +40,11 @@ Nejsou doplněny neověřené kvalifikace, reference, e-mail ani portrét.
   veřejný e-mail pruskaadam@me.com a LinkedIn adam-pruska.
 * culture.jpg: 41f758_0525cdc06cdc431bbe1f6509a51c107d~mv2.jpg,
   fotografie kulturních rozdílů z blogu, menší podporovaná varianta Wix CDN.
-* V dostupných stránkách home, blog, článku a RSS nebyly nalezeny reference
-  klientů ani články v médiích. Tyto části nevytvářejí falešné citace ani loga.
+* Při původním čtení home, blogu, článku a RSS nebyly nalezeny reference
+  klientů ani články v médiích. Reference později dodal vlastník v chatu.
 * Vlastník nahradil Calendly za Cal.com a dodal profil cal.com/adam-pruska.
   API adaptér používá jeho dokumentované veřejné rozhraní; skutečné slugs a
-  živou dostupnost je stále potřeba ověřit. Dosavadní odkaz Calendly není
+  živou dostupnost ověřuje nasazovací workflow. Dosavadní odkaz Calendly není
   mapován na žádnou z nových tří nabídek.
 * zurich.jpg: 41f758_56f2575c1c4a4f2894868f29cc7c4fc2~mv2.jpeg, fotografie
   Polyterrasse/centra Curychu přímo z doktorandského článku, varianta Wix CDN.
@@ -51,3 +52,26 @@ Nejsou doplněny neověřené kvalifikace, reference, e-mail ani portrét.
 * Skutečné události dodané vlastníkem: /adam-pruska/nezavazna-konzultace a
   /adam-pruska/soukroma-konzultace. Druhá slouží také pro první setkání balíčku;
   zvolená nabídka je rozlišená poznámkou a metadaty, bez automatické úhrady.
+
+## Nové texty a červená varianta
+
+Vlastník dodal tři oblasti pomoci (studium, kariéra, business), šest
+konkrétních témat konzultací, postup spolupráce a tři reference Michaely P.,
+Marie Č. a Karla M. Citace jsou převzaté z jeho zprávy, bez přidaných hodnocení
+nebo počtů klientů. Dále dodal 50% slevu pro Bc. a Mgr. studenty a možnost
+osobních setkání v Praze nebo Brně.
+
+Medailonek nyní uvádí sedm let v Curychu v minulém čase, současné bydliště
+v Praze, strukturní biologii a bioanalytickou chemii na ETH, spoluzaložení
+CometX a práci v biotech. Tyto údaje pocházejí přímo od vlastníka.
+
+Tři vlastníkem poskytnuté fotografie jsou uložené lokálně z Wix CDN:
+
+* adam-switzerland.jpeg: 41f758_528caf7eacf740169060438c0fdc1fe5~mv2.jpeg
+* eth-study.jpg: 41f758_8b85ae6e143944b6a11aef7ffba17d00~mv2.jpg
+* adam-portrait.jpg: 41f758_465369fde4b140dba67f7e06aaedaf23~mv2.jpg
+
+Cena zůstává 1 800 Kč za individuální 50minutové setkání dle dosavadní
+nabídky, nikoli neurčitá hodinová sazba. Balíček dle předchozího zadání
+zůstává 3 × 50 minut za 4 050 Kč. Privátní 30minutová schůzka z dodaných
+ukázkových textů nepřidává další nezapojenou událost do veřejné nabídky.

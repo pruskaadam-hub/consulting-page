@@ -83,10 +83,15 @@ POST se rezervace automaticky neopakuje a návštěvník je vyzván ke kontrole 
 
 Zdroj je https://pruskaadam4.wixstudio.com/pruska, jeho blog a údaje dodané
 vlastníkem. Zdroje viz [docs/content-sources.md](docs/content-sources.md).
-Reference a média jsou připravené v `content.testimonials` a `content.media`;
-bez skutečných podkladů se nezobrazují. Fotografie z Wixu nejsou vydávány za
-portrét Adama. Fotografie u doktorandského článku je pohled z ETH Zürich převzatý
-z původního článku.
+Tři reference klientů, medailonek, konkrétní texty a odkazy na Adamovy
+fotografie dodal vlastník. Mediální zmínky zůstávají připravené v
+`content.media` a bez podkladů se nezobrazují. Fotografie u doktorandského
+článku je pohled z ETH Zürich převzatý z původního článku.
+
+Design používá švýcarskou červenou `#d52b1e`, šedou a černou. Úvod vyplňuje
+šířku i výšku viewportu (`100svh`); na nízkých obrazovkách může růst podle
+obsahu. Hover pohyb se používá pouze na zařízeních s podporou hover a bez
+nastaveného `prefers-reduced-motion`. Malé nadpisy nad hlavními jsou odstraněné.
 
 ## Nasazení a prostředí
 

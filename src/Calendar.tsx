@@ -65,15 +65,15 @@ export function Calendar({service, onSubmittingChange}: {service: Service; onSub
 
   if(confirmation)return <div className="calendar-confirmation" role="status">
     <span className="confirmation-check" aria-hidden="true">✓</span>
-    <p className="eyebrow">{confirmation.status==='accepted' ? 'Rezervace potvrzena' : 'Žádost o termín přijata'}</p>
     <h3>{confirmation.status==='accepted' ? 'Máme domluveno.' : 'Ozvu se s potvrzením.'}</h3>
+    <p>{confirmation.status==='accepted' ? 'Rezervace potvrzena' : 'Žádost o termín přijata'}</p>
     <p>{service.title}<br /><strong>{displayDate(confirmation.start)}</strong><br />Časové pásmo: {timeZone}</p>
     <p>{confirmation.status==='accepted' ? 'Podrobnosti o schůzce najdeš v potvrzovacím e-mailu.' : 'Termín čeká na potvrzení. Sleduj prosím svůj e-mail.'}</p>
     {service.id==='package' && <p>Teď máš vybraný termín prvního setkání. Další dvě konzultace domluvíme společně.</p>}
   </div>;
 
   return <div className="native-calendar" aria-busy={loading || submitting}>
-    <div className="calendar-heading"><div><span className="eyebrow">Vybraný formát</span><h3>{service.title}</h3><p>{service.id==='package' ? 'První setkání · 50 min' : `${service.minutes} minut online`} <span>·</span> {priceLabel(service.price)}</p></div><span className="calendar-initials" aria-hidden="true">ap.</span></div>
+    <div className="calendar-heading"><div><h3>{service.title}</h3><p>{service.id==='package' ? 'První setkání · 50 min' : `${service.minutes} minut online`} <span>·</span> {priceLabel(service.price)}</p></div><span className="calendar-initials" aria-hidden="true">ap.</span></div>
     <div className="calendar-controls"><h4 id="month-title">{monthLabel}</h4><div><button type="button" aria-label="Předchozí měsíc" disabled={index<=currentIndex || submitting || uncertain} onClick={()=>{const d=new Date(Date.UTC(month.year,month.month-1,1));setMonth({year:d.getUTCFullYear(),month:d.getUTCMonth()});}}>←</button><button type="button" aria-label="Další měsíc" disabled={index>=currentIndex+6 || submitting || uncertain} onClick={()=>{const d=new Date(Date.UTC(month.year,month.month+1,1));setMonth({year:d.getUTCFullYear(),month:d.getUTCMonth()});}}>→</button></div></div>
     <div className="calendar-weekdays" aria-hidden="true">{['Po','Út','St','Čt','Pá','So','Ne'].map(d=><span key={d}>{d}</span>)}</div>
     <div className="calendar-days" role="group" aria-labelledby="month-title">{days.map(cell=>{

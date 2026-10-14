@@ -10,7 +10,7 @@ Doporučené pořadí a důvod:
 2. Lišta zkušeností: 7+ let ve Švýcarsku, ETH Zürich, akademie/startupy/korporát,
    první konzultace zdarma. Údaje dodané vlastníkem v tomto zadání.
 3. S čím můžu pomoct: konkrétní situace návštěvníka, nikoli obecný výčet dovedností.
-4. Co můžeš čekat: osobní přístup, vlastní zkušenosti a praktické další kroky.
+4. Co můžeš čekat: šest oblastí od kariéry a kontaktů po kulturu a vlastní projekt.
 5. Krátký medailonek: člověk, kterému návštěvník svěří svou situaci, ještě před cenami.
 6. Skutečné reference, pokud jsou dostupné: důvěra před rozhodnutím o rezervaci.
 7. Jak to funguje: tři srozumitelné kroky, počínaje nezávazným rozhovorem.
@@ -29,9 +29,9 @@ lepší srozumitelnost a menší tření, nikoli zaručené zvýšení počtu re
 ## Práce s chybějícím obsahem
 
 Na dostupných stránkách původního Wix webu a v RSS byly nalezeny dva skutečné
-články, e-mail a LinkedIn. Reference klientů a vystoupení v médiích nebyly
-v dostupném obsahu nalezeny. Příslušné komponenty jsou připravené, ale bez
-podkladů nezobrazují falešné citace, počty klientů, hodnocení ani loga médií.
+články, e-mail a LinkedIn. Tři reference, vlastní portréty a rozšířené texty
+později dodal vlastník přímo v chatu. Reference se nyní zobrazují před
+rezervací. Mediální zmínky zůstávají připravené pro konkrétní odkazy.
 
 Balíček: 3 × 1 800 Kč = 5 400 Kč; sleva 25 % = 1 350 Kč; výsledná cena
 4 050 Kč. Délka 50 minut vychází z individuální konzultace. Jedno osobní
