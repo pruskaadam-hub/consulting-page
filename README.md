@@ -1,9 +1,10 @@
 # Adam Pruška — Mentoring & Consulting
 
-Responzivní česká landing page s informacemi a fotografiemi z původního Wix webu,
-vloženým Calendly a nasazením přes GitHub Pages. React, TypeScript a Vite.
+Česká responzivní landing page: React, TypeScript, Vite a vlastní rezervační
+rozhraní pro veřejné API Cal.com. Nová struktura je popsaná v
+[docs/conversion-structure.md](docs/conversion-structure.md).
 
-## Vývoj
+## Spuštění
 
 Node.js >=22.12 (ověřeno s Node.js 24).
 
@@ -14,49 +15,85 @@ npm run dev -- --port 5173
 ```
 
 `npm run build` provede kontrolu typů a produkční sestavení do `dist/`.
-Relativní cesty fungují v podadresáři GitHub Pages i při lokálním spuštění.
-`npm test` ověří veřejné odkazy Calendly a parametry vloženého kalendáře.
+Relativní cesty fungují pod `/consulting-page/` na GitHub Pages.
+`npm test` spustí testy časových pásem, dostupnosti a potvrzování rezervací.
 
-## Rezervační kalendář
+## Cal.com: vlastní kalendář, bez iframe
 
-Do `.env.local` nebo prostředí nastavte:
+V `.env.local` nastavte veřejný profil a ověřené slugs událostí:
 
 ```dotenv
-VITE_CALENDLY_URL=https://calendly.com/pruskaadam/consulting-hour
+VITE_CAL_USERNAME=adam-pruska
+VITE_CAL_INTRO_SLUG=nezavazna-konzultace
+VITE_CAL_INDIVIDUAL_SLUG=soukroma-konzultace
+VITE_CAL_PACKAGE_SLUG=soukroma-konzultace
 ```
 
-Veřejný odkaz dodal vlastník v chatu. Stejný odkaz je nastaven v GitHub Actions.
-Po změně proměnné restartujte vývojový server; na produkci musí být nastavena
-při sestavení. `.env.local` je ignorován Gitem. Nepřidávejte API klíče do veřejných
-proměnných `VITE_`.
+Slug je poslední část odkazu `https://cal.com/adam-pruska/SLUG`.
+Nepřidávejte API klíč do `VITE_` proměnné. Veřejná rozhraní Cal.com podporují
+anonymní dotaz na volné termíny a vytvoření rezervace podle username + slug.
+Použité verze API: slots `2024-09-04`, bookings `2024-08-13`.
+Dokumentovaný kontrakt byl ověřen v oficiálním zdrojovém kódu:
 
-Kalendář se načítá až po kliknutí návštěvníka; existuje i přímý odkaz pro případ
-problémů s vložením. Dostupnost, délku, podmínky schůzky a potvrzení spravuje
-Calendly. Stránka neodesílá vlastní rezervační formulář a neslibuje vymyšlené
-termíny. Nevytvářejte rezervace v účtu při běžném testování.
+* [Veřejné termíny](https://github.com/calcom/cal.diy/blob/v5.8.4/apps/api/v2/src/modules/slots/slots-2024-09-04/controllers/slots.controller.ts)
+* [Vytvoření rezervace](https://github.com/calcom/cal.diy/blob/v5.8.4/apps/api/v2/src/ee/bookings/2024-08-13/controllers/bookings.controller.ts)
+
+Vlastník dodal dvě veřejné události v Cal.com:
+
+* `nezavazna-konzultace`: 30 minut online, zdarma.
+* `soukroma-konzultace`: 50 minut online.
+
+Balíček používá `soukroma-konzultace` pro první 50minutové setkání; další
+dvě se domlouvají samostatně. Nabídka balíčku se předává v poznámce a
+metadatech rezervace, nikoli jako potvrzení platby.
+
+Nastavte jejich skutečnou dostupnost a zapněte kontrolu kolizí u připojených
+kalendářů. Připojený účet sám o sobě neprokazuje, že každý kalendář kontroluje
+obsazenost. U chráněného firemního účtu jsou rozhodující oprávnění poskytovatele.
+
+Vlastní formulář podporuje základní jméno, e-mail a nepovinnou poznámku. Pokud
+událost vyžaduje další povinná pole, ověření e-mailu nebo platbu předem, je
+nutné rozšířit tento průchod podle konkrétního nastavení. Stránka nyní
+nevybírá platby a nepotvrzuje úhradu balíčku. Cena je nabídka služby.
+
+Po změně proměnných restartujte Vite a znovu sestavte web. Stejné veřejné slugs jsou nastavené v build jobu
+`.github/workflows/pages.yml`. Balíček používá událost individuální konzultace
+pro první setkání a přidává údaje o nabídce do poznámky a metadat;
+zbytek balíčku se domlouvá samostatně. Bez slugu UI pravdivě nabízí domluvení termínu e-mailem;
+nezobrazuje vymyšlené volné časy ani nevytváří rezervaci.
+
+## Ověření a aktuální omezení
+
+Lokální testy ověřují kontrakt API s testovacími odpověďmi, včetně skutečného
+průchodu rozhraním, kolizí, nepotvrzených žádostí a neurčité síťové odpovědi.
+To není důkaz fungování živého účtu. Přístup k cal.com a api.cal.com z tohoto
+prostředí byl blokovaný proxy (403). Potřebné domény jsou uložené v návrhu
+nastavení prostředí. Nasazovací workflow provádí pouze čtení skutečné dostupnosti a kontrolu CORS
+přístupu z produkční domény. To běží na GitHub runneru, zatímco lokální
+prohlížečové testy používají výhradně testovací odpovědi. Výsledek živého
+ověření musí být doložen dokončeným CI runem; přímý přístup z tohoto cloudového
+prostředí zůstává samostatná kontrola po aplikaci nastavení. Nevytvářejte skutečné
+rezervace nebo e-mailové pozvánky při běžném smoke testu bez výslovného zadání.
+
+UI hlásí potvrzení pouze po odpovědi API se stavem `accepted` a odpovídajícím
+termínem. Stav `pending` je žádost čekající na potvrzení. Při neznámém výsledku
+POST se rezervace automaticky neopakuje a návštěvník je vyzván ke kontrole e-mailu.
 
 ## Obsah
 
-Zdroje a původ fotografií jsou zdokumentovány v [docs/content-sources.md](docs/content-sources.md).
-Logo a fotografie jsou uložené lokálně v `public/images/`.
-Žádná ilustrační fotografie není prezentována jako portrét Adama.
+Zdroj je https://pruskaadam4.wixstudio.com/pruska, jeho blog a údaje dodané
+vlastníkem. Zdroje viz [docs/content-sources.md](docs/content-sources.md).
+Reference a média jsou připravené v `content.testimonials` a `content.media`;
+bez skutečných podkladů se nezobrazují. Fotografie z Wixu nejsou vydávány za
+portrét Adama. Fotografie u doktorandského článku je pohled z ETH Zürich převzatý
+z původního článku.
 
-## GitHub Pages
+## Nasazení a prostředí
 
-Workflow `.github/workflows/pages.yml` ověří testy, sestaví stránku a publikuje
-`dist/` při každém pushi do `main`. GitHub Actions jsou připnuté na konkrétní SHA.
+Workflow `.github/workflows/pages.yml` publikuje sestavený `dist/` při pushi do
+`main`. Pages Source musí být **GitHub Actions**. Vývojové větve se automaticky
+nepublikují. Před přepnutím této nové verze ověřte Cal.com podle bodů výše.
 
-V nastavení repozitáře **Settings → Pages → Source** má být **GitHub Actions**.
-Workflow lze spustit znovu přes **Actions → Deploy landing page to GitHub Pages →
-Run workflow**. Nezapínejte vlastní doménu bez požadavku vlastníka.
-
-Očekávaná adresa: https://pruskaadam-hub.github.io/consulting-page/.
-Samotný push ani úspěšný build nejsou důkazem publikace; ověřte dokončený
-deploy a funkční veřejnou adresu.
-
-## Cloudové prostředí
-
-Používejte existující checkout. Každá cloudová úloha je izolovaná, není třeba
-vytvářet další Git worktree. Instalace používá lockfile (`npm ci`), proces Vite
-je třeba po obnovení prostředí spustit znovu. Lokální náhled v onboarding UI
-nenahrazuje veřejné nasazení webu.
+Používejte existující checkout. Každá cloudová úloha je izolovaná; není potřeba
+vytvářet další Git worktree. Instalace používá lockfile (`npm ci`). Proces Vite
+je třeba po obnovení prostředí spustit znovu.

@@ -25,3 +25,29 @@ Ověřeno 14. 10. 2026 na https://pruskaadam4.wixstudio.com/pruska.
   za uživatele. Před potvrzením jsou rozhodující údaje příslušné události.
 
 Nejsou doplněny neověřené kvalifikace, reference, e-mail ani portrét.
+
+## Přestavba struktury a Cal.com
+
+* Vlastník dodal v chatu: 7+ let ve Švýcarsku, studium i práce na ETH Zürich,
+  zkušenosti z akademie, startupů a korporátu, balíček tří konzultací se slevou
+  25 % a s jedním osobním setkáním na zvoleném místě.
+* Doktorský článek potvrzuje zkušenost s chemií, výzkumem, doktorátem na ETH
+  a spoluprací s průmyslem. Z něj vycházejí příklady pomoci s výběrem skupiny,
+  motivačním dopisem, přípravou na pohovor a prvními kroky po přijetí.
+* https://pruskaadam4.wixstudio.com/pruska/blog a /blog-feed.xml poskytují dva
+  skutečné články z 9. 7. 2025 a 25. 3. 2025. Z blogové stránky byly převzaty
+  veřejný e-mail pruskaadam@me.com a LinkedIn adam-pruska.
+* culture.jpg: 41f758_0525cdc06cdc431bbe1f6509a51c107d~mv2.jpg,
+  fotografie kulturních rozdílů z blogu, menší podporovaná varianta Wix CDN.
+* V dostupných stránkách home, blog, článku a RSS nebyly nalezeny reference
+  klientů ani články v médiích. Tyto části nevytvářejí falešné citace ani loga.
+* Vlastník nahradil Calendly za Cal.com a dodal profil cal.com/adam-pruska.
+  API adaptér používá jeho dokumentované veřejné rozhraní; skutečné slugs a
+  živou dostupnost je stále potřeba ověřit. Dosavadní odkaz Calendly není
+  mapován na žádnou z nových tří nabídek.
+* zurich.jpg: 41f758_56f2575c1c4a4f2894868f29cc7c4fc2~mv2.jpeg, fotografie
+  Polyterrasse/centra Curychu přímo z doktorandského článku, varianta Wix CDN.
+  Nahrazuje obecnou ilustraci v kartě článku o doktorátu.
+* Skutečné události dodané vlastníkem: /adam-pruska/nezavazna-konzultace a
+  /adam-pruska/soukroma-konzultace. Druhá slouží také pro první setkání balíčku;
+  zvolená nabídka je rozlišená poznámkou a metadaty, bez automatické úhrady.

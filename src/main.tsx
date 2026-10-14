@@ -1,104 +1,54 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState, type MouseEvent } from 'react';
 import { createRoot } from 'react-dom/client';
-import { content } from './content';
-import { calendlyUrl, calendlyEmbedUrl } from './booking.mjs';
+import { Calendar } from './Calendar';
+import { content, services, priceLabel, type ServiceId } from './content';
 import './styles.css';
 
 const imagePath = (name: string) => `${import.meta.env.BASE_URL}images/${name}`;
-
-function Arrow({ diagonal = false }: { diagonal?: boolean }) {
+function Arrow({diagonal=false}:{diagonal?:boolean}) {
   return <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d={diagonal ? 'M6 18 18 6M6 6h12v12' : 'M4 12h15m-6-6 6 6-6 6'} stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>;
 }
-
-function Booking() {
-  const [consent, setConsent] = useState(false);
-  const rawUrl = import.meta.env.VITE_CALENDLY_URL;
-  const url = calendlyUrl(rawUrl);
-  const embed = calendlyEmbedUrl(rawUrl, window.location.hostname);
-
-  return <section className="booking section" id="rezervace" aria-labelledby="booking-title">
-    <div className="booking-intro">
-      <p className="eyebrow">Rezervace</p>
-      <h2 id="booking-title">Najděme si čas<br />na rozhovor.</h2>
-      <p>Vyberte si termín, který vám vyhovuje. Délku a podmínky konkrétní schůzky najdete v Calendly před potvrzením rezervace.</p>
-      <div className="booking-note"><span className="small-mark" aria-hidden="true"><Arrow diagonal /></span><span>Jeden první krok.<br /><strong>Nový pohled na to, co je před vámi.</strong></span></div>
-    </div>
-    <div className="booking-panel">
-      {url && embed ? <>
-        {consent ? <iframe className="calendly-frame" src={embed} title="Rezervační kalendář konzultace v Calendly" /> : <div className="booking-placeholder">
-          <CalendarMark />
-          <h3>Vyberte si svůj termín</h3>
-          <p>Kalendář poskytuje Calendly. Po jeho načtení se připojíte k této službě, která zpracovává údaje potřebné k rezervaci.</p>
-          <button className="button primary" onClick={() => setConsent(true)}>Načíst kalendář <Arrow /></button>
-          <a className="text-link" href={url} target="_blank" rel="noopener noreferrer">Otevřít přímo v Calendly <Arrow diagonal /></a>
-        </div>}
-        {consent && <a className="calendar-fallback text-link" href={url} target="_blank" rel="noopener noreferrer">Pokud se kalendář nenačítá, otevřete Calendly <Arrow diagonal /></a>}
-      </> : <div className="booking-placeholder">
-        <CalendarMark />
-        <span className="draft-label">Pracovní návrh</span>
-        <h3>Místo pro váš kalendář</h3>
-        <p>Zde bude rezervační kalendář Calendly s vašimi skutečnými volnými termíny. Čekáme na rezervační odkaz.</p>
-        <a className="text-link" href={content.sourceUrl} target="_blank" rel="noopener noreferrer">Přejít na současný web <Arrow diagonal /></a>
-      </div>}
-    </div>
-  </section>;
+function Brand() {
+  return <a className="brand" href="#" aria-label="Adam Pruška — úvod"><span className="brand-mark" aria-hidden="true">ap.</span>{content.brand}</a>;
 }
-
-function CalendarMark() {
-  return <svg className="calendar-mark" width="48" height="48" viewBox="0 0 48 48" fill="none" aria-hidden="true"><rect x="8" y="11" width="32" height="29" rx="5" stroke="currentColor" strokeWidth="1.5" /><path d="M8 20h32M16 7v8m16-8v8m-16 13h4m8 0h4m-16 6h4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>;
-}
-
 function App() {
-  const [menuOpen, setMenuOpen] = useState(false);
-  const closeMenu = () => setMenuOpen(false);
+  const [menuOpen,setMenuOpen]=useState(false);
+  const [sticky,setSticky]=useState(false);
+  const [selected,setSelected]=useState<ServiceId>('intro');
+  const [bookingBusy,setBookingBusy]=useState(false);
+  const heroAction=useRef<HTMLAnchorElement>(null);
+  const service=services.find(item=>item.id===selected)!;
+  const select=(id:ServiceId)=>{setSelected(id);setMenuOpen(false);};
+  const choose=(id:ServiceId)=>(event:MouseEvent<HTMLAnchorElement>)=>{if(bookingBusy){event.preventDefault();return;}select(id);};
+  useEffect(()=>{
+    const observer=new IntersectionObserver(([entry])=>setSticky(!entry.isIntersecting && entry.boundingClientRect.top<0),{threshold:0});
+    if(heroAction.current)observer.observe(heroAction.current);
+    return ()=>observer.disconnect();
+  },[]);
 
   return <div className="site-shell">
     <a className="skip-link" href="#obsah">Přejít na obsah</a>
-    {content.draft && <div className="draft-banner">První pracovní verze · texty a fotografie čekají na převzetí ze současného webu</div>}
-    <header className="header wrap">
-      <a className="brand" href="#" aria-label="Adam Pruška — úvod"><span className="brand-mark" aria-hidden="true">ap.</span>{content.brand}</a>
-      <button className="menu-toggle" type="button" aria-expanded={menuOpen} aria-controls="navigation" aria-label={menuOpen ? 'Zavřít menu' : 'Otevřít menu'} onClick={() => setMenuOpen(!menuOpen)}>{menuOpen ? 'Zavřít' : 'Menu'}<span aria-hidden="true">{menuOpen ? '−' : '+'}</span></button>
-      <nav id="navigation" className={menuOpen ? 'navigation open' : 'navigation'} aria-label="Hlavní navigace">
-        <a href="#konzultace" onClick={closeMenu}>Konzultace</a>
-        <a href="#o-mne" onClick={closeMenu}>O mně</a>
-        <a className="nav-cta" href="#rezervace" onClick={closeMenu}>Domluvit konzultaci <Arrow diagonal /></a>
-      </nav>
-    </header>
+    {sticky && <header className="sticky-header"><Brand /><a className="button primary" href="#rezervace" onClick={choose('intro')} aria-disabled={bookingBusy || undefined}><span>30 minut zdarma</span><Arrow diagonal /></a></header>}
+    <header className="header wrap"><Brand /><button className="menu-toggle" type="button" aria-expanded={menuOpen} aria-controls="navigation" aria-label={menuOpen ? 'Zavřít menu' : 'Otevřít menu'} onClick={()=>setMenuOpen(!menuOpen)}>{menuOpen ? 'Zavřít' : 'Menu'}<span aria-hidden="true">{menuOpen ? '−' : '+'}</span></button><nav id="navigation" className={menuOpen ? 'navigation open' : 'navigation'} aria-label="Hlavní navigace"><a href="#pomoc" onClick={()=>setMenuOpen(false)}>S čím pomůžu</a><a href="#postup" onClick={()=>setMenuOpen(false)}>Jak to funguje</a><a href="#o-mne" onClick={()=>setMenuOpen(false)}>O mně</a><a className="nav-cta" href="#rezervace" onClick={choose('intro')} aria-disabled={bookingBusy || undefined}>30 minut zdarma <Arrow diagonal /></a></nav></header>
     <main id="obsah">
-      <section className="hero wrap" aria-labelledby="hero-title">
-        <div className="hero-copy">
-          <p className="eyebrow"><span className="status-dot" />{content.hero.eyebrow}</p>
-          <h1 id="hero-title">Váš další krok<br />do <em>zahraničí.</em></h1>
-          <p className="hero-description">{content.hero.description}</p>
-          <a className="button primary" href="#rezervace">Domluvit konzultaci <Arrow diagonal /></a>
-          <a className="hero-secondary" href="#konzultace">První konzultace zdarma <span aria-hidden="true">↓</span></a>
-        </div>
-        <div className="hero-art hero-photo">
-          <img src={imagePath('consultation.jpg')} alt="Rozhovor u stolu — fotografie ze současného webu" fetchPriority="high" width="1600" height="1067" />
-          <div className="art-label"><span>Všechno začíná</span><strong>jedním rozhovorem.</strong></div>
-        </div>
-      </section>
-      <section className="intro section wrap" id="konzultace" aria-labelledby="intro-title">
-        <div><p className="eyebrow">Mentoring pro cestu do zahraničí</p><h2 id="intro-title">Najděte směr.<br />A správná <em>spojení.</em></h2></div>
-        <div className="intro-copy"><p>Pomáhám lidem najít směr, spojení a příležitosti — ať už míří do vědy, firemního světa nebo vlastního projektu.</p><p className="muted">Využijte mé zkušenosti z akademického prostředí, byznysu i neziskového sektoru. Získejte praktické rady, jak se prosadit ve Švýcarsku i dalších zemích.</p></div>
-      </section>
-      <section className="services section wrap" aria-labelledby="services-title">
-        <p className="eyebrow">Konzultace online</p><h2 id="services-title">Začněme <em>rozhovorem.</em></h2>
-        <div className="service-grid">{content.services.map(service => <article className="service-card" key={service.title}>
-          <img src={imagePath(service.image)} alt="" width="960" height="640" loading="lazy" />
-          <div className="service-body"><p className="eyebrow">{service.duration}</p><h3>{service.title}</h3><p>{service.description}</p><strong className="service-price">{service.price}</strong></div>
-        </article>)}</div>
-        <p className="service-note">Vyberte termín v Calendly. Dostupnost a podmínky konkrétní události se zobrazí před rezervací.</p>
-        <a className="text-link" href="#rezervace">Přejít na rezervační kalendář <Arrow /></a>
-      </section>
-      <section className="about section wrap" id="o-mne" aria-labelledby="about-title">
-        <div className="about-logo"><img src={imagePath('logo.jpg')} alt="Adam Pruška — Mentoring & Consulting" width="816" height="946" loading="lazy" /></div>
-        <div className="about-copy"><p className="eyebrow">O mně</p><h2 id="about-title">Adam Pruška.<br /><em>Mentoring & Consulting.</em></h2><p>Pomáhám lidem hledat příležitosti v zahraničí. Propojuji zkušenosti z akademického prostředí, byznysu a neziskového sektoru s praktickými radami pro váš další krok.</p><a className="text-link" href={`tel:${content.phone.replaceAll(' ', '')}`}>Zavolejte mi: {content.phone} <Arrow diagonal /></a></div>
-      </section>
-      <div className="booking-wrap"><div className="wrap"><Booking /></div></div>
+      <section className="hero wrap" aria-labelledby="hero-title"><div className="hero-copy"><p className="eyebrow"><span className="status-dot" />Mentoring & Consulting</p><h1 id="hero-title">Tvůj další krok<br />do <em>Švýcarska.</em></h1><p className="hero-description">Studium, práce nebo nový začátek v zahraničí? Prober to s někým, kdo zná švýcarské prostředí z vlastní zkušenosti.</p><a ref={heroAction} className="button primary" href="#rezervace" onClick={choose('intro')} aria-disabled={bookingBusy || undefined}>Rezervovat 30 minut zdarma <Arrow diagonal /></a><p className="hero-reassurance">Online · Nezávazně · Bez povinnosti pokračovat</p><a className="hero-secondary" href="#pomoc">Zjistit, s čím mi můžeš pomoct <span aria-hidden="true">↓</span></a></div><div className="hero-art hero-photo"><img src={imagePath('consultation.jpg')} alt="Konzultační rozhovor — ilustrační fotografie z původního webu" fetchPriority="high" width="1600" height="1067" /><div className="art-label"><span>Nemusíš na všechno</span><strong>přicházet sám.</strong></div></div></section>
+      <section className="credential-strip" aria-label="Zkušenosti a úvodní konzultace"><div><strong>7+ let</strong><span>ve Švýcarsku</span></div><div><strong>ETH Zürich</strong><span>studium a práce</span></div><div><strong>Od výzkumu k byznysu</strong><span>akademie · startupy · korporát</span></div><div><strong>První setkání zdarma</strong><span>30 minut bez závazku</span></div></section>
+      <section id="pomoc" className="section wrap" aria-labelledby="help-title"><div className="section-heading"><div><p className="eyebrow">S čím ti můžu pomoct</p><h2 id="help-title">Poznáváš se<br />v některé z těchto <em>situací?</em></h2></div><p>Začneme tím, co právě potřebuješ vyřešit. Od prvního nápadu až po konkrétní otázky.</p></div><div className="help-grid">{content.help.map((item,index)=><article className="help-card" key={item.title}><div className="card-topline"><span className="card-number">0{index+1}</span><span className="topic-tag">{item.tag}</span></div><h3>{item.title}</h3><p>{item.text}</p><a className="text-link" href="#rezervace" onClick={choose('intro')} aria-disabled={bookingBusy || undefined}>Probrat moji situaci <Arrow /></a></article>)}</div></section>
+      <section className="expectations section" aria-labelledby="expect-title"><div className="wrap"><p className="eyebrow">Co ode mě můžeš čekat</p><h2 id="expect-title">Méně nejistoty.<br />Více <em>souvislostí.</em></h2><div className="expect-grid">{content.expectations.map((item,index)=><article key={item.title}><span className="expect-number">0{index+1}</span><h3>{item.title}</h3><p>{item.text}</p></article>)}</div><p className="expect-footnote">Každá cesta je jiná. Společně hledáme postup, který dává smysl pro tebe.</p></div></section>
+      <section id="o-mne" className="about section wrap" aria-labelledby="about-title"><div className="about-logo"><img src={imagePath('logo.jpg')} alt="Adam Pruška — Mentoring & Consulting" width="816" height="946" loading="lazy" /></div><div className="about-copy"><p className="eyebrow">Kdo tě bude provázet</p><h2 id="about-title">Adam Pruška.<br /><em>Zkušenost, kterou sdílím.</em></h2><p>Ve Švýcarsku žiju přes sedm let. Na ETH Zürich jsem studoval a pracoval; zkušenosti jsem získal v akademii, startupech i korporátu.</p><p>Vlastní cestu od výzkumu a doktorátu k mentoringu používám jako výchozí bod pro praktické rozhovory o studiu, práci a životě v zahraničí.</p><a className="text-link" href={content.linkedIn} target="_blank" rel="noopener noreferrer">Více o mé cestě na LinkedIn <Arrow diagonal /></a></div></section>
+      {content.testimonials.length>0 && <section className="testimonials section wrap" aria-labelledby="testimonials-title"><p className="eyebrow">Zkušenosti klientů</p><h2 id="testimonials-title">Co říkají lidé,<br />kteří už udělali <em>první krok.</em></h2><div className="testimonial-grid">{content.testimonials.map(item=><figure key={item.name+item.quote}><blockquote>{item.quote}</blockquote><figcaption><strong>{item.name}</strong><span>{item.context}</span>{item.sourceUrl && <a href={item.sourceUrl} target="_blank" rel="noopener noreferrer">Zdroj reference ↗</a>}</figcaption></figure>)}</div></section>}
+      <section id="postup" className="process section wrap" aria-labelledby="process-title"><p className="eyebrow">Jak funguji</p><h2 id="process-title">Od první otázky<br />k dalšímu <em>kroku.</em></h2><div className="process-grid">{[
+        ['Seznámíme se','Během 30 minut zdarma probereme tvou situaci a zjistíme, zda ti můžu pomoct.'],
+        ['Vybereš si další postup','Pokud ti spolupráce dává smysl, můžeš zvolit individuální konzultaci nebo balíček.'],
+        ['Půjdeme do konkrétních témat','Zaměříme se na tvoje otázky, možnosti a praktické další kroky.'],
+      ].map(([title,text],index)=><article key={title}><span className="process-number">{index+1}</span><h3>{title}</h3><p>{text}</p></article>)}</div></section>
+      <section id="rezervace" className="reservation-section section" aria-labelledby="reservation-title"><div className="wrap"><div className="section-heading"><div><p className="eyebrow">Vyber si konzultaci</p><h2 id="reservation-title">Začni nezávazně.<br />Pokračuj podle <em>sebe.</em></h2></div><p>Nejsi si jistý nebo jistá? Úvodních 30 minut je zdarma. Společně zjistíme, co potřebuješ.</p></div><div className="offers-grid" role="group" aria-label="Typ konzultace">{services.map(item=><article className={`offer-card ${selected===item.id ? 'active' : ''}`} key={item.id}><span className="offer-badge">{item.label}</span><h3>{item.title}</h3><p className="offer-description">{item.description}</p><div className="offer-price">{item.id==='package' && <s>5 400 Kč</s>}<strong>{priceLabel(item.price)}</strong><span>{item.id==='package' ? 'za celý balíček' : `za ${item.minutes} minut`}</span></div><ul>{item.features.map(feature=><li key={feature}>{feature}</li>)}</ul><a href="#kalendar" className={selected===item.id ? 'button primary' : 'button offer-button'} aria-current={selected===item.id ? 'true' : undefined} onClick={choose(item.id)} aria-disabled={bookingBusy || undefined}>{selected===item.id ? 'Vybráno · zobrazit termíny' : item.id==='intro' ? 'Začít zdarma' : 'Vybrat konzultaci'} <Arrow /></a></article>)}</div><div id="kalendar" className="calendar-layout"><div className="calendar-intro"><p className="eyebrow">Tvůj termín</p><h3>Najděme si čas<br />na <em>rozhovor.</em></h3><p>Vyber den, čas a doplň kontakt. Potvrzení rezervace dostaneš e-mailem.</p>{service.id==='package' && <p>U balíčku vybíráš první setkání. Další dvě konzultace včetně osobní domluvíme společně.</p>}<a className="text-link" href={`mailto:${content.email}`}>Raději se nejdřív zeptáš? Napiš mi <Arrow diagonal /></a></div><Calendar key={service.id} service={service} onSubmittingChange={setBookingBusy} /></div></div></section>
+      <section className="faq section wrap" aria-labelledby="faq-title"><div><p className="eyebrow">Časté otázky</p><h2 id="faq-title">Ještě něco<br />potřebuješ <em>vědět?</em></h2></div><div className="faq-list">{content.faq.map(item=><details key={item.question}><summary>{item.question}<span aria-hidden="true">+</span></summary><p>{item.answer}</p></details>)}</div></section>
+      <section className="final-cta wrap"><div><p className="eyebrow">První krok může být jednoduchý</p><h2>Nemusíš mít jasno.<br />Stačí <em>začít rozhovorem.</em></h2><p>30 minut online, zdarma a bez závazku.</p></div><a className="button primary" href="#rezervace" onClick={choose('intro')} aria-disabled={bookingBusy || undefined}>Rezervovat 30 minut zdarma <Arrow diagonal /></a></section>
+      <section id="blog" className="blog section wrap" aria-labelledby="blog-title"><div className="section-heading"><div><p className="eyebrow">Z mého blogu</p><h2 id="blog-title">Zkušenosti<br />i mezi <em>konzultacemi.</em></h2></div><a className="text-link" href={`${content.sourceUrl}/blog`} target="_blank" rel="noopener noreferrer">Všechny články <Arrow diagonal /></a></div><div className="blog-grid">{content.posts.map(post=><article className="blog-card" key={post.url}><a href={post.url} target="_blank" rel="noopener noreferrer"><img src={imagePath(post.image)} alt="" loading="lazy" width="960" height="640" /><div><p className="blog-date">{post.date}</p><h3>{post.title}</h3><p>{post.description}</p><span className="text-link">Přečíst článek <Arrow diagonal /></span></div></a></article>)}</div></section>
+      {content.media.length>0 && <section className="media section wrap" aria-labelledby="media-title"><p className="eyebrow">Adam v médiích</p><h2 id="media-title">Další pohled<br />na moje <em>zkušenosti.</em></h2><div className="media-grid">{content.media.map(item=><a href={item.url} target="_blank" rel="noopener noreferrer" key={item.url}><span>{item.outlet}</span><h3>{item.title}</h3><Arrow diagonal /></a>)}</div></section>}
     </main>
-    <footer className="footer wrap"><a className="brand" href="#"><span className="brand-mark" aria-hidden="true">ap.</span>{content.brand}</a><span>Mentoring & Consulting</span><a href="https://calendly.com/legal/privacy-notice" target="_blank" rel="noopener noreferrer">Ochrana údajů v Calendly <Arrow diagonal /></a></footer>
+    <footer className="footer wrap"><Brand /><div className="footer-contact"><a href={`mailto:${content.email}`}>{content.email}</a><a href={`tel:${content.phone.replaceAll(' ','')}`}>{content.phone}</a></div><a href="https://cal.com/privacy" target="_blank" rel="noopener noreferrer">Ochrana údajů v Cal.com <Arrow diagonal /></a></footer>
   </div>;
 }
-
 createRoot(document.getElementById('root')!).render(<App />);

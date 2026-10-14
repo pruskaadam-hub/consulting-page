@@ -16,7 +16,10 @@ jobs:
   build:
     runs-on: ubuntu-24.04
     env:
-      VITE_CALENDLY_URL: https://calendly.com/pruskaadam/consulting-hour
+      VITE_CAL_USERNAME: adam-pruska
+      VITE_CAL_INTRO_SLUG: nezavazna-konzultace
+      VITE_CAL_INDIVIDUAL_SLUG: soukroma-konzultace
+      VITE_CAL_PACKAGE_SLUG: soukroma-konzultace
     steps:
       - name: Check out source
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
@@ -27,10 +30,12 @@ jobs:
           cache: npm
       - name: Install locked dependencies
         run: npm ci
-      - name: Verify booking links
+      - name: Verify reservation API contracts
         run: npm test
       - name: Build and type check
         run: npm run build
+      - name: Verify public Cal.com availability and browser access
+        run: node scripts/verify-cal-config.mjs
       - name: Configure Pages
         uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6
       - name: Upload website
