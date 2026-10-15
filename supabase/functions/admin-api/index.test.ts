@@ -1,6 +1,7 @@
 import { handle } from "./index.ts";
 import { limitedText } from "../_shared/http.ts";
 import { mailStatus, sendMail } from "../_shared/mail.ts";
+import { analyticsConfigured, analyticsReport } from "../_shared/google.ts";
 function assert(value: unknown, message = "Assertion failed") {
   if (!value) throw new Error(message);
 }
@@ -62,6 +63,100 @@ const mailMessage = {
   subject: "Fixture only",
   text: "This message must never reach a real provider.",
 };
+Deno.test("GA4 reports use the supplied property, a read-only token and provider totals; optional property override works", async () => {
+  const previousProperty = Deno.env.get("GA4_PROPERTY_ID");
+  const previousAccount = Deno.env.get("GOOGLE_SERVICE_ACCOUNT_JSON");
+  const original = globalThis.fetch;
+  try {
+    const pair = await crypto.subtle.generateKey(
+      {
+        name: "RSASSA-PKCS1-v1_5",
+        modulusLength: 2048,
+        publicExponent: new Uint8Array([1, 0, 1]),
+        hash: "SHA-256",
+      },
+      true,
+      ["sign", "verify"],
+    );
+    const bytes = new Uint8Array(
+      await crypto.subtle.exportKey("pkcs8", pair.privateKey),
+    );
+    const clientEmail = "fixture@fixture.iam.gserviceaccount.com";
+    Deno.env.set(
+      "GOOGLE_SERVICE_ACCOUNT_JSON",
+      JSON.stringify({
+        client_email: clientEmail,
+        private_key: `-----BEGIN PRIVATE KEY-----\n${
+          btoa(String.fromCharCode(...bytes))
+        }\n-----END PRIVATE KEY-----`,
+      }),
+    );
+    let property = "559071834", calls = 0;
+    globalThis.fetch = (input, init) => {
+      calls++;
+      const target = String(input);
+      if (target === "https://oauth2.googleapis.com/token") {
+        const body = new URLSearchParams(String(init?.body));
+        assert(
+          body.get("grant_type") ===
+            "urn:ietf:params:oauth:grant-type:jwt-bearer",
+        );
+        const payload = JSON.parse(
+          atob(
+            body.get("assertion")!.split(".")[1].replaceAll("-", "+")
+              .replaceAll("_", "/"),
+          ),
+        );
+        assert(payload.iss === clientEmail);
+        assert(
+          payload.scope ===
+            "https://www.googleapis.com/auth/analytics.readonly",
+        );
+        return Promise.resolve(
+          Response.json({ access_token: "fixture-google-token" }),
+        );
+      }
+      assert(
+        target ===
+          `https://analyticsdata.googleapis.com/v1beta/properties/${property}:runReport`,
+      );
+      assert(
+        new Headers(init?.headers).get("Authorization") ===
+          "Bearer fixture-google-token",
+      );
+      assert(
+        JSON.parse(String(init?.body)).dateRanges[0].endDate === "yesterday",
+      );
+      return Promise.resolve(
+        Response.json({
+          totals: [{
+            metricValues: [{ value: "9" }, { value: "12" }, { value: "20" }],
+          }],
+          rows: [],
+        }),
+      );
+    };
+    for (const id of [undefined, "123456789"]) {
+      if (id) Deno.env.set("GA4_PROPERTY_ID", id);
+      else Deno.env.delete("GA4_PROPERTY_ID");
+      property = id || "559071834";
+      assert(analyticsConfigured());
+      const result = await analyticsReport();
+      assert(
+        result.totals.users === 9 && result.totals.sessions === 12 &&
+          result.totals.views === 20,
+      );
+    }
+    assert(calls === 4);
+  } finally {
+    globalThis.fetch = original;
+    if (previousProperty === undefined) Deno.env.delete("GA4_PROPERTY_ID");
+    else Deno.env.set("GA4_PROPERTY_ID", previousProperty);
+    if (previousAccount === undefined) {
+      Deno.env.delete("GOOGLE_SERVICE_ACCOUNT_JSON");
+    } else Deno.env.set("GOOGLE_SERVICE_ACCOUNT_JSON", previousAccount);
+  }
+});
 Deno.test("consented public events use a server HMAC bucket and the database enforces acceptance or rate limiting", async () => {
   const names = [
     "EVENTS_HMAC_SECRET",

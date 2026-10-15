@@ -24,6 +24,9 @@ Vlastník dodal veřejné měřicí ID `G-L6HVJMS1XE`. Workflow Pages ho použí
 jako výchozí hodnotu; GitHub Actions Variable `VITE_GA4_MEASUREMENT_ID` ji
 může přepsat. Google tag se načte pouze po souhlasu. Přehledy přímo
 v administraci navíc potřebují Property ID a služební účet podle kroků níže.
+Property ID `559071834` je výchozí hodnota backendu; `GA4_PROPERTY_ID`
+v Supabase Secrets ji může přepsat. Postup připojení přehledů:
+[ga4-setup.md](ga4-setup.md).
 Administrace proto ukazuje samostatně **GA4: sběr dat na webu** a
 **GA4: přehledy v administraci**. Nastavení měřicího ID nepotvrzuje doručení
 událostí do Google ani oprávnění k reportům.

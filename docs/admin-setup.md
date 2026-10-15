@@ -132,7 +132,7 @@ Tyto hodnoty patří výhradně do **Edge Functions → Secrets**:
 | `ICLOUD_USERNAME` | Přihlašovací adresa iCloud Mail |
 | `ICLOUD_APP_PASSWORD` | Heslo pro konkrétní aplikaci vytvořené u Applu |
 | `RESEND_API_KEY` | Klíč pro odesílání z ověřené domény přes HTTPS |
-| `GA4_PROPERTY_ID` | Číselné ID služby Google Analytics |
+| `GA4_PROPERTY_ID` | Volitelné přepsání číselného ID služby; výchozí je `559071834` |
 | `GOOGLE_SERVICE_ACCOUNT_JSON` | JSON služebního účtu pouze pro čtení Analytics |
 | `STRIPE_SECRET_KEY` | Nejdřív testovací serverový klíč Stripe |
 | `STRIPE_WEBHOOK_SECRET` | Podpisový klíč konkrétního webhooku Stripe |

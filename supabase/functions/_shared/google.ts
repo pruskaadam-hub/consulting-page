@@ -5,10 +5,16 @@ const encode = (value: Uint8Array) =>
     .replaceAll("+", "-")
     .replaceAll("/", "_")
     .replaceAll("=", "");
+const propertyId = () => config("GA4_PROPERTY_ID", false) || "559071834";
+export function analyticsConfigured() {
+  return /^\d+$/.test(propertyId()) &&
+    Boolean(config("GOOGLE_SERVICE_ACCOUNT_JSON", false));
+}
 export async function analyticsReport() {
-  const property = config("GA4_PROPERTY_ID");
-  if (!/^\d+$/.test(property))
+  const property = propertyId();
+  if (!/^\d+$/.test(property)) {
     throw new ApiError("Zkontroluj ID služby GA4.", 503);
+  }
   const account = JSON.parse(config("GOOGLE_SERVICE_ACCOUNT_JSON"));
   const encoder = new TextEncoder(),
     now = Math.floor(Date.now() / 1000);
@@ -51,8 +57,9 @@ export async function analyticsReport() {
       assertion: `${header}.${payload}.${signature}`,
     }),
   });
-  if (!tokenResponse.ok)
+  if (!tokenResponse.ok) {
     throw new ApiError("Google připojení je potřeba zkontrolovat.", 502);
+  }
   const token = await tokenResponse.json();
   const response = await fetch(
     `https://analyticsdata.googleapis.com/v1beta/properties/${property}:runReport`,
@@ -76,11 +83,12 @@ export async function analyticsReport() {
       }),
     },
   );
-  if (!response.ok)
+  if (!response.ok) {
     throw new ApiError(
       "GA4 nevrátilo přehled. Ověř oprávnění účtu ke službě.",
       502,
     );
+  }
   const report = await response.json();
   const totals = report.totals?.[0]?.metricValues || [];
   return {

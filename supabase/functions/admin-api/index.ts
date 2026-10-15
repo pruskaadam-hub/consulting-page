@@ -7,7 +7,7 @@ import {
   UUID,
 } from "../_shared/contracts.mjs";
 import { config, requireAdmin, serviceClient } from "../_shared/auth.ts";
-import { analyticsReport } from "../_shared/google.ts";
+import { analyticsConfigured, analyticsReport } from "../_shared/google.ts";
 import { mailStatus, readMail, sendMail } from "../_shared/mail.ts";
 import { limitedText } from "../_shared/http.ts";
 
@@ -183,10 +183,7 @@ async function route(req: Request) {
   if (req.method === "GET" && path === "/status")
     return json({
       ...mailStatus(),
-      analytics: Boolean(
-        config("GA4_PROPERTY_ID", false) &&
-          config("GOOGLE_SERVICE_ACCOUNT_JSON", false),
-      ),
+      analytics: analyticsConfigured(),
       payments: Boolean(
         config("STRIPE_SECRET_KEY", false) &&
           config("STRIPE_WEBHOOK_SECRET", false),
