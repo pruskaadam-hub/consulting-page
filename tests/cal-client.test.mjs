@@ -92,7 +92,7 @@ test('intro qualification is required and preserves CTA topic in notes and metad
 });
 test('paid consultation keeps qualification optional and bundle identity survives',()=>{
  const body=bookingPayload({...attendee,serviceId:'package',consultationTopic:'career',situation:'',horizon:''});
- assert.match(body.bookingFieldsResponses.notes,/4 050 Kč/);
+ assert.match(body.bookingFieldsResponses.notes,/4\s500\sKč/);
  assert.equal(body.metadata.service,'package');
  assert.equal(body.metadata.topic,'career');
 });

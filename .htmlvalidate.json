@@ -18,6 +18,12 @@
         "style": "empty"
       }
     ],
-    "no-trailing-whitespace": "off"
+    "no-trailing-whitespace": "off",
+    "long-title": [
+      "error",
+      {
+        "maxlength": 90
+      }
+    ]
   }
 }

@@ -1,6 +1,6 @@
 import { content, services, type Service } from './content';
 import type { Language } from './locales';
-import { STUDENT_PRICES, currencyLabel } from './pricing.mjs';
+import { PRICES, STUDENT_PRICES, currencyLabel, discountLabel, PACKAGE_DISCOUNT, PACKAGE_SAVINGS } from './pricing.mjs';
 
 const translated = {
   sk: {
@@ -12,7 +12,7 @@ const translated = {
     service:[
       {title:'Nezáväzná konzultácia',label:'Zadarmo a bez záväzku',description:'Zistíme, s čím presne ti môžem pomôcť a či si vzájomne sadneme. Žiadny záväzok, žiadne podmienky.',features:['30 minút online','Priestor na tvoje otázky','Spoločne zhodnotíme ďalší krok']},
       {title:'Individuálna konzultácia',label:'Tvoj konkrétny cieľ',description:'Osobná konzultácia zameraná na tvoj konkrétny cieľ v kariére, štúdiu, podnikaní alebo expanzii do Švajčiarska.',features:['50 minút online','Individuálny prístup','Odídeš s konkrétnym plánom ďalších krokov']},
-      {title:'Balíček 3 konzultácií',label:'Zľava 25 %',description:'Pre témy, ktoré potrebujú viac priestoru a priebežnú spoluprácu.',features:['3 × 50 minút','Úspora 1 350 Kč oproti trom konzultáciám','Jedna konzultácia osobne na mieste podľa tvojej voľby','Odídeš s konkrétnym plánom ďalších krokov']},
+      {title:'Balíček 3 konzultácií',label:`Zľava ${discountLabel(PACKAGE_DISCOUNT,'sk')} %`,description:'Pre témy, ktoré potrebujú viac priestoru a priebežnú spoluprácu.',features:['3 × 50 minút',`Úspora ${currencyLabel(PACKAGE_SAVINGS,'sk')} oproti trom konzultáciám`,'Jedna konzultácia osobne na mieste podľa tvojej voľby','Odídeš s konkrétnym plánom ďalších krokov']},
     ],
     process:[
       {title:'Nezáväzné stretnutie zadarmo',text:'Zavolaj alebo napíš. Zadarmo zistíme, s čím presne ti môžem pomôcť a či si vzájomne sadneme. Žiadne skryté podmienky, žiadny tlak.'},
@@ -29,8 +29,8 @@ const translated = {
       {question:'Je prvá konzultácia naozaj zadarmo?',answer:'Áno. Úvodné online stretnutie trvá 30 minút a je nezáväzné. Preberieme tvoju situáciu a zistíme, či spolupráca dáva zmysel.'},
       {question:'Musím mať konkrétny plán alebo otázku?',answer:'Nemusíš mať hotový plán. Pomôže, keď si vopred premyslíš, kde sa práve nachádzaš a čo chceš posunúť.'},
       {question:'Ako prebieha individuálna konzultácia?',answer:'Individuálna online konzultácia trvá 50 minút a stojí 1 800 Kč. Venujeme ju konkrétnej téme, ktorú potrebuješ prebrať.'},
-      {question:'Máš zľavu pre študentov? A môžeme sa stretnúť osobne?',answer:`Bc. a Mgr. študenti majú individuálnu konzultáciu o 28 % lacnejšiu, za ${currencyLabel(STUDENT_PRICES.individual,'sk')}. Balíček je pre študentov o 35 % lacnejší, za ${currencyLabel(STUDENT_PRICES.package,'sk')}. Osobné stretnutia v Prahe alebo Brne sú možné po dohode.`},
-      {question:'Čo obsahuje balíček troch konzultácií?',answer:'Tri konzultácie po 50 minútach za 4 050 Kč, o 25 % menej než tri samostatné konzultácie. Jedna je osobne na mieste podľa tvojej voľby; miesto a praktické podmienky dohodneme vopred. V kalendári rezervuješ prvé stretnutie, ďalšie dve dohodneme spoločne.'},
+      {question:'Máš zľavu pre študentov? A môžeme sa stretnúť osobne?',answer:`Bc. a Mgr. študenti majú individuálnu konzultáciu o ${discountLabel(PRICES.studentIndividualDiscount,'sk')} % lacnejšiu, za ${currencyLabel(STUDENT_PRICES.individual,'sk')}. Balíček je pre študentov o ${discountLabel(PRICES.studentPackageDiscount,'sk')} % lacnejší než bežný balíček, za ${currencyLabel(STUDENT_PRICES.package,'sk')}. Osobné stretnutia v Prahe alebo Brne sú možné po dohode.`},
+      {question:'Čo obsahuje balíček troch konzultácií?',answer:`Tri konzultácie po 50 minútach za ${currencyLabel(PRICES.package,'sk')}, o ${discountLabel(PACKAGE_DISCOUNT,'sk')} % menej než tri samostatné konzultácie. Jedna je osobne na mieste podľa tvojej voľby; miesto a praktické podmienky dohodneme vopred. V kalendári rezervuješ prvé stretnutie, ďalšie dve dohodneme spoločne.`},
       {question:'Čo ak potrebujem zmeniť termín?',answer:'Možnosti zmeny alebo zrušenia nájdeš v potvrdení rezervácie. Ak si nie si istý alebo istá, napíš mi.'},
     ],
   },
@@ -43,7 +43,7 @@ const translated = {
     service:[
       {title:'Introductory consultation',label:'Free, no commitment',description:'We will find out how I can help and whether we are a good fit. No commitment and no conditions.',features:['30 minutes online','Space for your questions','Discuss the next step together']},
       {title:'Individual consultation',label:'Your specific goal',description:'A personal consultation focused on your goal in your career, studies, business or expansion into Switzerland.',features:['50 minutes online','An individual approach','Leave with a concrete plan for your next steps']},
-      {title:'3-consultation package',label:'Save 25%',description:'For topics that benefit from more time and ongoing collaboration.',features:['3 × 50 minutes','Save CZK 1,350 compared with three individual sessions','One in-person consultation at a location of your choice','Leave with a concrete plan for your next steps']},
+      {title:'3-consultation package',label:`Save ${discountLabel(PACKAGE_DISCOUNT,'en')}%`,description:'For topics that benefit from more time and ongoing collaboration.',features:['3 × 50 minutes',`Save ${currencyLabel(PACKAGE_SAVINGS,'en')} compared with three individual sessions`,'One in-person consultation at a location of your choice','Leave with a concrete plan for your next steps']},
     ],
     process:[
       {title:'A free introductory meeting',text:'Call or write. We will find out how I can help and whether we are a good fit, at no cost. No hidden conditions and no pressure.'},
@@ -60,8 +60,8 @@ const translated = {
       {question:'Is the first consultation really free?',answer:'Yes. The introductory online meeting is 30 minutes and carries no commitment. We discuss your situation and whether working together makes sense.'},
       {question:'Do I need a specific plan or question?',answer:'You do not need a finished plan. It helps to think about where you are now and what you want to move forward.'},
       {question:'How does an individual consultation work?',answer:'An individual online consultation is 50 minutes and costs CZK 1,800. We focus on the specific topic you want to discuss.'},
-      {question:'Is there a student discount? Can we meet in person?',answer:`Bachelor’s and master’s students receive a 28% discount on individual consultations, bringing the price to ${currencyLabel(STUDENT_PRICES.individual,'en')}. The package is 35% cheaper for students at ${currencyLabel(STUDENT_PRICES.package,'en')}. In-person meetings in Prague or Brno are possible by arrangement.`},
-      {question:'What does the three-consultation package include?',answer:'Three 50-minute consultations for CZK 4,050, 25% less than three individual sessions. One is in person at a location of your choice; the location and practical details are agreed in advance. You book the first meeting in the calendar and we arrange the other two together.'},
+      {question:'Is there a student discount? Can we meet in person?',answer:`Bachelor’s and master’s students receive a ${discountLabel(PRICES.studentIndividualDiscount,'en')}% discount on individual consultations, bringing the price to ${currencyLabel(STUDENT_PRICES.individual,'en')}. The package is ${discountLabel(PRICES.studentPackageDiscount,'en')}% cheaper than the regular package for students at ${currencyLabel(STUDENT_PRICES.package,'en')}. In-person meetings in Prague or Brno are possible by arrangement.`},
+      {question:'What does the three-consultation package include?',answer:`Three 50-minute consultations for ${currencyLabel(PRICES.package,'en')}, ${discountLabel(PACKAGE_DISCOUNT,'en')}% less than three individual sessions. One is in person at a location of your choice; the location and practical details are agreed in advance. You book the first meeting in the calendar and we arrange the other two together.`},
       {question:'What if I need to change the time?',answer:'You can find rescheduling and cancellation options in your booking confirmation. If you are unsure, email me.'},
     ],
   },

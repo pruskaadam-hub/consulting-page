@@ -1,4 +1,4 @@
-import { PRICES, STUDENT_PRICES, currencyLabel } from './pricing.mjs';
+import { PRICES, STUDENT_PRICES, currencyLabel, discountLabel, PACKAGE_DISCOUNT, PACKAGE_SAVINGS } from './pricing.mjs';
 import { CONTACT_EMAIL } from './site-config.mjs';
 export type ServiceId = 'intro' | 'individual' | 'package';
 export type Testimonial = { quote: string; name: string; initials: string; context: string; result?: string; photo?: string; linkedIn?: string; sourceUrl?: string };
@@ -23,8 +23,8 @@ export const services: Service[] = [
   },
   {
     id: 'package', title: 'Balíček 3 konzultací', minutes: 50, price: PRICES.package, studentPrice: STUDENT_PRICES.package, studentDiscount: PRICES.studentPackageDiscount,
-    label: 'Sleva 25 %', description: 'Pro témata, která potřebují více prostoru a průběžnou spolupráci.',
-    features: ['3 × 50 minut', 'Úspora 1 350 Kč oproti třem konzultacím', 'Jedna konzultace osobně na místě dle tvé volby', 'Odejdeš s konkrétním plánem dalších kroků'],
+    label: `Sleva ${discountLabel(PACKAGE_DISCOUNT)} %`, description: 'Pro témata, která potřebují více prostoru a průběžnou spolupráci.',
+    features: ['3 × 50 minut', `Úspora ${currencyLabel(PACKAGE_SAVINGS)} oproti třem konzultacím`, 'Jedna konzultace osobně na místě dle tvé volby', 'Odejdeš s konkrétním plánem dalších kroků'],
     calSlug: import.meta.env.VITE_CAL_PACKAGE_SLUG || '',
   },
 ];
@@ -56,8 +56,8 @@ export const content = {
     { question: 'Je první konzultace opravdu zdarma?', answer: 'Ano. Úvodní online setkání trvá 30 minut a je nezávazné. Probereme tvou situaci a zjistíme, zda spolupráce dává smysl.' },
     { question: 'Musím mít konkrétní plán nebo otázku?', answer: 'Nemusíš mít hotový plán. Pomůže, když si předem promyslíš, kde se právě nacházíš a co bys chtěl nebo chtěla posunout.' },
     { question: 'Jak probíhá individuální konzultace?', answer: 'Individuální online konzultace trvá 50 minut a stojí 1 800 Kč. Je věnovaná konkrétnímu tématu, které potřebuješ probrat.' },
-    { question: 'Máš slevu pro studenty? A můžeme se potkat osobně?', answer: `Bc. a Mgr. studenti mají individuální konzultaci o 28 % levnější, tedy za ${currencyLabel(STUDENT_PRICES.individual)}. Balíček je pro studenty o 35 % levnější, za ${currencyLabel(STUDENT_PRICES.package)}. Osobní setkání v Praze nebo Brně je možné po předchozí domluvě.` },
-    { question: 'Co obsahuje balíček tří konzultací?', answer: 'Balíček obsahuje tři konzultace po 50 minutách za 4 050 Kč, tedy o 25 % méně než tři jednotlivé konzultace. Jedna se uskuteční osobně na místě dle tvé volby. Místo a praktické podmínky osobního setkání domluvíme předem. V kalendáři vybíráš termín prvního setkání; další dva domluvíme společně.' },
+    { question: 'Máš slevu pro studenty? A můžeme se potkat osobně?', answer: `Bc. a Mgr. studenti mají individuální konzultaci o ${discountLabel(PRICES.studentIndividualDiscount)} % levnější, tedy za ${currencyLabel(STUDENT_PRICES.individual)}. Balíček je pro studenty o ${discountLabel(PRICES.studentPackageDiscount)} % levnější než běžný balíček, za ${currencyLabel(STUDENT_PRICES.package)}. Osobní setkání v Praze nebo Brně je možné po předchozí domluvě.` },
+    { question: 'Co obsahuje balíček tří konzultací?', answer: `Balíček obsahuje tři konzultace po 50 minutách za ${currencyLabel(PRICES.package)}, tedy o ${discountLabel(PACKAGE_DISCOUNT)} % méně než tři jednotlivé konzultace. Jedna se uskuteční osobně na místě dle tvé volby. Místo a praktické podmínky osobního setkání domluvíme předem. V kalendáři vybíráš termín prvního setkání; další dva domluvíme společně.` },
     { question: 'Co když potřebuji změnit termín?', answer: `Možnosti změny nebo zrušení termínu najdeš v potvrzení rezervace. Pokud si nejsi jistý nebo jistá, napiš mi přes kontaktní sekci.` },
   ],
 };

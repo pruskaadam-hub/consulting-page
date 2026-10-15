@@ -112,3 +112,18 @@ Datům publikace ani dvěma značkám k ověření nejsou přisuzované vymyšle
 Vlastník změnil studentské slevy na 28 % u individuální konzultace a 35 %
 u balíčku. Nové částky jsou 1 296 Kč a 2 632,50 Kč. Nahrazují dřívější
 studentskou slevu 50 %, která je v tomto dokumentu uvedená jako historie zadání.
+
+## Nejnovější aktualizace z 15. 10. 2026
+
+Vlastník stanovil pevné ceny: individuální konzultace pro studenty 1 500 Kč,
+balíček tří konzultací 4 500 Kč a studentský balíček 3 500 Kč. Nahrazují
+předchozí částky a procenta výše. Běžná individuální cena zůstává 1 800 Kč.
+Odvozené slevy jsou 16,7 % (student jednotlivec), 16,7 % (běžný balíček proti
+3 × 1 800 Kč) a 22,2 % (studentský balíček proti běžnému balíčku).
+
+Nová příloha `clanky-pro-codex.md` aktualizuje původních pět článků a přidává
+dva o komunitních kontaktech. Podklady jsou redakční text vlastníka, nikoli
+nezávislé ověření citovaných zdrojů. Převzaté znění má opravené zjevné překlepy
+a dlouhé pomlčky podle dřívějšího požadavku. Meta popisy, tabulky, checklist,
+vzorový e-mail a zdrojové odkazy jsou zachované. Příloha už neobsahuje dvě
+původní značky ověření; neznámá data publikace dál zůstávají označená.

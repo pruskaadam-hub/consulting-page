@@ -9,6 +9,8 @@
 | `src/blog/prace-ve-svycarsku-entry-point.md` | `/consulting-page/blog/prace-ve-svycarsku-entry-point/` |
 | `src/blog/akademie-nebo-prumysl.md` | `/consulting-page/blog/akademie-nebo-prumysl/` |
 | `src/blog/ceska-firma-ve-svycarsku.md` | `/consulting-page/blog/ceska-firma-ve-svycarsku/` |
+| `src/blog/kontakty-pres-komunitu.md` | `/consulting-page/blog/kontakty-pres-komunitu/` |
+| `src/blog/firma-kontakty-pres-komunitu.md` | `/consulting-page/blog/firma-kontakty-pres-komunitu/` |
 
 Přehled: `/consulting-page/blog/`. Přehled i nové články mají také vstupy
 v `/sk/blog/` a `/en/blog/`; jazykový přepínač mění rozhraní a zachová článek.
@@ -18,24 +20,24 @@ nových podkladů. Původní dvě přeložené stránky `/clanky/` zůstávají 
 Meta popisy nejsou součástí viditelného těla článků. Používají se v metadatech
 stránek a jako perex na kartách. Každý nový článek má Article JSON-LD,
 autora Adama Prušku a dvě související položky z dodané sady. Datum nebylo
-vymyšlené. Sitemap obsahuje všech 27 adres.
+vymyšlené. Sitemap obsahuje všech 33 adres.
 
-Na hlavní stránce je pět nových karet a odkaz na přehled. CTA z těla článků
+Na hlavní stránce je sedm nových karet a odkaz na přehled. CTA z těla článků
 vede na hlavní stránku, `#rezervace` nebo `#firmy`. V článku o CV je zmínka
-o entry pointech skutečným interním odkazem. Zachované texty byly pouze
-upravené v používání dlouhých pomlček dle následného souhlasu vlastníka.
+o entry pointech skutečným interním odkazem. Texty vycházejí z nejnovější přílohy, mají opravené zjevné překlepy
+a používají rozsahy bez dlouhých pomlček dle následného souhlasu vlastníka.
 
 ## Další nově vytvořené soubory
 
 * `src/blog/metadata.json`: titulky, meta popisy, slugs, obrázky a související články.
 * `src/blog/render.mjs`: bezpečné Markdown zobrazení, interní CTA, TODO komentáře a JSON-LD.
 * `src/blog-posts.mjs`: načtení článkových podkladů do webu.
-* `src/pricing.mjs`: jednotný výpočet studentských cen a měnový formát s haléři.
+* `src/pricing.mjs`: pevné ceny, odvozené slevy a lokalizovaný měnový formát.
 * `tests/blog-pricing.test.mjs`: ceny, bezpečné odkazy, TODO, metadata a blogové adresy.
 * `docs/blog-publication.md`: tento přehled.
 
 HTML vstupy se generují při sestavení, nikoli ručně: `dist/blog/index.html`,
-pět `dist/blog/<slug>/index.html` a jejich jazykové vstupy. Obsah nových
+sedm `dist/blog/<slug>/index.html` a jejich jazykové vstupy. Obsah nových
 článků je přítomný také přímo ve statickém HTML. Nezávisí pouze na načtení
 JavaScriptu. Assety, SEO a sitemap se generují z jednoho nastavení adresy webu.
 
@@ -46,9 +48,7 @@ Každá následující značka má v HTML sousední komentář
 
 | Značka | Umístění | Co doplnit nebo ověřit |
 | --- | --- | --- |
-| `[DOPLNIT: datum publikace]` | Karty a záhlaví každého z pěti nových článků | Skutečná data publikace. |
-| `[ověřit u konkrétního inzerátu]` | `src/blog/svycarske-cv.md`, sekce dossier | Zda konkrétní přihláška vyžaduje celé dossier a reference. |
-| `[ověřit aktuální pravidla a lhůty na webu SEM / kantonu]` | `src/blog/prace-ve-svycarsku-entry-point.md`, sekce osobní návštěvy | Aktuální podmínky pobytu při hledání práce. |
+| `[DOPLNIT: datum publikace]` | Karty a záhlaví každého ze sedmi nových článků | Skutečná data publikace. |
 
 Neznámá data publikace nejsou předávaná jako neplatné řetězce do JSON-LD.
 
@@ -62,12 +62,28 @@ Neznámá data publikace nejsou předávaná jako neplatné řetězce do JSON-LD
 * Původní kulturní článek na Wixu: opravit slug `kopie-jak-na-doktorát…`; zdrojový odkaz zatím zůstává.
 
 Studentská cena balíčku už není TODO. Individuální konzultace pro studenty
-stojí 1 296 Kč po slevě 28 % z 1 800 Kč. Balíček pro studenty stojí
-2 632,50 Kč po slevě 35 % z běžné ceny balíčku 4 050 Kč.
+stojí 1 500 Kč (sleva 16,7 % z 1 800 Kč). Balíček pro studenty stojí
+3 500 Kč (sleva 22,2 % z běžného balíčku 4 500 Kč). Běžný balíček šetří
+900 Kč, tedy 16,7 % oproti třem jednotlivým konzultacím za 5 400 Kč.
 
 ## Ověření
 
-17 jednotkových testů a prohlížečové kontroly 27 stránek na 375 a 1280 px.
+18 jednotkových testů a prohlížečové kontroly 33 stránek na 375 a 1280 px.
 Kontrolují se HTML, konzole, ceny, všechny konzultační CTA, celé karty a Enter,
 blogové odkazy, JSON-LD, skrytý kalendář i stavy potvrzení. Testy Cal.com používají
 pouze testovací odpovědi. Živé nasazovací ověření pouze čte dostupnost a CORS.
+
+## Aktualizace podle přílohy `clanky-pro-codex.md`
+
+Aktualizováno všech pět původních Markdown souborů, přidány dva komunitní
+články uvedené v tabulce. CV má nově devět bodů. Oba komunitní články mají
+vzájemný odkaz s rozlišením jednotlivců a firem. Firemní CTA vede na `#firmy`.
+Vzorový e-mail má tlačítko Kopírovat; checklist má neaktivní zaškrtávací políčka.
+Tabulky lze na malém displeji posouvat i ovládat klávesnicí. Opravené jsou
+zjevné překlepy; rozsahy se stále píší slovem „až“ podle předchozího zadání.
+Nová příloha neobsahuje dřívější dvě značky ověření v těle článků. Zbylé TODO
+jsou všechna uvedená výše; data publikace nebyla vymyšlená. Zdroje nebyly
+v rámci této redakční úpravy nezávisle ověřované.
+
+HTML kontrola dovoluje titulky do 90 znaků, aby nové dodané názvy zůstaly
+v plném znění i ve formátu „Titulek | Adam Pruška“ (nejdelší má 82 znaků).

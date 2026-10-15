@@ -1,3 +1,4 @@
+import { PRICES, STUDENT_PRICES, currencyLabel } from './pricing.mjs';
 const API_ORIGIN = 'https://api.cal.com';
 const slugPattern = /^[a-z0-9][a-z0-9-]*$/i;
 export class BookingError extends Error {
@@ -73,7 +74,7 @@ export function bookingPayload({username, eventTypeSlug, start, name, email, tim
   if (!Number.isFinite(milliseconds) || milliseconds <= Date.now()) throw new BookingError('Vyber prosím budoucí termín.', 'validation');
   if (!name?.trim() || name.trim().length > 100 || !email?.trim() || email.trim().length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) throw new BookingError('Vyplň prosím jméno a platný e-mail.', 'validation');
   new Intl.DateTimeFormat('cs-CZ', {timeZone});
-  const packageNote = serviceId === 'package' ? 'Zvolená nabídka: balíček 3 × 50 minut za 4 050 Kč. Tento termín je první konzultace; další dvě včetně jednoho osobního setkání domluvíme samostatně.' : '';
+  const packageNote = serviceId === 'package' ? `Zvolená nabídka: balíček 3 × 50 minut za ${currencyLabel(PRICES.package)}. Studentská cena balíčku: ${currencyLabel(STUDENT_PRICES.package)}. Tento termín je první konzultace; další dvě včetně jednoho osobního setkání domluvíme samostatně.` : '';
   const topics = {study:'Studium v zahraničí', career:'Práce a kariéra', project:'Vlastní projekt', other:'Jiné téma'};
   const horizons = {soon:'Do 3 měsíců', year:'3 až 12 měsíců', later:'Později'};
   if (!['cs','sk','en'].includes(language)) throw new BookingError('Vyber podporovaný jazyk.', 'validation');

@@ -4,7 +4,7 @@ Jedna klientka mi poslala CV, se kterým se půl roku hlásila na pozice v Curyc
 
 ### 1. Nehledá se CV, ale celé dossier
 
-V německy mluvící části Švýcarska se často čeká kompletní přihláška (Bewerbungsdossier): motivační dopis, CV, diplomy a pracovní reference od předchozích zaměstnavatelů. Ty se tady nazývají Arbeitszeugnis a jsou standardem. **[ověřit u konkrétního inzerátu]**
+V německy mluvící části Švýcarska se čeká kompletní přihláška (Bewerbungsdossier): motivační dopis, CV, diplomy a pracovní hodnocení od předchozích zaměstnavatelů (Arbeitszeugnisse). Kariérní centrum univerzity ZHAW píše, že hodnocení patří do přílohy povinně a mají ve Švýcarsku velmi vysokou váhu ([ZHAW](https://www.zhaw.ch/de/studium/nach-dem-studium/career-services/bewerbungsunterlagen)). Kontakty na referenční osoby se do CV nepíšou, jen věta „Referenzen auf Anfrage“. Seznam si neseš až na pohovor.
 
 **Co dělat:** V Česku podobné dokumenty běžně nedostáváme, tak si o ně řekni. Krátký doporučující dopis od bývalého šéfa nebo vedoucího diplomky v angličtině ti v dossier udělá velký rozdíl.
 
@@ -14,11 +14,11 @@ Na rozdíl od anglosaského světa, kde je fotka v CV skoro chyba, ve Švýcarsk
 
 **Co dělat:** Fotka profesionální, ne oříznutá ze svatby. Do hlavičky přidej občanství a místo, odkud se hlásíš.
 
-### 3. Dvě strany. Opravdu dvě.
+### 3. Jedna až dvě strany. Hlavní je horní třetina.
 
 Švýcarský personalista nemá čas, a hlavně nemá trpělivost. CV na čtyři strany působí, že neumíš vybrat, co je podstatné. A to je proškrtávání, které budeš v práci dělat denně.
 
-Výjimkou je akademické CV s publikacemi. I tam ale platí: hlavní část na dvě strany, publikace a konference jako příloha.
+Běžný standard jsou 1 až 2 strany. Tři jsou přijatelné jen u dlouhé praxe nebo akademické kariéry, třeba po doktorátu (ZHAW). Počet stran ale není to hlavní. Personalista při prvním pohledu čte horní třetinu první strany, takže tam patří to nejdůležitější: kdo jsi, co umíš a proč sedíš na tuhle pozici. Hustá jedna strana porazila už spoustu nafouknutých dvou.
 
 ### 4. Výsledky, ne povinnosti
 
@@ -30,11 +30,11 @@ Výjimkou je akademické CV s publikacemi. I tam ale platí: hlavní část na d
 
 Švýcarsko má tři hlavní úřední jazyky a angličtina je často „OK, but not enough“. Personalista chce vědět přesně, na čem jsi. Zapiš jazyky na škále A1 až C2 a nepřifukuj. Pokud napíšeš němčinu B2, počítej s tím, že část pohovoru proběhne německy.
 
-Pokud se němčinu nebo franštinu právě učíš, napiš to. „Němčina B1, aktuálně intenzivní kurz“ je signál, že to se zemí myslíš vážně.
+Pokud se němčinu nebo francouzštinu právě učíš, napiš to. „Němčina B1, aktuálně intenzivní kurz“ je signál, že to se zemí myslíš vážně.
 
 ### 6. Jazyk CV podle regionu a inzerátu
 
-Inzerát v angličtině? CV v angličtině. Inzerát v němčině a ty německy mluvíš dobře? CV v němčině. Ženeška nebo Lausanne? Franština tam má jinou váhu než v Curychu. Každý kanton je jiný, mentalně i pracovně, a platí to i pro přihlášky.
+Inzerát v angličtině? CV v angličtině. Inzerát v němčině a ty německy mluvíš dobře? CV v němčině. Ženeva nebo Lausanne? Franština tam má jinou váhu než v Curychu. Každý kanton je jiný, mentálně i pracovně, a platí to i pro přihlášky.
 
 ### 7. Motivační dopis: krátce a o nich, ne o tobě
 
@@ -48,6 +48,22 @@ Největší chyba českých motivačních dopisů je, že jsou o tom, co chce ka
 4. Kdy můžeš nastoupit a jaký máš pobytový status.
 
 A žádné vtipy. Švýcarská profesionální komunikace je věcná, stručná a zdvořilá. Osobnost se ukáže na pohovoru.
+
+### 8. Na každou pozici jiné CV (a projdi robotem)
+
+Velké firmy v Basileji, Curychu i Ženěvě třídí přihlášky přes systémy ATS, které hledají klíčová slova z inzerátu dřív, než CV uvidí člověk. Jedno univerzální CV rozeslané na osm míst není strategie.
+
+**Co dělat:**
+
+- Z inzerátu si vypiš 5 až 10 klíčových slov (metody, nástroje, certifikace) a použij je v CV přirozeně, stejnými slovy jako v inzerátu.
+- Nech si CV porovnat s inzerátem pomocí AI (ChatGPT, Claude). Ber to jako překlad tvé zkušenosti do jejich jazyka, ne jako vymýšlení. Zkušenost zůstává stejná, mění se rámování ([sulista.ch](https://www.sulista.ch/blog/cv-vs-linkedin-do-you-still-need-both)).
+- Používej jednoduchý layout bez tabulek a grafických ikon. Robot čte text, ne design.
+
+### 9. LinkedIn není náhrada CV, ale jeho druhá polovina
+
+CV píšeš pro jednu firmu a jednu pozici. LinkedIn je tvůj veřejný příběh, který pracuje i ve chvíli, kdy nikam nepíšeš. Švýcařtí personalisté si tě po přečtení CV skoro jistě vyhledají, takže oba dokumenty musí vyprávět stejný příběh, ale ne slovo od slova.
+
+**Co dělat:** Nadpis profilu napiš anglicky a konkrétně („Protein biochemist | cryo-EM | open to roles in Basel“), v nastavení zapni, že hledáš práci, a jako lokalitu dej město ve Švýcarsku, kde chceš pracovat.
 
 ### Bonus: CV je jen polovina
 

@@ -13,7 +13,7 @@
   },
   {
     "slug": "svycarske-cv",
-    "title": "Švýcarské CV: 7 rozdílů oproti českému",
+    "title": "Švýcarské CV: 9 věcí, které rozhodují",
     "description": "České CV přeložené do angličtiny ve Švýcarsku často neprojde ani prvním sítem. Co personalisté v Curychu, Basileji nebo Ženěvě čekají a co naopak nesnesou.",
     "language": "cs",
     "image": "planning.jpg",
@@ -58,5 +58,33 @@
       "email-profesorovi-eth",
       "svycarske-cv"
     ]
+  },
+  {
+    "language": "cs",
+    "image": "mentoring.jpg",
+    "alt": "Ilustrační fotografie společného plánování a sdílení zkušeností",
+    "slug": "kontakty-pres-komunitu",
+    "title": "První kontakty ve Švýcarsku přes česko-slovenskou komunitu",
+    "description": "Jak využít české a slovenské spolky, akce a skupiny ve Švýcarsku k prvním pracovním kontaktům. Výhody, nevýhody, konkrétní místa, postup krok za krokem a kolik to trvá času.",
+    "related": [
+      "firma-kontakty-pres-komunitu",
+      "prace-ve-svycarsku-entry-point"
+    ],
+    "companion": "firma-kontakty-pres-komunitu",
+    "companionLabel": "Jste firma? Přečtěte si verzi pro firmy"
+  },
+  {
+    "language": "cs",
+    "image": "consultation.jpg",
+    "alt": "Ilustrační fotografie pracovního setkání",
+    "slug": "firma-kontakty-pres-komunitu",
+    "title": "Česká firma a první kontakty ve Švýcarsku: jak využít krajanskou síť",
+    "description": "Češi a Slováci ve Švýcarsku pracují ve firmách, které chcete oslovit. Jak přes komunitu, obchodní komory a ambasádu získat první schůzky, co od toho čekat a jak dlouho to trvá.",
+    "related": [
+      "kontakty-pres-komunitu",
+      "ceska-firma-ve-svycarsku"
+    ],
+    "companion": "kontakty-pres-komunitu",
+    "companionLabel": "Hledáš kontakty jako jednotlivec?"
   }
 ]

@@ -6,6 +6,8 @@ Dobrá zpráva: protože většina e-mailů je špatná, stačí napsat dobrý a
 
 Na doktorát ve Švýcarsku se obvykle nehlásíš do programu, ze kterého tě pak někdo přiřadí. Hledáš konkrétní skupinu a konkrétního vedoucího, který má na projekt peníze. Doktorand je tady zaměstnanec s platem, ne student se stipendiem. Profesor si tedy nevybírá „talentovaného studenta“, ale kolegu na čtyři roky.
 
+Pro představu: u doktorandů financovaných Švýcarskou národní vědeckou nadací (SNSF) je od 1. ledna 2026 dolní hranice platu 50 000 CHF hrubého ročně, horní 55 000 CHF ([SNSF](https://www.snf.ch/en/kHunysxdKHpyUL8s/news/salary-increase-for-doctoral-students)). ETH, EPFL a univerzity mají vlastní tabulky v podobném rozpětí. Profesor tedy neinvestuje jen čas, ale i 200 000 CHF z grantu. Podle toho si vybírá.
+
 U magistra je to jinak, tam se hlásíš klasickou přihláškou přes univerzitní portál. I tady se ale vyplatí vědět, ve které skupině chceš dělat projekty a diplomku. Ukážeš tak v motivačním dopise, že máš jasno.
 
 ### Krok 1: Vybírej skupinu, ne značku
@@ -36,6 +38,25 @@ Profesor tvůj e-mail čte na telefonu mezi dvěma schůzkami. Máš půl minuty
 
 Celé to má mít do 150 slov. Když máš pocit, že je to málo, je to tak akorát.
 
+**Vzor, ze kterého můžeš vyjít** (uprav ho, kopírovaný e-mail profesor pozná):
+
+```
+Subject: PhD inquiry: cryo-EM of membrane transporters (MSc, Masaryk University)
+
+Dear Prof. Müller,
+
+I am finishing my MSc in biochemistry at Masaryk University (Brno) and I am looking for a PhD position starting in autumn 2027. Your 2025 paper on the inward-open state of LacY caught my attention, especially the approach to stabilising the transporter in nanodiscs.
+
+In my master's thesis I purified and characterised two bacterial transporters and collected my first cryo-EM datasets (3.4 Å). I would like to build on this in a group that combines structural work with functional assays.
+
+Do you have, or are you planning, an open PhD position in your group? I attach my CV and would be happy to send my thesis summary.
+
+Kind regards,
+Jana Nováková
+```
+
+Všimni si, co tam není: žádné „I have always been passionate about science“, žádný životopis od gymnázia, žádná omluva. Jméno profesora i článek jsou vymyšlené, struktura je skutečná.
+
 ### Nejčastější chyby
 
 - **Hromadný e-mail.** „Dear Professor“ bez jména, nebo dokonce jméno jiného profesora (ano, stává se to častěji, než by člověk čekal). Konec.
@@ -52,6 +73,14 @@ A když přijde „bohužel nemáme místo“? Odpověz poděkováním a zeptej 
 ### Krok 4: Pozvánka na pohovor
 
 Když tě pozve, máš vyhráno jen napůl. Pohovor bývá neformálnější, než čekáš, ale odborně do hloubky. Často zahrnuje prezentaci tvé diplomky, rozhovor se členy skupiny a někdy prohlídku laboratoře. Profesor zjišťuje dvě věci: jestli to zvládneš odborně a jestli s tebou bude skupině dobře.
+
+Pohovor skoro vždy začíná větou „Tell us about yourself“. Na ni si připrav 2 až 3 minuty podle jednoduché struktury, kterou doporučuje i švýcarský kariérní kouč Václav Sulista ([sulista.ch](https://www.sulista.ch/blog/how-can-you-introduce-yourself-at-the-job-interview-in-the-best-way)):
+
+1. **Jsem:** kdo jsi a kde teď stojíš. Dvě věty.
+2. **Umím:** to hlavní. Metody, výsledky diplomky, jeden konkrétní problém, který jsi vyřešil. Připrav si ke každému bodu detail, kdyby se doptali.
+3. **Chci:** proč právě tahle skupina a co do ní přineseš.
+
+Neříkej své CV chronologicky. Vyber z něj jen to, co sedí k projektu, a spoj to do červené nitky, která vede k nim. Nacvič to nahlas, ideálně před někým, kdo tě zastaví, když začneš používat žargon.
 
 Příprava na pohovor by vydala na samostatný článek. Jedno ale řeknu už teď: připrav si vlastní otázky. Kdo se na nic nezeptá, působí, že mu je jedno, kam jde.
 

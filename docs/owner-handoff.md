@@ -13,8 +13,8 @@ https://pruskaadam-hub.github.io/consulting-page/
 * Úvodní rezervace vyžaduje téma, situaci a časový horizont. Financování
   je nepovinné a zobrazuje se jen při studiu. Zvolený záměr je vidět vedle
   kalendáře a uloží se do poznámky a metadat rezervace.
-* Individuální konzultace ukazuje studentskou cenu 1 296 Kč se slevou 28 %.
-  Studentský balíček stojí 2 632,50 Kč po slevě 35 % z běžných 4 050 Kč. U placených nabídek
+* Individuální konzultace ukazuje studentskou cenu 1 500 Kč se slevou 16,7 %.
+  Studentský balíček stojí 3 500 Kč po slevě 22,2 % z běžných 4 500 Kč. U placených nabídek
   je konkrétní výstup: plán dalších kroků. Platební podmínky nejsou vymyšlené.
 * Medailonek zmiňuje pomoc se studiem i hledáním práce pro absolventy a
   zkušené profesionály. Přeformulovaná položka startupových zkušeností.
@@ -27,7 +27,7 @@ https://pruskaadam-hub.github.io/consulting-page/
 * Dva původní články mají vlastní podstránky ve všech třech jazycích. Jsou to
   redakční úpravy článků z Wixu, s odkazem na originál a relevantními fotografiemi.
   Blog je před FAQ. Externí zdroje se otevírají v novém panelu. Nový přehled
-  `/blog/` představuje pět dodaných českých článků; české texty zůstávají
+  `/blog/` představuje sedm dodaných českých článků; české texty zůstávají
   označené `lang="cs"` i při přepnutí jazyka okolního rozhraní.
 * Závěrečná sekce médií obsahuje všech deset dodaných odkazů. Nejsou přidávána
   neověřená loga ani názvy videí. Čtení těchto domén blokovala proxy; odkazy
@@ -46,7 +46,7 @@ jsou záměrně viditelné v každé jazykové verzi, aby se neztratily při dop
 
 | Značka | Umístění | Co dodat |
 | --- | --- | --- |
-| `[DOPLNIT: datum publikace]` | Nový blog, karty a záhlaví pěti článků | Skutečná data publikace; nevkládají se do JSON-LD, dokud nejsou známá. |
+| `[DOPLNIT: datum publikace]` | Nový blog, karty a záhlaví sedmi článků | Skutečná data publikace; nevkládají se do JSON-LD, dokud nejsou známá. |
 | `[DOPLNIT: cena / podmínky]` | `src/main.tsx`, výrazný blok praktických služeb | Cenu nebo pravidla úprav CV a dokumentů. |
 | `[DOPLNIT: předem přes Cal.com / převodem na fakturu]` | `src/main.tsx`, pod ceníkem a platební FAQ | Zvolený způsob platby, splatnost a případné potřebné údaje. |
 | `[DOPLNIT: konkrétní výsledek]` | `src/main.tsx`, všechny tři reference | Skutečný výsledek pro každou referenci. |
@@ -140,7 +140,7 @@ Wixu. Do té doby zůstává zdrojový odkaz beze změny.
 
 `npm test` kontroluje časová pásma, dostupnost, stavy potvrzení, kvalifikační
 pole a konzistentní jazykové adresy. `npm run build` provede TypeScript a
-vygeneruje 27 samostatných HTML vstupů s vlastními metadaty.
+vygeneruje 33 samostatných HTML vstupů s vlastními metadaty.
 
 `npm run test:ui` spustí lokální statický server, otevře Chromium a ověří
 všechny stránky a konzultační CTA v češtině, slovenštině a angličtině.
@@ -161,10 +161,11 @@ v jednom. Celé karty konzultací jsou nativní odkazy, takže fungují kliknut�
 na libovolnou část i klávesou Enter. Během odesílání je změna nabídky blokovaná.
 Úprava CV a dokumentů je samostatný výrazný blok praktických služeb.
 
-Výpočty studentských cen jsou v `src/pricing.mjs`, všude se používá stejný
-zdroj. Balíček má 35% studentskou slevu ze standardní ceny balíčku 4 050 Kč.
-Konzultace má 28% studentskou slevu z 1 800 Kč. Částka balíčku se zobrazuje
-s haléři; nedochází k tichému zaokrouhlení na celé koruny.
+Pevné ceny a odvozené slevy jsou v `src/pricing.mjs`. Individuální konzultace
+stojí 1 800 Kč, pro studenty 1 500 Kč (sleva 16,7 %). Balíček tří konzultací
+stojí 4 500 Kč místo 5 400 Kč za tři jednotlivé konzultace (úspora 900 Kč,
+sleva 16,7 %). Studentský balíček stojí 3 500 Kč (sleva 22,2 % z běžného balíčku).
+Procenta se zaokrouhlují jen pro zobrazení; pevné ceny se z nich nepočítají.
 
 Živé texty webu včetně článků nepoužívají dlouhé pomlčky. Články byly podle
 následného upřesnění vlastníka upravené také: číselné rozsahy jsou slovem

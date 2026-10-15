@@ -8,7 +8,7 @@ Jedna česká firma mi před časem napsala, že měsíce rozesílá nabídky š
 
 **Každý kanton je jiný.** Curych, Basilej, Bern, Ženeva, Ticino. Jiný jazyk, jiná mentalita, často i jiná pravidla. „Vstup na švýcarský trh“ je ve skutečnosti vstup na několik malých trhů.
 
-**Angličtina nestačí.** Ve startupové scéně a velkých korporacích ano. U středních firem, ve veřejném sektoru a mimo velká města je němčina nebo franština často podmínka.
+**Angličtina nestačí.** Ve startupové scéně a velkých korporacích ano. U středních firem, ve veřejném sektoru a mimo velká města je němčina nebo francouzština často podmínka.
 
 **Cena není hlavní argument.** „Jsme levnější“ může ve Švýcarsku znít jako „jsme horší“. Spolehlivost, kvalita, dodržené termíny a přesnost mají vyšší váhu.
 
@@ -47,6 +47,16 @@ Na Nápadu roku jsme s Lab On Card obhajovali hlubokou a složitou vědu před l
 První zakázka ve Švýcarsku je zkouška. Ne produktu, ale tebe. Přijdeš na schůzku přesně na čas (ne o deset minut dřív, to je tlak na druhou stranu)? Pošleš nabídku v den, kdy jsi slíbil? Odpovídáš na e-maily do druhého dne? Tyhle drobnosti rozhodují víc než cena.
 
 A až se to povede, první švýcarský zákazník se stane tvou nejsilnější referencí pro další.
+
+### Checklist před první obchodní cestou
+
+- [ ] Máme jednu větu, co děláme, a jedno číslo, které to dokazuje.
+- [ ] Máme materiály v jazyce regionu (německy nebo francouzsky), ne jen anglicky.
+- [ ] Víme, kdo u partnera rozhoduje o nákupu, a nejen kdo je na webu jako kontakt.
+- [ ] Máme aspoň jednu referenci nebo pilotní výsledek, ideálně ze sousední země (Německo, Rakousko).
+- [ ] Známe regulační požadavky na náš produkt ve Švýcarsku (Švýcarsko není členem EU a některé certifikace se uznávají jinak).
+- [ ] Každá schůzka je potvrzená e-mailem s přesným časem a místem.
+- [ ] Po návratu pošleme do 48 hodin shrnutí a další krok, který jsme slíbili.
 
 ### Bez iluzí, ale s plánem
 

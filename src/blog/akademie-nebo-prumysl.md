@@ -11,7 +11,7 @@ Debata „akademie vs. průmysl“ se často vede jako souboj: svoboda a idealis
 | Co je produkt | Publikace, granty, studenti | Výrobek, služba, data pro rozhodnutí |
 | Horizont | Roky | Týdny až měsíce |
 | Kdo rozhoduje | Ty a tvůj grant | Tým, zákazník, trh |
-| Jistota | Krátkodobé smlouvy, pak těžká soutež o stálé místo | Větší, ale závisí na firmě |
+| Jistota | Krátkodobé smlouvy, pak těžká soutěž o stálé místo | Větší, ale závisí na firmě |
 | Co se cení | Hloubka, originalita | Výsledek, rychlost, spolupráce |
 
 Není tu špatný sloupec. Je tu sloupec, který sedí tobě. A ten se během života může změnit.
@@ -38,13 +38,34 @@ S kariérou je to stejné. První stáž v průmyslu tě možná nebude bavit. P
 - Veď si seznam věcí, které umíš mimo svůj obor: projektové řízení, prezentování, vyjednávání o grantech, vedení studentů. Doktorandi často podceňují, kolik toho umí.
 - Nauč se vysvětlit svou práci babičce v jedné větě. Pokud to nezvládneš, nezvládneš to ani na pohovoru ve firmě.
 
+### Přelož svou práci do jazyka firem
+
+Švýcarské firmy hledají často „plug-and-play“ kandidáty, kteří stejnou roli už dělali. Ochota brát lidi, kteří mění obor, podle zkušeností kariérních poradců klesá ([sulista.ch](https://www.sulista.ch/blog/the-swiss-hiring-paradox-a-skilled-labor-shortage-and-the-zero-gap-mentality)). Doktorand z labu je pro personalistu přesně takový „kariérní změnař“. Nemůžeš čekat, že si tvoje dovednosti přeloží sám. Musíš to udělat za něj.
+
+| Co děláš v laboratoři | Jak to zní v CV pro firmu |
+| --- | --- |
+| Vedu svůj doktorský projekt | Řízení 4letého projektu od návrhu po výsledky, plánování rozpočtu a času |
+| Psal jsem grantovou žádost | Získal jsem financování X CHF v konkurenčním řízení |
+| Vedu bakaláře a magistry | Vedení a mentoring týmu 3 juniorů |
+| Spolupracuji se skupinou v Bostonu | Koordinace mezinárodní spolupráce, komunikace s partnery |
+| Opravuji nefunkční metodu | Řešení problémů, optimalizace procesu (zkrácení o X %) |
+| Prezentuji na konferencích | Prezentace komplexních výsledků odbornému i neodbornému publiku |
+
+Každý řádek doplň o číslo. Firmy chtějí vidět výsledek, ne činnost.
+
+### Průmysl není automaticky jistota
+
+Od akademie odchází hodně lidí kvůli jistotě. Jenže i průmysl má své vlny. V roce 2024 ohlásil Novartis zrušení zhruba 800 míst ve vývoji a Roche omezování týmu produktového vývoje, kde bylo ohrožených méně než 340 kmenových zaměstnanců. Za vlnami propouštění stojí konce patentů, drahý a nejistý vývoj, tlak na ceny a automatizace ([sulista.ch](https://www.sulista.ch/blog/what-are-the-reasons-for-the-downsizing-in-the-pharma-sector-and-how-can-we-cope-with-it)).
+
+Není to důvod do průmyslu nejít. Je to důvod jít tam s otevřenýma očima. Jistotu ti nedá firma, ale to, co umíš a koho znáš. Proto se vyplatí učit se i po nástupu (analýza dat v Pythonu, práce s AI, projektové řízení) a nepřestat budovat kontakty, ani když práci zrovna máš.
+
 ### Rozhodnutí není na celý život
 
 Největší obava, kterou slyším: „Když odejdu z akademie, už se nevrátím.“ Někdy je to pravda, častěji ne. Cesty mezi akademií, startupy a korporátem jsou dnes mnohem prostupnější než dřív. A svět je malý: na XBIO jsem potkal člověka, který vede byznys ve firmě vzešlé z mého bývalého departementu na ETH, i svého budoucího šéfa.
 
 ### A ještě jedna věc
 
-Doktorát je dřina. Stojí to za to, ale tlak na výkon bývá extrémní a s psychikou se počítat musí, i u silných a schopných lidí. Pokud ti to nejde, není to selhání. Sdílet není slabost. Mluv o tom s blízkými, s kolegy, a když je to potřeba, i s odborníkem. Rozhodnutí o kariéře se dělá lépe s člistou hlavou.
+Doktorát je dřina. Stojí to za to, ale tlak na výkon bývá extrémní a s psychikou se počítat musí, i u silných a schopných lidí. Pokud ti to nejde, není to selhání. Sdílet není slabost. Mluv o tom s blízkými, s kolegy, a když je to potřeba, i s odborníkem. Rozhodnutí o kariéře se dělá lépe s čistou hlavou.
 
 ---
 

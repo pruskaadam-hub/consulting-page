@@ -1,6 +1,6 @@
-Často se mě ptáte, jaké to bylo studovat, pracovat a žít ve Švýcarsku. Jednoduchá odpověď neexistuje. Sto lidí, sto chutí. Jednu věc ale za sedm let v Curychu vím jistě: kdo hledá práci ve Švýcarsku jen přes pracovní portály z obdýváku v Brně, čeká dlouho. Někdy navždy.
+Často se mě ptáte, jaké to bylo studovat, pracovat a žít ve Švýcarsku. Jednoduchá odpověď neexistuje. Sto lidí, sto chutí. Jednu věc ale za sedm let v Curychu vím jistě: kdo hledá práci ve Švýcarsku jen přes pracovní portály z obýváku v Brně, čeká dlouho. Někdy navždy.
 
-Není to tím, že by Češi a Sláci nebyli dost dobří. Jsou, a často víc, než si sami myslí. Je to tím, jak švýcarský trh funguje.
+Není to tím, že by Češi a Slováci nebyli dost dobří. Jsou, a často víc, než si sami myslí. Je to tím, jak švýcarský trh funguje.
 
 ### Proč to na dálku nejde
 
@@ -12,6 +12,12 @@ Když jsem se díval na to, co lidem nejvíc komplikuje vstup do Švýcarska, op
 - **Uzavřenější mentalita.** Důvěra se tady buduje pomalu. Ale když už ji máš, drží.
 
 Všechny čtyři mají společné řešení: někdo, kdo za tebe ručí. Doporučení, osobní setkání, společný známý. Tady se výrazná část pozic obsadí dřív, než se vůbec dostane na portál.
+
+### Pátá bariéra: mentalita „nulové mezery“
+
+Švýcarsko si stěžuje na nedostatek kvalifikovaných lidí, a přitom vybírá extrémně přísně. Kariérní kouč Václav Sulista z Basileje tomu říká švýcarský paradox náboru a popisuje „zero-gap“ mentalitu: firmy chtějí kandidáta, který odpovídá inzerátu skoro na 100 %, ideálně někoho, kdo stejnou práci dělal roky ve stejném oboru ([sulista.ch](https://www.sulista.ch/blog/the-swiss-hiring-paradox-a-skilled-labor-shortage-and-the-zero-gap-mentality)). Přihlášky navíc často nejdřív třídí software podle pevných kritérií.
+
+Pro tebe z toho plynou dvě věci. Zaprvé: pokud na inzerát sedíš jen napůl, portál tě skoro jistě vyřadí. Zadruhé: právě proto se vyplatí obejít filtr a mluvit přímo s hiring managerem. Člověk, který tě potkal, umí ocenit to, co robot nevidí: přenositelné dovednosti, rychlost učení, motivaci.
 
 ### Co je „entry point“
 
@@ -39,22 +45,31 @@ Fungující networking vypadá jinak: zajímáš se o lidi, ptáš se na jejich 
 
 **Co dělat:**
 
-1. Vyber si 2 až 3 místa, kde se potáží lidé z tvého oboru, a choď tam opakovaně.
+1. Vyber si 2 až 3 místa, kde se potkávají lidé z tvého oboru, a choď tam opakovaně.
 2. Před akcí si připrav jednu větu o sobě a jednu otázku, kterou se chceš zeptat.
 3. Po akci napiš do 48 hodin krátkou zprávu těm, se kterými sis rozuměl. Ne žádost o práci, ale poděkování a navazující otázku.
-4. O doporučení žadej až ve chvíli, kdy tě dotyčný zná aspoň trochu.
+4. O doporučení žádej až ve chvíli, kdy tě dotyčný zná aspoň trochu.
 
 ### Přijeď osobně
 
 Nejsilnější věc, kterou můžeš udělat, je přijet. I na pár dní. Naplánuj si cestu kolem nějaké akce, konference nebo setkání komunity a dopředu si domluv 3 až 5 káv s lidmi z oboru. Osobní setkání mění „nějaký uchazeč z Česka“ na „ten sympatický chemik, co jsem potkal minulý týden“.
 
-Občané EU můžou do Švýcarska přijet hledat práci a po určitou dobu tu být i bez pracovní smlouvy. **[ověřit aktuální pravidla a lhůty na webu SEM / kantonu]**
+Občan Česka nebo Slovenska může do Švýcarska přijet hledat práci a zůstat tu bez povolení až tři měsíce (90 dní) v kalendářním roce. Pokud hledáš déle, musíš požádat kantonální migrační úřad o povolení k pobytu za účelem hledání práce ([SEM](https://www.sem.admin.ch/sem/en/home/themen/fza_schweiz-eu-efta/eu-efta_buerger_schweiz/faq.html)). V praxi ale na hledání z místa nepotřebuješ měsíce. Stačí pár dobře naplánovaných cest.
+
+### Plán na první měsíc
+
+| Týden | Co udělat |
+| --- | --- |
+| 1 | Vyber jeden region a jeden obor. Vypiš 20 firem nebo skupin, kde bys chtěl pracovat. |
+| 2 | Na LinkedInu najdi u každé firmy jednoho člověka z tvé budoucí role, ideálně Čecha nebo Slováka. Napiš pěti z nich s prosbou o 20 minut rozhovoru. |
+| 3 | Najdi akci, meetup nebo setkání komunity v tom regionu a naplánuj kolem ní cestu. Domluv si 3 až 5 káv. |
+| 4 | Po cestě do 48 hodin poděkuj, uprav CV podle toho, co jsi se dozvěděl, a teprve teď se hlaš na konkrétní pozice, ideálně s doporučením. |
 
 ### Nebuď s tím sám
 
 Když se ohlédnu, nejvíc mi pomohla ne škola ani CV, ale lidé. Rychlejší integrace, nové spolupráce, spousta přátel. A zároveň jsem se úplně neodstřihl od domova.
 
-Ne všechno je ve Švýcarsku sné a lepší než u nás. Ale je to země, kde se otevřené dveře opravdu otevírají, když na ně zaklepe ten správný člověk. Hlavní je neztrácet čas a nebýt sám.
+Ne všechno je ve Švýcarsku snazší a lepší než u nás. Ale je to země, kde se otevřené dveře opravdu otevírají, když na ně zaklepe ten správný člověk. Hlavní je neztrácet čas a nebýt sám.
 
 ---
 

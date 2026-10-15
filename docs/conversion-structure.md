@@ -34,8 +34,8 @@ Na dostupných stránkách původního Wix webu a v RSS byly nalezeny dva skute�
 později dodal vlastník přímo v chatu. Reference se nyní zobrazují před
 rezervací. Vlastník později dodal deset mediálních odkazů; jsou v závěrečné sekci.
 
-Balíček: 3 × 1 800 Kč = 5 400 Kč; sleva 25 % = 1 350 Kč; výsledná cena
-4 050 Kč. Délka 50 minut vychází z individuální konzultace. Jedno osobní
+Balíček: 3 × 1 800 Kč = 5 400 Kč; úspora 900 Kč (16,7 %); výsledná cena
+4 500 Kč. Studentská cena balíčku je 3 500 Kč. Délka 50 minut vychází z individuální konzultace. Jedno osobní
 setkání je součástí požadavku vlastníka. Rozsah dopravy a geografické
 podmínky ještě nejsou stanovené; nejsou přidávané neověřené příplatky.
 
