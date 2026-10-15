@@ -20,6 +20,10 @@ jobs:
       VITE_CAL_INTRO_SLUG: nezavazna-konzultace
       VITE_CAL_INDIVIDUAL_SLUG: soukroma-konzultace
       VITE_CAL_PACKAGE_SLUG: soukroma-konzultace
+      VITE_SUPABASE_URL: https://lsofzsartjesgwetcpzw.supabase.co
+      VITE_SUPABASE_PUBLISHABLE_KEY: ${{ vars.VITE_SUPABASE_PUBLISHABLE_KEY }}
+      VITE_ENABLE_EVENTS: ${{ vars.VITE_ENABLE_EVENTS || 'false' }}
+      VITE_GA4_MEASUREMENT_ID: ${{ vars.VITE_GA4_MEASUREMENT_ID }}
     steps:
       - name: Check out source
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
@@ -34,10 +38,14 @@ jobs:
         run: npm test
       - name: Build and type check
         run: npm run build
+      - name: Verify protected Supabase handlers without contacting providers
+        run: npm run test:backend
       - name: Install test browser
         run: npx playwright install --with-deps chromium
       - name: Validate pages and reservation flow without creating real bookings
         run: npm run test:ui
+      - name: Verify admin access and consent with isolated fixtures
+        run: npm run test:admin
       - name: Verify public Cal.com availability and browser access
         run: node scripts/verify-cal-config.mjs
       - name: Configure Pages

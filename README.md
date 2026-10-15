@@ -115,3 +115,25 @@ nepublikují. Před přepnutím této nové verze ověřte Cal.com podle bodů v
 Používejte existující checkout. Každá cloudová úloha je izolovaná; není potřeba
 vytvářet další Git worktree. Instalace používá lockfile (`npm ci`). Proces Vite
 je třeba po obnovení prostředí spustit znovu.
+
+## Administrace a backend Supabase
+
+Soukromý vstup je `/admin/`, hlavní doména `https://adampruska.cz/`.
+Přihlášení pro `pruskaadam@me.com` vyžaduje povolený účet a TOTP MFA.
+Celý backend běží v Supabase: Auth, PostgreSQL s RLS a Edge Function `admin-api`.
+Pošta FORPSI používá IMAP/TLS 993 a SMTP/TLS 465. Připravená jsou propojení
+GA4, Cal.com a Stripe Payments, Invoicing a Tax.
+
+Nasazení souborů na Pages samo neaktivuje Supabase ani externí služby.
+Podrobný postup, bezpečné uložení klíčů a zbývající nastavení:
+[docs/admin-setup.md](docs/admin-setup.md).
+
+`npm run test:backend` prověří Deno handlery bez skutečných síťových volání.
+`npm run test:admin` ověří přihlášení, MFA, ovládání a souhlas s měřením pomocí
+izolovaného sestavení a zachycených odpovědí. `npm test` zahrnuje skutečné
+PostgreSQL/RLS testy přes PGlite. Nikdy netestujte odesláním skutečné zprávy
+nebo vytvořením skutečné platby bez výslovného zadání vlastníka.
+
+`npm run deploy:backend` potřebuje `SUPABASE_ACCESS_TOKEN` v bezpečném prostředí.
+Veřejný publishable klíč Supabase patří do GitHub Actions Variable
+`VITE_SUPABASE_PUBLISHABLE_KEY`; serverové klíče a heslo pošty do Supabase Secrets.

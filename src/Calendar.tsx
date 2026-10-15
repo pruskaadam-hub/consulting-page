@@ -3,6 +3,7 @@ import { content, type Service } from './content';
 import { copies, type Language, type Topic } from './locales';
 import { formatPrice } from './localized-content';
 import { BookingError, createBooking, dateKey, loadSlots, monthDays } from './cal-client.mjs';
+import {trackEvent} from './Analytics';
 
 type Slot = {start: string; end: string | null};
 type Confirmation = {uid: string; start: string; status: string};
@@ -63,6 +64,7 @@ export function Calendar({service, language, intentTopic, onTopicChange, onSubmi
     try {
       const result = await createBooking({username:content.calUsername,eventTypeSlug:service.calSlug,start:slot.start,name,email,timeZone,topic:notes,serviceId:service.id,language,consultationTopic:intentTopic,situation,horizon,financing});
       setConfirmation(result);
+      if(result.status==='accepted')trackEvent('booking_confirmed',{language,service:service.id,placement:'calendar'});
     } catch(e) {
       const kind=e instanceof BookingError ? e.kind : 'uncertain';
       setSubmitError(({conflict:t.errorConflict,validation:t.errorValidation,rejected:t.errorRejected} as Record<string,string>)[kind] || t.errorUncertain);

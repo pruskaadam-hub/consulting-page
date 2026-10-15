@@ -1,0 +1,18 @@
+project_id = "consulting-page"
+
+[functions.admin-api]
+# Public telemetry and signed provider webhooks share this entry point.
+# Every admin route verifies the user and the database enforces owner + MFA.
+verify_jwt = false
+
+[auth]
+site_url = "https://adampruska.cz/admin/"
+additional_redirect_urls = ["https://adampruska.cz/admin/", "https://pruskaadam-hub.github.io/consulting-page/admin/"]
+enable_signup = false
+
+[auth.mfa]
+max_enrolled_factors = 2
+
+[auth.mfa.totp]
+enroll_enabled = true
+verify_enabled = true

@@ -161,3 +161,18 @@ následného upřesnění vlastníka upravené také: číselné rozsahy jsou sl
 
 Nové články a přesný seznam značek k ověření viz
 [blog-publication.md](blog-publication.md).
+
+## Soukromá administrace
+
+Vlastník zvolil Supabase projekt `lsofzsartjesgwetcpzw`, přihlašovací e-mail
+`pruskaadam@me.com` a schránku FORPSI `adam@adampruska.cz`. Administrace má
+vstup `/admin/`, není v sitemapě a vyžaduje vlastnické oprávnění a MFA.
+Byly připravené databázové tabulky, Edge Function a propojení Stripe Payments,
+Invoicing, Tax, GA4, pošty a Cal.com. Zveřejnění frontendu nenahrazuje nasazení
+Supabase backendu a konfiguraci účtů. Stav propojení a přesné kroky viz
+[admin-setup.md](admin-setup.md).
+
+Vlastník potvrdil uložení `adampruska.cz` do Custom domain v GitHub Pages.
+GitHub následně hlásil DNS check in progress. DNS a přímý HTTPS přístup
+z tohoto prostředí blokuje síťová proxy; jejich dokončení tím není ověřené.
+Cílové canonical adresy zůstávají `https://adampruska.cz/`.

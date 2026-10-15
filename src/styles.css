@@ -576,3 +576,11 @@ button.text-link { background: transparent; border-top: 0; border-left: 0; borde
 .article-companion { margin-top: 32px; padding: 24px; border-radius: 18px; background: var(--surface); }
 .article-companion a { display: flex; align-items: center; justify-content: space-between; gap: 18px; font-weight: 500; }
 .article-companion svg { flex-shrink: 0; }
+.consent-settings { display:flex; justify-content:flex-end; gap:20px; padding-top:12px; padding-bottom:20px; }
+.consent-settings button { background:none; border:0; padding:8px 0; font:inherit; font-size:10px; color:var(--muted); cursor:pointer; }
+.analytics-consent { position:fixed; bottom:22px; right:22px; width:min(440px,calc(100% - 44px)); background:white; border:1px solid var(--line); border-radius:22px; padding:26px; box-shadow:0 15px 60px #0002; z-index:30; }
+.analytics-consent h2 { font-size:24px; margin-bottom:15px; }
+.analytics-consent p { font-size:12px; color:var(--muted); }
+.analytics-consent > div { display:flex; gap:12px; margin-top:20px; }
+.analytics-consent button { flex:1; border:1px solid var(--ink); border-radius:24px; padding:12px; background:white; color:var(--ink); font:inherit; font-size:12px; cursor:pointer; }
+.analytics-consent button:last-child { background:var(--ink); color:white; }

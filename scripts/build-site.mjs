@@ -54,5 +54,11 @@ for(const route of routes){
  const target=path.join(outDir,relative);await mkdir(target,{recursive:true});await writeFile(path.join(target,'index.html'),html);
 }
 await writeFile(path.join(outDir,'sitemap.xml'),`<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${routes.map(route=>`<url><loc>${escape(route.blog ? blogUrl(route.language,route.slug) : pageUrl(route.language,route.slug))}</loc></url>`).join('')}</urlset>`);
-await writeFile(path.join(outDir,'robots.txt'),`User-agent: *\nAllow: /\nSitemap: ${new URL('sitemap.xml',SITE_URL)}\n`);
-console.log(`Generated ${routes.length} static page routes with localized metadata.`);
+const adminRoot='../';
+const adminHtml=shell.replace('<html lang="cs">',`<html lang="cs" data-site-root="${adminRoot}">`)
+  .replace(/<title>.*?<\/title>/s,'<title>Administrace | Adam Pruška</title>\n<meta name="robots" content="noindex, nofollow" />\n<meta name="referrer" content="no-referrer" />')
+  .replaceAll('"./assets/',`"${adminRoot}assets/`).replace('href="./favicon.svg"',`href="${adminRoot}favicon.svg"`);
+await mkdir(path.join(outDir,'admin'),{recursive:true});
+await writeFile(path.join(outDir,'admin/index.html'),adminHtml);
+await writeFile(path.join(outDir,'robots.txt'),`User-agent: *\nAllow: /\nDisallow: ${new URL('admin/',SITE_URL).pathname}\nSitemap: ${new URL('sitemap.xml',SITE_URL)}\n`);
+console.log(`Generated ${routes.length} public pages and a private admin entry point.`);

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type MouseEvent } from 'react';
+import { lazy, Suspense, useEffect, useRef, useState, type MouseEvent } from 'react';
 import { createRoot } from 'react-dom/client';
 import { PACKAGE_COMPARISON_PRICE, discountLabel } from './pricing.mjs';
 import { Calendar } from './Calendar';
@@ -12,9 +12,11 @@ import { media, mediaFormats } from './media';
 import { assetUrl, internalUrl, blogInternalUrl, currentRoute } from './routes';
 import { Placeholder } from './Placeholder';
 import { ContactLinks, ContactSection } from './Contact';
+import { AnalyticsConsent, trackEvent } from './Analytics';
 import './styles.css';
 
 const route=currentRoute();
+const Admin=lazy(()=>import('./admin/Admin'));
 function Arrow({diagonal=false}:{diagonal?:boolean}) {
   return <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d={diagonal ? 'M6 18 18 6M6 6h12v12' : 'M4 12h15m-6-6 6 6-6 6'} stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>;
 }
@@ -52,6 +54,7 @@ function App({language}:{language:Language}) {
   const service=services.find(item=>item.id===selected)!;
   const choose=(id:ServiceId,topic?:Topic)=>(event:MouseEvent<HTMLAnchorElement>)=>{
     event.preventDefault();if(bookingBusy)return;
+    trackEvent('consultation_click',{service:id,language,placement:event.currentTarget.closest('.hero-copy')?'hero':event.currentTarget.closest('.offer-card')?'offer':'cta'});
     setSelected(id);setMenuOpen(false);setBookingOpen(true);setBookingStarted(true);
     if(topic!==undefined)setIntentTopic(topic);
     history.replaceState(null,'',location.pathname+location.search+'#kalendar');
@@ -126,4 +129,4 @@ function NewBlogPage({language,slug}:{language:Language;slug:string}) {
     {post ? <><article className="article-detail" lang="cs"><header className="article-intro wrap"><a className="text-link" href={blogInternalUrl(language)}>{c.allArticles}</a><p className="article-byline">Adam Pruška · <Placeholder id="publicationDate" note="ověřit před publikací" /></p><h1>{post.title}</h1></header><figure className="article-image wrap"><img src={assetUrl(post.image)} alt={post.alt} width="960" height="640" fetchPriority="high" /></figure><div className="article-prose authored-prose"><div onClick={copyEmail} dangerouslySetInnerHTML={{__html:html}} /><p className="copy-status" role="status">{copyStatus}</p>{'companion' in post && <aside className="article-companion"><a href={blogInternalUrl(language,post.companion)}>{post.companionLabel}<Arrow diagonal /></a></aside>}</div></article><section className="section wrap" aria-labelledby="related-title"><h2 id="related-title">{c.related}</h2><div className="related-articles">{related.map(item=><a href={blogInternalUrl(language,item.slug)} key={item.slug}><h3 lang="cs">{item.title}</h3><Arrow /></a>)}</div></section></> : <section className="blog-index section wrap" aria-labelledby="blog-index-title"><div className="section-heading"><h1 id="blog-index-title">Blog</h1><a className="text-link" href={internalUrl(language)}>{c.back}<Arrow /></a></div><BlogCards language={language} /></section>}
     <ContactSection language={language} /></main><Footer language={language} /></div>;
 }
-createRoot(document.getElementById('root')!).render(route.blog ? <NewBlogPage {...route} /> : route.slug ? <ArticlePage {...route} /> : <App language={route.language} />);
+createRoot(document.getElementById('root')!).render(route.admin ? <Suspense fallback={<p role="status">Načítám administraci…</p>}><Admin /></Suspense> : <>{route.blog ? <NewBlogPage {...route} /> : route.slug ? <ArticlePage {...route} /> : <App language={route.language} />}<AnalyticsConsent language={route.language} /></>);

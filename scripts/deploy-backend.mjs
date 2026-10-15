@@ -1,0 +1,88 @@
+// Run only with the owner's Supabase management token supplied through secure environment settings.
+import { readFile } from "node:fs/promises";
+import { spawnSync } from "node:child_process";
+import path from "node:path";
+const ref = process.env.SUPABASE_PROJECT_REF || "lsofzsartjesgwetcpzw";
+const token = process.env.SUPABASE_ACCESS_TOKEN;
+if (!token) {
+  console.error(
+    "Missing SUPABASE_ACCESS_TOKEN. Add it securely in the Codex environment settings, never to source code or chat.",
+  );
+  process.exit(1);
+}
+if (!/^[a-z]{20}$/.test(ref)) throw new Error("Invalid project ref");
+async function query(sql) {
+  const response = await fetch(
+    `https://api.supabase.com/v1/projects/${ref}/database/query`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ query: sql }),
+      signal: AbortSignal.timeout(60000),
+    },
+  );
+  if (!response.ok)
+    throw new Error(
+      `Supabase database operation failed (HTTP ${response.status}); no credentials or response body logged.`,
+    );
+  return response.json();
+}
+const existing = await query(
+  "select to_regclass('public.admin_backend_versions')::text as marker",
+);
+if (!Array.isArray(existing))
+  throw new Error("Unexpected management API response");
+if (!existing[0]?.marker) {
+  const conflicts = await query(
+    "select table_name from information_schema.tables where table_schema='public' and table_name in ('admin_users','clients','orders','bookings','invoices','stripe_invoices','business_settings','tasks','mail_outbox','events','event_rate_limits','webhook_events','invoice_counters')",
+  );
+  if (conflicts.length)
+    throw new Error(
+      "Existing table names overlap with this migration. Review the project before applying changes.",
+    );
+  const sql = await readFile(
+    new URL("../supabase/migrations/202610150001_admin.sql", import.meta.url),
+    "utf8",
+  );
+  await query(`begin;\n${sql}\ncommit;`);
+  console.log("Admin schema created with row-level security.");
+} else {
+  const version = await query(
+    "select version from public.admin_backend_versions where version='202610150001'",
+  );
+  if (!version.length)
+    throw new Error("Unknown backend version. Migration review required.");
+  console.log("Admin schema version already installed.");
+}
+const appointment = await readFile(
+  new URL("../supabase/appoint-owner.sql", import.meta.url),
+  "utf8",
+);
+const owners = await query(appointment);
+console.log(
+  owners.length === 1
+    ? "Owner account appointed."
+    : "Create the owner in Supabase Authentication, then run the appointment again.",
+);
+const deployment = spawnSync(
+  "npx",
+  [
+    "--yes",
+    "supabase@2.121.0",
+    "functions",
+    "deploy",
+    "admin-api",
+    "--project-ref",
+    ref,
+    "--no-verify-jwt",
+    "--use-api",
+  ],
+  { stdio: "inherit", env: { ...process.env, NPM_CONFIG_CACHE: process.env.NPM_CONFIG_CACHE || path.resolve('../.cache/npm') } },
+);
+if (deployment.status !== 0) process.exit(deployment.status ?? 1);
+console.log(
+  "Backend deployed. Configure Auth, allowed origins and provider secrets according to docs/admin-setup.md.",
+);
