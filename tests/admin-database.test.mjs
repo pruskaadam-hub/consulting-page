@@ -21,6 +21,7 @@ before(async () => {
   await pg.exec(await readFile(new URL("../supabase/migrations/202610150002_stripe_modes.sql", import.meta.url), "utf8"));
   await pg.exec(await readFile(new URL("../supabase/migrations/202610150003_invoice_due_dates.sql", import.meta.url), "utf8"));
   await pg.exec(await readFile(new URL("../supabase/migrations/202610150004_service_invoices.sql", import.meta.url), "utf8"));
+  await pg.exec(await readFile(new URL("../supabase/migrations/202610150005_invoice_identity.sql", import.meta.url), "utf8"));
   await pg.exec(
     await readFile(
       new URL("../supabase/appoint-owner.sql", import.meta.url),
@@ -435,4 +436,100 @@ test("direct service invoicing requires owner membership and MFA before writing 
   for (const [role, sub, aal] of [["anon", null, null], ["authenticated", outsider, "aal2"], ["authenticated", owner, "aal1"]]) {
     await assert.rejects(as(role, sub, aal, () => pg.query("select public.issue_service_invoice($1,$2,'Service','Description',180000)", [crypto.randomUUID(), client])), /permission denied|Admin \+ MFA required/);
   }
+});
+
+async function invoiceDraft(email, overrides={}) {
+  const business=(await pg.query("select * from public.business_settings")).rows[0];
+  return {client_id:null,order_id:null,name:"Mentoring",details:"Příprava na pohovory",amount_minor:180050,tax_rate:0,due_date:"2030-12-31",supply_date:"2026-10-15",
+    supplier:{...business,legal_name:"Test Supplier",ico:"12345678",address:"Praha, Česká republika",bank_account:"123/0100",vat_registered:false,vat_id:"",registration:"Fyzická osoba zapsaná v živnostenském rejstříku",brand_name:"Adam Pruška",logo_style:"site",accent_color:"#d7202b",website:"https://adampruska.cz"},
+    recipient:{first_name:"Jana",last_name:"Nováková",company_name:"",name:"Jana Nováková",client_type:"person",email,address:"Testovací 1, 110 00 Praha",country_code:"CZ",ico:"",vat_id:"",vat_registered:false,website:"https://example.test"},...overrides};
+}
+const draftSql="select (public.issue_invoice_draft($1,$2)).*";
+test("manual recipient, branding and invoice save atomically; retries preserve immutable identities", async () => {
+  const request=crypto.randomUUID(), data=await invoiceDraft("manual-new@example.test");
+  let issued;
+  await as("authenticated",owner,"aal2",async()=>{
+    issued=(await pg.query(draftSql,[request,JSON.stringify(data)])).rows[0];
+    const repeated=(await pg.query(draftSql,[request,JSON.stringify(data)])).rows[0];
+    assert.equal(issued.id,repeated.id);
+    assert.equal(issued.recipient.first_name,"Jana");
+    assert.equal(issued.recipient.last_name,"Nováková");
+    assert.equal(issued.recipient.country_code,"CZ");
+    assert.equal(issued.recipient.website,"https://example.test");
+    assert.equal(issued.supplier.registration,data.supplier.registration);
+    assert.equal(issued.supplier.accent_color,"#d7202b");
+    const saved=(await pg.query("select * from public.clients where email='manual-new@example.test'")).rows;
+    assert.equal(saved.length,1);
+    assert.equal(saved[0].name,"Jana Nováková");
+    await pg.query("update public.clients set last_name='Later contact edit' where id=$1",[saved[0].id]);
+    await pg.query("update public.business_settings set accent_color='#123456'");
+    const retry=(await pg.query(draftSql,[request,JSON.stringify(data)])).rows[0];
+    assert.equal(retry.recipient.last_name,"Nováková");
+    assert.equal(retry.supplier.accent_color,"#d7202b");
+    assert.equal((await pg.query("select last_name from public.clients where id=$1",[saved[0].id])).rows[0].last_name,"Later contact edit");
+  });
+  await assert.rejects(as("authenticated",owner,"aal2",()=>pg.query(draftSql,[request,JSON.stringify({...data,amount_minor:1})])),/Invoice request mismatch/);
+});
+
+test("invalid billing drafts roll back contacts, settings, requests and invoice counters", async()=>{
+  const baseline=(await pg.query("select * from public.business_settings")).rows;
+  const counters=(await pg.query("select * from public.invoice_counters order by year")).rows;
+  for(const scenario of ["registration","company","vat","price","accent","url"]) {
+    const request=crypto.randomUUID(),email=`invalid-${scenario}@example.test`,data=await invoiceDraft(email);
+    if(scenario==="registration")data.supplier.registration="";
+    if(scenario==="company")Object.assign(data.recipient,{client_type:"company",company_name:"Test s.r.o.",ico:""});
+    if(scenario==="vat")data.recipient.vat_registered=true;
+    if(scenario==="price")data.amount_minor=0;
+    if(scenario==="accent")data.supplier.accent_color="invalid";
+    if(scenario==="url")data.recipient.website="javascript:alert(1)";
+    await assert.rejects(as("authenticated",owner,"aal2",()=>pg.query(draftSql,[request,JSON.stringify(data)])),/Supplier registration|Complete company|VAT ID required|check constraint/);
+    assert.equal((await pg.query("select count(*)::int as n from public.clients where email=$1",[email])).rows[0].n,0);
+    assert.equal((await pg.query("select count(*)::int as n from public.invoice_requests where id=$1",[request])).rows[0].n,0);
+    assert.equal((await pg.query("select count(*)::int as n from public.orders where id=$1",[request])).rows[0].n,0);
+  }
+  assert.deepEqual((await pg.query("select * from public.business_settings")).rows,baseline);
+  assert.deepEqual((await pg.query("select * from public.invoice_counters order by year")).rows,counters);
+});
+
+test("company VAT identity and cents are snapshotted; duplicate email cannot replace a contact",async()=>{
+  const data=await invoiceDraft("company-new@example.test");
+  Object.assign(data.recipient,{client_type:"company",company_name:"Test Company s.r.o.",ico:"12345678",vat_registered:true,vat_id:"CZ12345678"});
+  Object.assign(data.supplier,{vat_registered:true,vat_id:"CZ12345678"});data.tax_rate=21;
+  const issued=(await as("authenticated",owner,"aal2",()=>pg.query(draftSql,[crypto.randomUUID(),JSON.stringify(data)]))).rows[0];
+  assert.equal(issued.recipient.name,"Test Company s.r.o.");
+  assert.equal(issued.recipient.vat_id,"CZ12345678");
+  assert.equal(issued.net_minor+issued.tax_minor,180050);
+  assert.equal(issued.net_minor,Math.round(180050/1.21));
+  await assert.rejects(as("authenticated",owner,"aal2",()=>pg.query(draftSql,[crypto.randomUUID(),JSON.stringify(data)])),/unique constraint/);
+});
+
+test("invoice draft RPC and saved request data stay private behind owner plus MFA",async()=>{
+  const data=await invoiceDraft("private-draft@example.test");
+  for(const [role,sub,aal] of [["anon",null,null],["authenticated",outsider,"aal2"],["authenticated",owner,"aal1"]]) {
+    await assert.rejects(as(role,sub,aal,()=>pg.query(draftSql,[crypto.randomUUID(),JSON.stringify(data)])),/permission denied|Admin \+ MFA/);
+    await assert.rejects(as(role,sub,aal,()=>pg.query("select * from public.invoice_requests")),/permission denied/);
+  }
+});
+
+test("billing an existing order checks its recipient, preserves server price and prevents a second invoice",async()=>{
+  const id=(await pg.query("insert into public.orders(client_id,description,amount_minor) values($1,'Existing order',450000) returning id",[client])).rows[0].id;
+  const data=await invoiceDraft("updated-contact@example.test",{client_id:client,order_id:id,amount_minor:1});
+  const wrong=JSON.stringify({...data,client_id:null});
+  await assert.rejects(as("authenticated",owner,"aal2",()=>pg.query(draftSql,[crypto.randomUUID(),wrong])),/Recipient does not match order/);
+  const issued=(await as("authenticated",owner,"aal2",()=>pg.query(draftSql,[crypto.randomUUID(),JSON.stringify(data)]))).rows[0];
+  assert.equal(issued.amount_minor,450000);
+  assert.equal(issued.description,"Existing order");
+  assert.equal(issued.recipient.email,"updated-contact@example.test");
+  assert.equal((await pg.query("select email from public.clients where id=$1",[client])).rows[0].email,"updated-contact@example.test");
+  await assert.rejects(as("authenticated",owner,"aal2",()=>pg.query(draftSql,[crypto.randomUUID(),JSON.stringify(data)])),/Order already invoiced/);
+});
+
+test("zero VAT for a payer requires the specific explanation on the immutable invoice",async()=>{
+  const data=await invoiceDraft("zero-vat@example.test");
+  Object.assign(data.supplier,{vat_registered:true,vat_id:"CZ12345678"});
+  await assert.rejects(as("authenticated",owner,"aal2",()=>pg.query(draftSql,[crypto.randomUUID(),JSON.stringify(data)])),/Tax exemption explanation required/);
+  data.tax_note="Testovací vysvětlení zvoleného režimu a právního ustanovení";
+  const issued=(await as("authenticated",owner,"aal2",()=>pg.query(draftSql,[crypto.randomUUID(),JSON.stringify(data)]))).rows[0];
+  assert.equal(issued.tax_note,data.tax_note);
+  assert.equal(issued.tax_minor,0);
 });

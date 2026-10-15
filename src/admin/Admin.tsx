@@ -17,6 +17,7 @@ import type {
 import { internalUrl } from "../routes";
 import { PRICES, STUDENT_PRICES } from "../pricing.mjs";
 import { InvoiceForm } from "./InvoiceForm";
+import { InvoiceDocument } from "./InvoiceDocument";
 import "./admin.css";
 
 const sections = [
@@ -118,7 +119,7 @@ function Field({
         type={type}
         defaultValue={value}
         required={required}
-        maxLength={type === "date" ? undefined : maxLength}
+        maxLength={["date", "color"].includes(type) ? undefined : maxLength}
       />
     </label>
   );
@@ -638,7 +639,7 @@ function Workspace({
       <a className="skip-link" href="#admin-main">
         Přejít k obsahu
       </a>
-      <aside className="admin-sidebar">
+      <aside className="admin-sidebar" aria-label="Navigace správce">
         <a className="admin-wordmark" href={internalUrl("cs")}>
           <span>ap.</span>
           <span>
@@ -953,6 +954,10 @@ function Workspace({
                       <div>
                         <strong>{c.name}</strong>
                         <span>{c.email}</span>
+                        {c.company_name && c.company_name !== c.name && <span>{c.company_name}</span>}
+                        {(c.first_name || c.last_name) && <span>{[c.first_name,c.last_name].filter(Boolean).join(" ")}</span>}
+                        {c.ico && <span>IČO: {c.ico}</span>}
+                        {c.website && <span>{c.website}</span>}
                         <span>
                           {c.address || "Fakturační adresa není vyplněná."}
                         </span>
@@ -1307,11 +1312,10 @@ function Workspace({
                 </Panel>
                 <Panel title="Vystavit fakturu">
                   <InvoiceForm snapshot={s} busy={busy} dueDate={inputDate(14)} today={inputDate()}
-                    onClients={() => setSection("clients")}
                     onIssue={(issue) => void work(async () => setInvoice(await issue()), "Faktura byla vystavena.")}
                   />
                 </Panel>
-                {invoice && <InvoiceView invoice={invoice} />}
+                {invoice && <InvoiceDocument invoice={invoice} />}
               </>
             )}
             {section === "mail" && (
@@ -1444,6 +1448,13 @@ function Workspace({
                       name="vat_id"
                       value={s.business.vat_id}
                     />
+                    <Field label="Zápis v rejstříku nebo evidenci" name="registration" value={s.business.registration || ""} required maxLength={1000} />
+                    <Field label="Název značky na faktuře" name="brand_name" value={s.business.brand_name || "Adam Pruška"} maxLength={160} />
+                    <Field label="Kontaktní e-mail dodavatele" name="contact_email" type="email" value={s.business.contact_email || ""} maxLength={254} />
+                    <Field label="Kontaktní telefon dodavatele" name="contact_phone" type="tel" value={s.business.contact_phone || ""} maxLength={60} />
+                    <Field label="Web dodavatele" name="website" type="url" value={s.business.website || ""} maxLength={500} />
+                    <Field label="Barva faktury" name="accent_color" type="color" value={s.business.accent_color || "#d7202b"} />
+                    <label className="admin-field"><span>Logo na faktuře</span><select aria-label="Logo na faktuře" name="logo_style" defaultValue={s.business.logo_style || "site"}><option value="site">Značka ap. jako na webu</option><option value="original">Původní logo Adam Pruška</option><option value="none">Pouze název značky</option></select></label>
                     <Field
                       label="Poznámka na faktuře"
                       name="invoice_note"
@@ -1568,94 +1579,6 @@ function EventSummary() {
         <Empty>Zatím nejsou zaznamenané události.</Empty>
       )}
     </Panel>
-  );
-}
-function InvoiceView({ invoice: i }: { invoice: Invoice }) {
-  return (
-    <section className="admin-invoice" aria-label={`Faktura ${i.number}`}>
-      <div className="admin-invoice-header">
-        <h2>Faktura {i.number}</h2>
-        <button
-          className="admin-outline"
-          type="button"
-          onClick={() => window.print()}
-        >
-          Tisk / uložit PDF
-        </button>
-      </div>
-      <div className="admin-two-col">
-        <div>
-          <h3>Dodavatel</h3>
-          <strong>{i.supplier.legal_name}</strong>
-          <p>
-            {i.supplier.address}
-            <br />
-            IČO: {i.supplier.ico}
-            {i.supplier.vat_id && (
-              <>
-                <br />
-                DIČ: {i.supplier.vat_id}
-              </>
-            )}
-          </p>
-        </div>
-        <div>
-          <h3>Odběratel</h3>
-          <strong>{i.recipient.name}</strong>
-          <p>
-            {i.recipient.address}
-            {i.recipient.ico && (
-              <>
-                <br />
-                IČO: {i.recipient.ico}
-              </>
-            )}
-            {i.recipient.vat_id && (
-              <>
-                <br />
-                DIČ: {i.recipient.vat_id}
-              </>
-            )}
-          </p>
-        </div>
-      </div>
-      <p>
-        Vystaveno: {date(i.issue_date)} · Splatnost: {date(i.due_date)}
-        {i.supply_date && (
-          <>
-            <br />
-            Datum uskutečnění plnění: {date(i.supply_date)}
-          </>
-        )}
-        <br />
-        Způsob úhrady: bankovní převod
-        <br />
-        Účet: {i.supplier.bank_account}
-        <br />
-        Variabilní symbol: {i.number}
-      </p>
-      <div className="admin-list-row">
-        <div>
-          <strong>{i.description}</strong>
-          {i.service_details && <p className="admin-service-details">{i.service_details}</p>}
-        </div>
-        <strong>{money(i.amount_minor)}</strong>
-      </div>
-      {i.supplier.vat_registered ? (
-        <p>
-          Základ: {money(i.net_minor)} · DPH {i.tax_rate} %:{" "}
-          {money(i.tax_minor)}
-        </p>
-      ) : (
-        <p>Dodavatel není plátcem DPH.</p>
-      )}
-      <h3>Celkem k úhradě: {money(i.amount_minor)}</h3>
-      <p>{i.supplier.invoice_note}</p>
-      <p className="admin-small">
-        Stav úhrady je vedený u objednávky. Tento doklad sám o sobě nepotvrzuje
-        zaplacení.
-      </p>
-    </section>
   );
 }
 function Mailbox({

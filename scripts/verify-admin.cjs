@@ -99,6 +99,8 @@ const { HtmlValidate } = require("html-validate");
       vat_registered: false,
       vat_id: "",
       invoice_note: "",
+      registration:"Fyzická osoba zapsaná v živnostenském rejstříku",
+      brand_name:"Adam Pruška",logo_style:"site",accent_color:"#d7202b",website:"https://adampruska.cz",
     };
     const user = () => ({
       id: current,
@@ -207,33 +209,25 @@ const { HtmlValidate } = require("html-validate");
               clients: clients.length,
               bookings: 0,
             });
-          if (name === "rpc/issue_service_invoice") {
-            const body = req.postDataJSON();
-            directRequests.push(body);
-            if (failDirectInvoice) {
-              failDirectInvoice = false;
-              return ok({message:"Complete billing identities and VAT status first",code:"P0001"},400);
+          if (name === "rpc/issue_invoice_draft") {
+            const body=req.postDataJSON(),data=body.p_data;
+            if(!data.order_id) {
+              directRequests.push(body);
+              if(failDirectInvoice) {failDirectInvoice=false;return ok({message:"Complete billing identities and VAT status first",code:"P0001"},400);}
             }
-            const order = {id:body.p_request,client_id:body.p_client,description:body.p_name,service_details:body.p_details,
-              amount_minor:body.p_amount,status:"pending",source:"manual",is_test:false,
-              created_at:new Date().toISOString(),clients:{name:clients[0].name,email:clients[0].email}};
-            orders.push(order);
-            const item = {id:crypto.randomUUID(),number:"202600002",order_id:order.id,
-              issue_date:"2026-10-15",due_date:body.p_due_date,supplier:business,recipient:clients[0],
-              description:order.description,service_details:order.service_details,
-              amount_minor:order.amount_minor,net_minor:order.amount_minor,tax_minor:0,tax_rate:0};
-            invoices.push(item);
-            return ok(item);
-          }
-          if (name === "rpc/issue_invoice") {
-            const body = req.postDataJSON();
-            assert.equal(body.p_order, orders[0].id);
-            const item = {id: crypto.randomUUID(), number:"202600001", order_id: body.p_order,
-              issue_date:"2026-10-15", due_date:body.p_due_date, supplier: business,
-              recipient: clients[0], description: orders[0].description,
-              amount_minor:150000, net_minor:150000, tax_minor:0, tax_rate:0};
-            invoices.push(item);
-            return ok(item);
+            let contact=clients.find(c=>c.id===data.client_id);
+            const recipient={...data.recipient,name:data.recipient.client_type==="company" ? data.recipient.company_name : `${data.recipient.first_name} ${data.recipient.last_name}`.trim()};
+            if(contact)Object.assign(contact,recipient);
+            else {contact={id:crypto.randomUUID(),...recipient};clients.push(contact);}
+            Object.assign(business,data.supplier);
+            let order=orders.find(o=>o.id===data.order_id);
+            if(!order) {order={id:body.p_request,client_id:contact.id,description:data.name,service_details:data.details,
+              amount_minor:data.amount_minor,status:"pending",source:"manual",is_test:false,created_at:new Date().toISOString(),clients:{name:contact.name,email:contact.email}};orders.push(order);}
+            const net=Math.round(order.amount_minor/(1+data.tax_rate/100));
+            const item={id:crypto.randomUUID(),number:`2026${String(invoices.length+1).padStart(5,"0")}`,order_id:order.id,
+              issue_date:"2026-10-15",due_date:data.due_date,supply_date:data.supply_date,supplier:JSON.parse(JSON.stringify(business)),recipient:JSON.parse(JSON.stringify(contact)),
+              description:order.description,service_details:order.service_details,amount_minor:order.amount_minor,net_minor:net,tax_minor:order.amount_minor-net,tax_rate:data.tax_rate,tax_note:data.tax_note};
+            invoices.push(item);return ok(item);
           }
           if (name === "rpc/analytics_summary")
             return ok({ events: [], days: [] });
@@ -401,7 +395,7 @@ const { HtmlValidate } = require("html-validate");
     assert.equal(await page.getByRole("button", {name:"Vystavit fakturu",exact:true}).isDisabled(), true);
     await page.getByText("Mezi posledními 100 objednávkami není žádná", {exact:false}).waitFor();
     await page.getByLabel("Nová konzultace nebo služba", {exact:true}).check();
-    await page.getByRole("button", {name:"Přejít na klienty",exact:true}).click();
+    await page.getByRole("navigation", {name:"Administrace"}).getByRole("button", {name:"Klienti",exact:true}).click();
     await page.getByLabel("Jméno nebo firma").fill("Client Test");
     await page
       .getByLabel("E-mail", { exact: true })
@@ -431,6 +425,7 @@ const { HtmlValidate } = require("html-validate");
     assert.equal(await page.getByRole("heading", {name: "Faktury Stripe", exact: true}).count(), 0);
     await page.getByLabel("Existující objednávka", {exact:true}).check();
     await page.locator('select[name="order_id"]').selectOption(orders[0].id);
+    await page.getByLabel("Země klienta", {exact:true}).selectOption("CZ");
     await page.getByLabel("Datum splatnosti", {exact: true}).fill("2030-12-31");
     await page.getByRole("button", {name: "Vystavit fakturu", exact: true}).click();
     await page.getByRole("region", {name: "Faktura 202600001", exact: true}).waitFor();
@@ -483,6 +478,52 @@ const { HtmlValidate } = require("html-validate");
     const pdf=await page.pdf({format:"A4"});
     assert.equal(pdf.subarray(0,5).toString(),"%PDF-");
     await page.emulateMedia({media:"screen"});
+    await page.getByLabel("Klient pro fakturu", {exact:true}).selectOption("new");
+    await page.getByLabel("Typ odběratele", {exact:true}).selectOption("company");
+    await page.getByLabel("Jméno klienta", {exact:true}).fill("Eva");
+    await page.getByLabel("Příjmení klienta", {exact:true}).fill("Nová");
+    await page.getByLabel("Název firmy klienta", {exact:true}).fill("Nová firma s.r.o.");
+    await page.getByLabel("IČO firmy / zahraniční identifikátor", {exact:true}).fill("87654321");
+    await page.getByLabel("E-mail klienta", {exact:true}).fill("nova-firma@example.test");
+    await page.getByLabel("Fakturační adresa klienta (ulice, město, PSČ)", {exact:true}).fill("Nová 5, 110 00 Praha");
+    await page.getByLabel("Web klienta (volitelný)", {exact:true}).fill("https://example.test/firma");
+    await page.getByLabel("Klient je plátce DPH", {exact:true}).check();
+    await page.getByLabel("DIČ klienta", {exact:true}).fill("CZ87654321");
+    if(!await page.locator(".invoice-supplier-editor").evaluate(e=>e.open)) await page.getByText("Údaje mé firmy a vzhled faktury", {exact:true}).click();
+    await page.getByLabel("Název značky na faktuře", {exact:true}).fill("AP test brand");
+    await page.getByLabel("Logo na faktuře", {exact:true}).selectOption("original");
+    await page.getByLabel("Dodavatel: plátcovství DPH", {exact:true}).selectOption("yes");
+    await page.getByLabel("Dodavatel: DIČ", {exact:true}).fill("CZ12345678");
+    assert.equal(await page.getByLabel("Sazba DPH", {exact:true}).inputValue(),"21");
+    await page.getByLabel("Sazba DPH", {exact:true}).selectOption("0");
+    assert.equal(await page.getByLabel("Důvod nulové DPH a právní ustanovení", {exact:true}).evaluate(e=>e.required),true);
+    await page.getByLabel("Důvod nulové DPH a právní ustanovení", {exact:true}).fill("Testovací popis režimu a ustanovení");
+    await page.getByLabel("Sazba DPH", {exact:true}).selectOption("21");
+    const live=page.getByRole("region", {name:"Náhled faktury",exact:true});
+    await live.getByText("Nová firma s.r.o.", {exact:true}).waitFor();
+    await live.getByText("AP test brand", {exact:true}).waitFor();
+    assert.equal(await live.locator("img").count(),1);
+    assert.match(await page.getByLabel("Klient pro fakturu", {exact:true}).evaluate(e=>getComputedStyle(e).backgroundPosition),/15px/);
+    for(const width of [375,1280]) {
+      await page.setViewportSize({width,height:900});
+      assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,"invoice editor overflow");
+    }
+    await page.getByRole("button", {name:"Vystavit fakturu",exact:true}).click();
+    const companyDoc=page.getByRole("region", {name:"Faktura 202600003",exact:true});await companyDoc.waitFor();
+    assert.equal(clients.length,2);
+    assert.equal(clients[1].company_name,"Nová firma s.r.o.");
+    assert.equal(invoices[2].supplier.brand_name,"AP test brand");
+    assert.equal(invoices[2].tax_rate,21);
+    assert.equal(invoices[2].tax_minor,31240);
+    assert.equal(invoices[2].tax_note,"");
+    await companyDoc.getByText("Daňový doklad", {exact:true}).waitFor();
+    assert.equal(invoices[2].recipient.website,"https://example.test/firma");
+    await companyDoc.getByText("Fyzická osoba zapsaná v živnostenském rejstříku", {exact:true}).waitFor();
+    if(process.env.SCREENSHOT_DIR) await companyDoc.screenshot({path:path.join(process.env.SCREENSHOT_DIR,"invoice-document.png")});
+    await validate("manual client and branded invoice");
+    await page.getByRole("navigation", {name:"Administrace"}).getByRole("button", {name:"Klienti",exact:true}).click();
+    await page.getByText("https://example.test/firma", {exact:true}).waitFor();
+    await page.getByRole("navigation", {name:"Administrace"}).getByRole("button", {name:"Faktury",exact:true}).click();
     const overdueOrder = {...orders[0], id:crypto.randomUUID(), status:"pending", description:"Historická neuhrazená faktura"};
     orders.push(overdueOrder);
     invoices.push({...invoices[0],id:crypto.randomUUID(),number:"202000001",order_id:overdueOrder.id,issue_date:"2020-01-01",due_date:"2020-01-15"});
@@ -595,7 +636,7 @@ const { HtmlValidate } = require("html-validate");
     );
     assert.deepEqual(errors, []);
     console.log(
-      "PASS: owner-only login and MFA, protected dashboard and CRUD, all 9 admin sections at 375/1280px, plain-text mailbox, mocked send, logout, consent before any analytics and withdrawal. No real provider operations.",
+      "PASS: owner-only login and MFA, protected dashboard and CRUD, all 9 admin sections at 375/1280px, manual invoice clients and live brand/VAT preview, PDF, plain-text mailbox, mocked send, logout, consent before any analytics and withdrawal. No real provider operations.",
     );
   } finally {
     await browser.close();

@@ -90,7 +90,8 @@ se stávajícími tabulkami se zastaví. Nevypisuje klíče ani odpovědi s tajn
 
 Alternativně lze nové schéma vytvořit spuštěním migrací
 `202610150001_admin.sql`, `202610150002_stripe_modes.sql`,
-`202610150003_invoice_due_dates.sql` a `202610150004_service_invoices.sql` ze složky
+`202610150003_invoice_due_dates.sql`, `202610150004_service_invoices.sql` a
+`202610150005_invoice_identity.sql` ze složky
 `supabase/migrations` v Supabase SQL Editoru. Na existujícím schématu se
 spouštějí pouze dosud neaplikované migrace, každá v transakci. Automatický
 deploy tento výběr provádí podle tabulky verzí. Funkce se nasadí oficiálním CLI:
@@ -244,6 +245,11 @@ jméno, e-mail, obsah formulářů, URL dotazy ani obsah administrace se neměř
 Agregace kliknutí není účetní důkaz prodeje.
 
 ## 7. Fakturační údaje, údržba a testy
+
+Ruční klienti, firemní vzhled a živý upravitelný náhled jsou popsané v
+[invoice-fields.md](invoice-fields.md). Údaje dodavatele včetně zápisu v
+rejstříku nebo evidenci musí být skutečné. Nový klient a úpravy firemních
+údajů se uloží společně s fakturou při jejím vystavení.
 
 Pro aktuální ruční fakturaci není potřeba platební ani fakturační služba.
 V Nastavení doplňte skutečné údaje dodavatele, účet a stav DPH. V Klientech

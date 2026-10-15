@@ -62,6 +62,7 @@ for (const [version, filename] of [
   ["202610150002", "202610150002_stripe_modes.sql"],
   ["202610150003", "202610150003_invoice_due_dates.sql"],
   ["202610150004", "202610150004_service_invoices.sql"],
+  ["202610150005", "202610150005_invoice_identity.sql"],
 ]) {
   const applied = await query(
     `select version from public.admin_backend_versions where version='${version}'`,

@@ -6,6 +6,13 @@ export type Client = {
   ico: string;
   vat_id: string;
   notes: string;
+  first_name?: string;
+  last_name?: string;
+  company_name?: string;
+  client_type?: "person" | "company";
+  website?: string;
+  country_code?: string;
+  vat_registered?: boolean;
 };
 export type Order = {
   id: string;
@@ -35,6 +42,13 @@ export type Business = {
   vat_registered: boolean | null;
   vat_id: string;
   invoice_note: string;
+  registration?: string;
+  brand_name?: string;
+  contact_email?: string;
+  contact_phone?: string;
+  website?: string;
+  logo_style?: "site" | "original" | "none";
+  accent_color?: string;
 };
 export type Invoice = {
   id: string;
@@ -52,6 +66,7 @@ export type Invoice = {
   net_minor: number;
   tax_minor: number;
   tax_rate: number;
+  tax_note?: string;
 };
 export type Task = {
   id: string;
