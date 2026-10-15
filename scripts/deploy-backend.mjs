@@ -2,6 +2,7 @@
 import { readFile } from "node:fs/promises";
 import { spawnSync } from "node:child_process";
 import path from "node:path";
+import { ensureEventsSecret } from "./provision-events.mjs";
 const ref = process.env.SUPABASE_PROJECT_REF || "lsofzsartjesgwetcpzw";
 const token = process.env.SUPABASE_ACCESS_TOKEN;
 if (!token) {
@@ -67,6 +68,10 @@ console.log(
     ? "Owner account appointed."
     : "Create the owner in Supabase Authentication, then run the appointment again.",
 );
+const events = await ensureEventsSecret({ projectRef: ref, token });
+console.log(events.created
+  ? "First-party events secret configured."
+  : "First-party events secret already configured; preserved.");
 const deployment = spawnSync(
   "npx",
   [

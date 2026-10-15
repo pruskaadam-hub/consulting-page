@@ -59,7 +59,7 @@ Tato cesta nevyžaduje propojení Personal Vaultu s prostředím Codexu.
    New repository secret**. Název je `SUPABASE_ACCESS_TOKEN`; hodnotu vložte
    pouze do chráněného pole Secret.
 4. Otevřete **Actions → Deploy Supabase backend → Run workflow** a vyberte
-   větev `main`. Workflow se spouští také po změnách backendu na `main`.
+   větev `main`. Při publikování webu jej nejprve volá workflow Pages.
 5. Ověřte úspěch kroku **Deploy database and Edge Function** a zprávu
    **Owner account appointed.** Pokud účet při prvním nasazení neexistoval,
    vytvořte ho a workflow spusťte znovu.
@@ -68,6 +68,9 @@ Workflow nejprve prověří databázová oprávnění a serverové handlery bez
 vytváření skutečných plateb nebo zpráv. Token dostane pouze nasazovací krok,
 ne prohlížeč ani veřejné sestavení webu. Samotné nasazení nenastavuje heslo
 správce, hostovaná nastavení Auth ani přístupové údaje externích služeb.
+Nasazení automaticky vytvoří chybějící `EVENTS_HMAC_SECRET` pomocí bezpečného
+generátoru. Existující hodnotu zachová a nikdy ji nevypisuje. Workflow Pages
+čeká na úspěšné nasazení backendu, než sestaví a zveřejní veřejný web.
 
 ### Z prostředí Codexu
 
@@ -136,7 +139,7 @@ Tyto hodnoty patří výhradně do **Edge Functions → Secrets**:
 | `STRIPE_AUTOMATIC_TAX` | `true` až po nastavení Stripe Tax a registrací |
 | `STRIPE_PRODUCT_TAX_CODE` | Volitelný správný Stripe kód konkrétního typu služby |
 | `CAL_WEBHOOK_SECRET` | Sdílené tajemství pro podpis webhooku Cal.com |
-| `EVENTS_HMAC_SECRET` | Dlouhá náhodná hodnota pro omezení anonymních událostí |
+| `EVENTS_HMAC_SECRET` | Serverová hodnota automaticky vytvořená při nasazení; nevypisuje se |
 
 Supabase samo dodává `SUPABASE_URL`, `SUPABASE_ANON_KEY` a serverový
 `SUPABASE_SERVICE_ROLE_KEY`. Nikdy nekopírujte service_role do webu.
@@ -208,8 +211,11 @@ V GA4 vytvořte službu pro web, aktivujte Google Analytics Data API a služebn�
 účtu přidělte oprávnění Viewer jen k této službě. Jeho JSON uložte do Secrets.
 Číselné Property ID není totéž jako měřicí ID začínající `G-`.
 
-V GitHub Actions Variables nastavte `VITE_GA4_MEASUREMENT_ID=G-…` a případně
-`VITE_ENABLE_EVENTS=true`, až je backend nasazený. Pak znovu sestavte web.
+Vlastní měření událostí má workflow Pages zapnuté přes `VITE_ENABLE_EVENTS=true`.
+Před sestavením webu úspěšně nasadí backend a zajistí serverové tajemství.
+Pro Google Analytics nastavte GitHub Actions Variable
+`VITE_GA4_MEASUREMENT_ID=G-…` a znovu spusťte Pages. GA4 se bez skutečného ID
+nespouští; text souhlasu pak popisuje jen vlastní měření.
 Google skript ani anonymní události se nespouštějí před souhlasem. Souhlas
 lze odvolat; nové události se zastaví. Respektuje se Do Not Track. Téma,
 jméno, e-mail, obsah formulářů, URL dotazy ani obsah administrace se neměří.

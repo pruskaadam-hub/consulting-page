@@ -117,6 +117,7 @@ const copy = {
   cs: {
     title: "Pomůžeš mi zlepšovat web?",
     text: "Se souhlasem měřím návštěvnost a zájem o konzultace pomocí Google Analytics a anonymních událostí. Do měření neposílám údaje z rezervací ani e-maily.",
+    eventsOnlyText: "Se souhlasem měřím návštěvnost a zájem o konzultace pomocí anonymních událostí na tomto webu. Do měření neposílám údaje z rezervací ani e-maily.",
     yes: "Povolit měření",
     no: "Bez měření",
     settings: "Nastavení měření",
@@ -125,6 +126,7 @@ const copy = {
   sk: {
     title: "Pomôžeš mi zlepšovať web?",
     text: "So súhlasom meriam návštevnosť a záujem o konzultácie pomocou Google Analytics a anonymných udalostí. Do merania neposielam údaje z rezervácií ani e-maily.",
+    eventsOnlyText: "So súhlasom meriam návštevnosť a záujem o konzultácie pomocou anonymných udalostí na tomto webe. Do merania neposielam údaje z rezervácií ani e-maily.",
     yes: "Povoliť meranie",
     no: "Bez merania",
     settings: "Nastavenie merania",
@@ -133,6 +135,7 @@ const copy = {
   en: {
     title: "Help me improve this website?",
     text: "With your consent, I measure visits and interest in consultations using Google Analytics and anonymous events. Booking details and email addresses are never sent to analytics.",
+    eventsOnlyText: "With your consent, I measure visits and interest in consultations using anonymous events on this website. Booking details and email addresses are never sent to analytics.",
     yes: "Allow analytics",
     no: "Without analytics",
     settings: "Analytics preferences",
@@ -181,7 +184,7 @@ export function AnalyticsConsent({ language }: { language: Language }) {
       {open && (
         <section className="analytics-consent" aria-labelledby="consent-title">
           <h2 id="consent-title">{c.title}</h2>
-          <p>{c.text}</p>
+          <p>{gaEnabled ? c.text : c.eventsOnlyText}</p>
           <div>
             <button type="button" onClick={() => choose("rejected")}>
               {c.no}

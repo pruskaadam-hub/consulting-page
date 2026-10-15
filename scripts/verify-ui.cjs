@@ -63,7 +63,13 @@ const path=require('node:path');
    throw new Error('Invalid HTML: '+label);
   }
  }
- async function go(relative=''){await page.goto(base+relative,{waitUntil:'networkidle'});}
+ async function go(relative=''){
+  await page.goto(base+relative,{waitUntil:'networkidle'});
+  // The full consent contract is exercised in verify-admin; these page checks
+  // continue with measurement declined and never send production telemetry.
+  if(await page.locator('.analytics-consent').count())
+   await page.locator('.analytics-consent button').first().click();
+ }
  async function selectTime(){
   await page.waitForFunction(()=>!document.querySelector('.native-calendar[aria-busy="true"]'));
   if(await page.locator('.calendar-days button:not([disabled])').count()===0){await page.locator('.calendar-controls button').last().click();await page.waitForFunction(()=>!document.querySelector('.native-calendar[aria-busy="true"]'));}

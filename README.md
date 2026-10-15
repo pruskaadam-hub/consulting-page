@@ -108,7 +108,7 @@ nastaveného `prefers-reduced-motion`. Malé nadpisy nad hlavními jsou odstran�
 
 ## Nasazení a prostředí
 
-Workflow `.github/workflows/pages.yml` publikuje sestavený `dist/` při pushi do
+Workflow `.github/workflows/pages.yml` nejprve nasadí Supabase backend a pak publikuje sestavený `dist/` při pushi do
 `main`. Pages Source musí být **GitHub Actions**. Vývojové větve se automaticky
 nepublikují. Před přepnutím této nové verze ověřte Cal.com podle bodů výše.
 

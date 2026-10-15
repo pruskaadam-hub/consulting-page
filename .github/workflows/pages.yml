@@ -13,7 +13,13 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  backend:
+    uses: ./.github/workflows/backend.yml
+    secrets:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+
   build:
+    needs: backend
     runs-on: ubuntu-24.04
     env:
       VITE_CAL_USERNAME: adam-pruska
@@ -22,7 +28,7 @@ jobs:
       VITE_CAL_PACKAGE_SLUG: soukroma-konzultace
       VITE_SUPABASE_URL: https://lsofzsartjesgwetcpzw.supabase.co
       VITE_SUPABASE_PUBLISHABLE_KEY: ${{ vars.VITE_SUPABASE_PUBLISHABLE_KEY }}
-      VITE_ENABLE_EVENTS: ${{ vars.VITE_ENABLE_EVENTS || 'false' }}
+      VITE_ENABLE_EVENTS: 'true'
       VITE_GA4_MEASUREMENT_ID: ${{ vars.VITE_GA4_MEASUREMENT_ID }}
     steps:
       - name: Check out source

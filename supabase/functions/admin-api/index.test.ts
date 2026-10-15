@@ -62,6 +62,65 @@ const mailMessage = {
   subject: "Fixture only",
   text: "This message must never reach a real provider.",
 };
+Deno.test("consented public events use a server HMAC bucket and the database enforces acceptance or rate limiting", async () => {
+  const names = [
+    "EVENTS_HMAC_SECRET",
+    "SUPABASE_URL",
+    "SUPABASE_SERVICE_ROLE_KEY",
+  ];
+  const before = names.map((name) => Deno.env.get(name));
+  Deno.env.set("EVENTS_HMAC_SECRET", "fixture-events-secret");
+  Deno.env.set("SUPABASE_URL", "https://project.supabase.co");
+  Deno.env.set("SUPABASE_SERVICE_ROLE_KEY", "fixture-service-key");
+  const original = globalThis.fetch;
+  let accepted = true, calls = 0;
+  globalThis.fetch = (input, init) => {
+    calls++;
+    assert(String(input).endsWith("/rpc/accept_event"));
+    const body = JSON.parse(String(init?.body));
+    assert(/^[a-f0-9]{64}$/.test(body.p_bucket));
+    assert(body.p_event.name === "consultation_click");
+    assert(
+      body.p_event.service === "intro" && body.p_event.placement === "hero",
+    );
+    assert(!JSON.stringify(body).includes("private@example.test"));
+    assert(!JSON.stringify(body).includes("203.0.113.1"));
+    return Promise.resolve(Response.json(accepted));
+  };
+  try {
+    for (accepted of [true, false]) {
+      const response = await handle(
+        new Request(url + "/events", {
+          method: "POST",
+          headers: {
+            Origin: "https://adampruska.cz",
+            "X-Forwarded-For": "203.0.113.1",
+          },
+          body: JSON.stringify({
+            id: mailMessage.id,
+            session_id: mailMessage.id,
+            consent: true,
+            name: "consultation_click",
+            language: "cs",
+            path: "/",
+            service: "intro",
+            placement: "hero",
+            email: "private@example.test",
+          }),
+        }),
+      );
+      assert(response.status === (accepted ? 202 : 429));
+      assert((await response.json()).accepted === accepted);
+    }
+    assert(calls === 2);
+  } finally {
+    globalThis.fetch = original;
+    names.forEach((name, index) => {
+      if (before[index] === undefined) Deno.env.delete(name);
+      else Deno.env.set(name, before[index]!);
+    });
+  }
+});
 Deno.test("iCloud receipt and HTTPS sending are configured independently and status never exposes secrets", () =>
   withMailFixture(() => {
     assert(mailStatus().mail);

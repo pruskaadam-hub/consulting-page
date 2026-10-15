@@ -68,7 +68,7 @@ nastavení svého účtu a informování klientů.
 
 ## 4. Nasazení a ověření
 
-Změny backendu na `main` spouštějí workflow **Deploy Supabase backend**.
+Publikování webu z `main` nejprve volá workflow **Deploy Supabase backend**.
 Stejné workflow lze spustit ručně v Actions. Používá existující GitHub Secret
 `SUPABASE_ACCESS_TOKEN`. Nastavení schránky a Resend patří do Supabase Secrets,
 ne do GitHub proměnných pro veřejné sestavení a ne do chatu.
