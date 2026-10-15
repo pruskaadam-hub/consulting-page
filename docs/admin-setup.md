@@ -88,8 +88,11 @@ oprávnění a nasadí funkci `admin-api` do uvedeného projektu. Při kolizi
 se stávajícími tabulkami se zastaví. Nevypisuje klíče ani odpovědi s tajnými
 údaji. Verzi migrace eviduje v chráněné tabulce.
 
-Alternativně lze SQL z `supabase/migrations/202610150001_admin.sql` spustit
-v Supabase SQL Editoru. Funkce se nasadí oficiálním CLI:
+Alternativně lze nové schéma vytvořit spuštěním migrací
+`202610150001_admin.sql` a poté `202610150002_stripe_modes.sql` ze složky
+`supabase/migrations` v Supabase SQL Editoru. Na existujícím schématu se
+spouštějí pouze dosud neaplikované migrace, každá v transakci. Automatický
+deploy tento výběr provádí podle tabulky verzí. Funkce se nasadí oficiálním CLI:
 
 ```sh
 npx supabase@2.121.0 functions deploy admin-api --project-ref lsofzsartjesgwetcpzw --no-verify-jwt --use-api
@@ -161,7 +164,8 @@ Přijetí zprávy SMTP serverem nepotvrzuje doručení adresátovi.
 
 První propojení proveďte v testovacím režimu. Veřejný `pk_test_…` klíč není
 pro hostovaný Checkout potřeba. Potřebujeme serverový klíč v Supabase Secrets
-a podpisový klíč webhooku.
+a podpisový klíč webhooku. Majitel potvrdil uložení testovacího
+`STRIPE_SECRET_KEY`; webhook a zkušební platba se ověřují samostatně.
 
 Endpoint webhooku:
 `https://lsofzsartjesgwetcpzw.supabase.co/functions/v1/admin-api/stripe-webhook`
@@ -175,11 +179,22 @@ Odebírané události:
 * `invoice.payment_failed`
 * `charge.refunded`
 
-API je připnuté na `2025-06-30.basil`; stejnou verzi nastavte při tvorbě
-webhook destination. Podpis se ověřuje nad původními bajty, s tolerancí pěti
+Ve Stripe otevřete v testovacím režimu Workbench → Webhooks → Add destination.
+Zvolte události vlastního účtu, plný objekt události (snapshot) a Webhook
+endpoint. API je připnuté na `2025-06-30.basil`; stejnou verzi nastavte při tvorbě
+webhook destination. Signing secret konkrétního endpointu uložte v Supabase
+Edge Functions → Secrets jako `STRIPE_WEBHOOK_SECRET`. Klíč do chatu nepatří.
+Podpis se ověřuje nad původními bajty, s tolerancí pěti
 minut. Opakované platební události jsou idempotentní; nesouhlas částky nebo
 měny neoznačí objednávku uhrazenou. Pozdější starší oznámení nepřepíše novější
 stav faktury. Vrácené částky snižují evidované čisté příjmy.
+
+Režim objednávky se rezervuje podle serverového klíče ještě před vytvořením
+Checkoutu. Podepsané platby, faktury a refundace musí souhlasit s tímto
+režimem. Testovací objednávky a faktury mají v administraci označení a neovlivní
+příjmy ani počet čekajících skutečných objednávek. Při přechodu do ostrého
+provozu nastavte ostrý serverový klíč i podpisový klíč samostatného ostrého
+webhooku a vytvořte nové objednávky. Testovací objednávku nelze převést na ostrou.
 
 Správce vytvoří klienta a objednávku, poté platební odkaz Stripe. Cena pochází
 z databáze. Celkové ceny jsou včetně případné daně (`tax_behavior=inclusive`).

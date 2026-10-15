@@ -1015,6 +1015,12 @@ function Workspace({
             {section === "orders" && (
               <>
                 <Panel title="Objednávky a úhrady">
+                  {integration?.stripe_mode === "test" && integration.payments && (
+                    <p className="admin-notice" role="status">
+                      Stripe je v testovacím režimu. Platební odkazy nepřijímají
+                      skutečné peníze. Testovací úhrady se nezapočítávají do příjmů.
+                    </p>
+                  )}
                   <p>
                     Posledních 100 objednávek. Ruční označení úhrady použij až
                     po ověření přijaté platby.
@@ -1059,6 +1065,7 @@ function Workspace({
                               <td>{money(o.amount_minor)}</td>
                               <td>
                                 <Status value={o.status} />
+                                {o.is_test && <span className="admin-badge">Testovací platba</span>}
                                 <small>
                                   {o.source === "stripe"
                                     ? o.status === "paid"
@@ -1214,6 +1221,7 @@ function Workspace({
                     <div className="admin-list-row" key={item.id}>
                       <div>
                         <strong>{item.number || item.id}</strong>
+                        {item.is_test && <span className="admin-badge">Testovací faktura</span>}
                         <span>
                           {money(item.amount_minor)} · {item.status}
                         </span>

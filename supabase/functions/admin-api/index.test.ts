@@ -1,5 +1,6 @@
 import { handle } from "./index.ts";
 import { limitedText } from "../_shared/http.ts";
+import { hmacHex } from "../_shared/contracts.mjs";
 import { mailStatus, sendMail } from "../_shared/mail.ts";
 import {
   analyticsConfigured,
@@ -523,6 +524,8 @@ Deno.test(
         return Promise.resolve(Response.json(true));
       }
       if (target.includes("/rpc/begin_checkout")) {
+        const reservation = JSON.parse(String(init?.body));
+        assert(reservation.p_is_test === true);
         return Promise.resolve(Response.json({ id }));
       }
       if (target.includes("/rest/v1/orders")) {
@@ -549,6 +552,7 @@ Deno.test(
           body: JSON.stringify({
             order_id: id,
             amount_minor: 1,
+            is_test: false,
             success_url: "https://other.example/",
           }),
         }),
@@ -561,3 +565,94 @@ Deno.test(
     }
   },
 );
+
+Deno.test("signed Stripe snapshots forward test/live modes and reject inconsistent payloads", async () => {
+  Deno.env.set("SUPABASE_URL", "https://project.supabase.co");
+  Deno.env.set("SUPABASE_SERVICE_ROLE_KEY", "fixture-service-only");
+  Deno.env.set("STRIPE_WEBHOOK_SECRET", "fixture-signing-only");
+  const original = globalThis.fetch;
+  const calls: { target: string; body: Record<string, unknown> }[] = [];
+  globalThis.fetch = (input, init) => {
+    const target = String(input);
+    assert(target.startsWith("https://project.supabase.co/rest/v1/rpc/"));
+    calls.push({ target, body: JSON.parse(String(init?.body)) });
+    return Promise.resolve(Response.json(true));
+  };
+  async function deliver(event: Record<string, unknown>) {
+    const raw = JSON.stringify(event);
+    const timestamp = Math.floor(Date.now() / 1000);
+    const signature = await hmacHex(
+      "fixture-signing-only",
+      `${timestamp}.${raw}`,
+    );
+    const response = await handle(
+      new Request(url + "/stripe-webhook", {
+        method: "POST",
+        headers: { "stripe-signature": `t=${timestamp},v1=${signature}` },
+        body: raw,
+      }),
+    );
+    await response.body?.cancel();
+    return response.status;
+  }
+  try {
+    for (const live of [false, true]) {
+      for (
+        const [type, rpc] of [
+          ["checkout.session.completed", "apply_payment"],
+          ["checkout.session.async_payment_succeeded", "apply_payment"],
+          ["invoice.finalized", "apply_stripe_invoice"],
+          ["invoice.paid", "apply_stripe_invoice"],
+          ["invoice.payment_failed", "apply_stripe_invoice"],
+          ["charge.refunded", "apply_refund"],
+        ]
+      ) {
+        const object = {
+          id: "provider-fixture",
+          livemode: live,
+          payment_status: "paid",
+          metadata: { order_id: "11111111-1111-4111-8111-111111111111" },
+          amount_total: 180000,
+          total: 180000,
+          amount_refunded: 10000,
+          currency: "czk",
+          status: "paid",
+        };
+        assert(
+          await deliver({
+            id: "evt_fixture",
+            type,
+            livemode: live,
+            created: 1,
+            data: { object },
+          }) === 200,
+        );
+        const call = calls.at(-1)!;
+        assert(call.target.endsWith("/" + rpc));
+        assert(call.body.p_is_test === !live);
+      }
+    }
+    const count = calls.length;
+    assert(
+      await deliver({
+        id: "evt_bad",
+        type: "checkout.session.completed",
+        livemode: false,
+        data: { object: { livemode: true, payment_status: "paid" } },
+      }) === 400,
+    );
+    assert(
+      await deliver({
+        id: "evt_missing",
+        type: "checkout.session.completed",
+        data: { object: { payment_status: "paid" } },
+      }) === 400,
+    );
+    assert(
+      calls.length === count,
+      "Invalid modes must never reach the database",
+    );
+  } finally {
+    globalThis.fetch = original;
+  }
+});

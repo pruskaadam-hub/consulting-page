@@ -14,6 +14,7 @@ export type Order = {
   amount_minor: number;
   status: string;
   source: string;
+  is_test: boolean;
   created_at: string;
   clients: { name: string; email: string };
 };
@@ -64,6 +65,7 @@ export type Outbox = {
 };
 export type StripeInvoice = {
   id: string;
+  is_test: boolean;
   number: string;
   status: string;
   amount_minor: number;

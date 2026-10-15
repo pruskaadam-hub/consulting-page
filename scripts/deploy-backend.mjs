@@ -58,6 +58,22 @@ if (!existing[0]?.marker) {
     throw new Error("Unknown backend version. Migration review required.");
   console.log("Admin schema version already installed.");
 }
+for (const [version, filename] of [
+  ["202610150002", "202610150002_stripe_modes.sql"],
+]) {
+  const applied = await query(
+    `select version from public.admin_backend_versions where version='${version}'`,
+  );
+  if (applied.length) {
+    console.log(`Backend migration ${version} already installed.`);
+    continue;
+  }
+  const sql = await readFile(
+    new URL(`../supabase/migrations/${filename}`, import.meta.url), "utf8",
+  );
+  await query(`begin;\n${sql}\ncommit;`);
+  console.log(`Backend migration ${version} installed.`);
+}
 const appointment = await readFile(
   new URL("../supabase/appoint-owner.sql", import.meta.url),
   "utf8",

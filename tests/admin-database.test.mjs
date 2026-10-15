@@ -5,7 +5,7 @@ import { PGlite } from "@electric-sql/pglite";
 const owner = "11111111-1111-4111-8111-111111111111",
   outsider = "22222222-2222-4222-8222-222222222222";
 const pg = new PGlite();
-let client, order;
+let client, order, paymentOrder;
 before(async () => {
   await pg.exec(`create role anon;create role authenticated;create role service_role bypassrls;create schema auth;create table auth.users(id uuid primary key,email text);
  create function auth.jwt() returns jsonb language sql stable as $$select coalesce(nullif(current_setting('request.jwt.claims',true),''),'{}')::jsonb$$;
@@ -18,6 +18,7 @@ before(async () => {
       "utf8",
     ),
   );
+  await pg.exec(await readFile(new URL("../supabase/migrations/202610150002_stripe_modes.sql", import.meta.url), "utf8"));
   await pg.exec(
     await readFile(
       new URL("../supabase/appoint-owner.sql", import.meta.url),
@@ -142,11 +143,15 @@ test("owner creates actual records; invoices require billing details and are imm
   );
 });
 test("only service role can apply signed payments; replay and wrong amounts cannot alter revenue", async () => {
+  await as("authenticated", owner, "aal2", async () => {
+    paymentOrder = (await pg.query("insert into public.orders(client_id,description,amount_minor) values($1,'Live payment',180000) returning id", [client])).rows[0].id;
+    await pg.query("select public.begin_checkout($1,false)", [paymentOrder]);
+  });
   await assert.rejects(
     as("authenticated", owner, "aal2", () =>
       pg.query(
-        "select public.apply_payment('event-1',$1,180000,'czk','session-1')",
-        [order],
+        "select public.apply_payment('event-1',$1,180000,'czk','session-1',false)",
+        [paymentOrder],
       ),
     ),
     /permission denied/,
@@ -154,8 +159,8 @@ test("only service role can apply signed payments; replay and wrong amounts cann
   await assert.rejects(
     as("service_role", null, null, () =>
       pg.query(
-        "select public.apply_payment('event-1',$1,1,'czk','session-1')",
-        [order],
+        "select public.apply_payment('event-1',$1,1,'czk','session-1',false)",
+        [paymentOrder],
       ),
     ),
     /Payment mismatch/,
@@ -164,8 +169,8 @@ test("only service role can apply signed payments; replay and wrong amounts cann
     assert.equal(
       (
         await pg.query(
-          "select public.apply_payment('event-1',$1,180000,'czk','session-1') as applied",
-          [order],
+          "select public.apply_payment('event-1',$1,180000,'czk','session-1',false) as applied",
+          [paymentOrder],
         )
       ).rows[0].applied,
       true,
@@ -173,8 +178,8 @@ test("only service role can apply signed payments; replay and wrong amounts cann
     assert.equal(
       (
         await pg.query(
-          "select public.apply_payment('event-1',$1,180000,'czk','session-1') as applied",
-          [order],
+          "select public.apply_payment('event-1',$1,180000,'czk','session-1',false) as applied",
+          [paymentOrder],
         )
       ).rows[0].applied,
       false,
@@ -245,7 +250,7 @@ test("Stripe order reserves its own invoice flow and verified refunds reduce net
   let stripeOrder;
   await as("authenticated", owner, "aal2", async () => {
     await assert.rejects(
-      pg.query("select public.begin_checkout($1)", [order]),
+      pg.query("select public.begin_checkout($1,false)", [order]),
       /Order is not payable|local invoice/,
     );
   });
@@ -257,7 +262,7 @@ test("Stripe order reserves its own invoice flow and verified refunds reduce net
         [client],
       )
     ).rows[0].id;
-    await pg.query("select public.begin_checkout($1)", [stripeOrder]);
+    await pg.query("select public.begin_checkout($1,false)", [stripeOrder]);
   });
   await assert.rejects(
     as("authenticated", owner, "aal2", () =>
@@ -267,10 +272,10 @@ test("Stripe order reserves its own invoice flow and verified refunds reduce net
   );
   await as("service_role", null, null, async () => {
     await pg.query(
-      "select public.apply_payment('stripe-order-paid',$1,450000,'czk','session-2')",
+      "select public.apply_payment('stripe-order-paid',$1,450000,'czk','session-2',false)",
       [stripeOrder],
     );
-    await pg.query("select public.apply_refund('refund-partial',$1,100000)", [
+    await pg.query("select public.apply_refund('refund-partial',$1,100000,false)", [
       stripeOrder,
     ]);
     const base = {
@@ -282,10 +287,10 @@ test("Stripe order reserves its own invoice flow and verified refunds reduce net
       tax_minor: 0,
       currency: "czk",
     };
-    await pg.query("select public.apply_stripe_invoice($1,20)", [
+    await pg.query("select public.apply_stripe_invoice($1,20,false)", [
       JSON.stringify(base),
     ]);
-    await pg.query("select public.apply_stripe_invoice($1,10)", [
+    await pg.query("select public.apply_stripe_invoice($1,10,false)", [
       JSON.stringify({ ...base, status: "open" }),
     ]);
   });
@@ -305,10 +310,10 @@ test("Stripe order reserves its own invoice flow and verified refunds reduce net
     );
   });
   await as("service_role", null, null, async () => {
-    await pg.query("select public.apply_refund('refund-full',$1,450000)", [
+    await pg.query("select public.apply_refund('refund-full',$1,450000,false)", [
       stripeOrder,
     ]);
-    await pg.query("select public.apply_refund('refund-old',$1,100000)", [
+    await pg.query("select public.apply_refund('refund-old',$1,100000,false)", [
       stripeOrder,
     ]);
   });
@@ -319,4 +324,50 @@ test("Stripe order reserves its own invoice flow and verified refunds reduce net
       180000,
     ),
   );
+});
+
+test("test Checkout stays separate from live totals and rejects mode changes and crossed webhooks", async () => {
+  let testOrder;
+  const summary = () => pg.query("select public.business_summary() as data");
+  const before = (await as("authenticated", owner, "aal2", summary)).rows[0].data;
+  await as("authenticated", owner, "aal2", async () => {
+    testOrder = (await pg.query("insert into public.orders(client_id,description,amount_minor) values($1,'Test Checkout',150000) returning id", [client])).rows[0].id;
+    const reserved = (await pg.query("select (public.begin_checkout($1,true)).*", [testOrder])).rows[0];
+    assert.equal(reserved.is_test, true);
+    assert.equal(reserved.source, "stripe");
+    await pg.query("select public.begin_checkout($1,true)", [testOrder]);
+    assert.deepEqual((await summary()).rows[0].data, before);
+  });
+  await assert.rejects(as("authenticated", owner, "aal2", () => pg.query("select public.begin_checkout($1,false)", [testOrder])), /mode mismatch/);
+  await assert.rejects(as("authenticated", owner, "aal2", () => pg.query("select public.issue_invoice($1,0)", [testOrder])), /Use the Stripe invoice/);
+  await assert.rejects(as("service_role", null, null, () => pg.query("select public.apply_payment('test-paid',$1,150000,'czk','cs_test_fixture',false)", [testOrder])), /Payment mismatch/);
+  await as("service_role", null, null, async () => {
+    assert.equal((await pg.query("select public.apply_payment('test-paid',$1,150000,'czk','cs_test_fixture',true) as applied", [testOrder])).rows[0].applied, true);
+    assert.equal((await pg.query("select public.apply_payment('test-paid',$1,150000,'czk','cs_test_fixture',true) as applied", [testOrder])).rows[0].applied, false);
+  });
+  const invoice = JSON.stringify({id:"in_test_fixture",order_id:testOrder,status:"paid",amount_minor:150000,tax_minor:0,currency:"czk"});
+  await assert.rejects(as("service_role", null, null, () => pg.query("select public.apply_stripe_invoice($1,30,false)", [invoice])), /Invoice mode mismatch/);
+  await assert.rejects(as("service_role", null, null, () => pg.query("select public.apply_refund('test-refund',$1,150000,false)", [testOrder])), /Refund mismatch/);
+  await as("service_role", null, null, async () => {
+    await pg.query("select public.apply_stripe_invoice($1,30,true)", [invoice]);
+    await pg.query("select public.apply_refund('test-refund',$1,150000,true)", [testOrder]);
+  });
+  await as("authenticated", owner, "aal2", async () => {
+    assert.equal((await pg.query("select is_test from public.stripe_invoices where id='in_test_fixture'")).rows[0].is_test, true);
+    assert.equal((await pg.query("select status from public.orders where id=$1", [testOrder])).rows[0].status, "refunded");
+    assert.deepEqual((await summary()).rows[0].data, before);
+  });
+  await assert.rejects(as("service_role", null, null, () => pg.query("select public.apply_payment('cross-live',$1,180000,'czk','cs_test_wrong',true)", [paymentOrder])), /Payment mismatch/);
+});
+
+test("mode-aware webhook RPCs remain service-only and legacy signatures are removed", async () => {
+  for (const signature of ["begin_checkout(uuid)","apply_payment(text,uuid,bigint,text,text)","apply_refund(text,uuid,bigint)","apply_stripe_invoice(jsonb,bigint)"]) {
+    assert.equal((await pg.query("select to_regprocedure($1)::text as fn", ["public."+signature])).rows[0].fn, null);
+  }
+  for (const role of ["anon", "authenticated"]) {
+    for (const sql of ["select public.apply_payment('forbidden',null,1,'czk','cs_fixture',true)", "select public.apply_refund('forbidden',null,1,true)", "select public.apply_stripe_invoice('{}',1,true)"]) {
+      await assert.rejects(as(role, owner, "aal2", () => pg.query(sql)), /permission denied/);
+    }
+  }
+  await assert.rejects(as("authenticated", outsider, "aal2", () => pg.query("select public.begin_checkout($1,true)", [order])), /Admin \+ MFA required/);
 });

@@ -213,7 +213,10 @@ const { HtmlValidate } = require("html-validate");
             tasks,
             bookings: [],
             invoices: [],
-            stripe_invoices: [],
+            stripe_invoices: orders.filter((o) => o.is_test).map((o) => ({
+              id: "in_test_fixture", number: "TEST-1", status: "paid",
+              amount_minor: o.amount_minor, is_test: true,
+            })),
             mail_outbox: [],
           }[name];
           assert.ok(rows, `unexpected table ${name}`);
@@ -243,8 +246,8 @@ const { HtmlValidate } = require("html-validate");
             mail_send: mailSend,
             mail_provider: "icloud",
             analytics: false,
-            payments: false,
-            invoicing: false,
+            payments: orders.some((o) => o.is_test),
+            invoicing: orders.some((o) => o.is_test),
             tax: false,
             stripe_mode: "test",
             bookings: false,
@@ -379,6 +382,16 @@ const { HtmlValidate } = require("html-validate");
       .filter({ hasText: "Objednávka byla vytvořena." })
       .waitFor();
     assert.equal(orders.length, 1);
+    Object.assign(orders[0], {source: "stripe", is_test: true, status: "paid"});
+    await page.reload();
+    await page.getByRole("navigation", {name: "Administrace"})
+      .getByRole("button", {name: "Objednávky", exact: true}).click();
+    await page.getByText("Stripe je v testovacím režimu.", {exact: false}).waitFor();
+    await page.getByText("Testovací platba", {exact: true}).waitFor();
+    assert.equal(await page.getByRole("button", {name: "Označit uhrazeno", exact: true}).count(), 0);
+    await page.getByRole("navigation", {name: "Administrace"})
+      .getByRole("button", {name: "Faktury", exact: true}).click();
+    await page.getByText("Testovací faktura", {exact: true}).waitFor();
     await page
       .getByRole("navigation", { name: "Administrace" })
       .getByRole("button", { name: "Pošta", exact: true })

@@ -3,8 +3,8 @@ import {
   eventInput,
   hmacHex,
   sameSignature,
-  verifyStripe,
   UUID,
+  verifyStripe,
 } from "../_shared/contracts.mjs";
 import { config, requireAdmin, serviceClient } from "../_shared/auth.ts";
 import { analyticsConfigured, analyticsReport } from "../_shared/google.ts";
@@ -57,10 +57,18 @@ async function route(req: Request) {
         req.headers.get("stripe-signature"),
         config("STRIPE_WEBHOOK_SECRET"),
       ))
-    )
+    ) {
       throw new ApiError("Neplatný podpis.", 401);
+    }
     const event = JSON.parse(raw),
       session = event.data?.object;
+    if (
+      typeof event.livemode !== "boolean" ||
+      (session && session.livemode !== event.livemode)
+    ) {
+      throw new ApiError("Neplatný režim Stripe události.");
+    }
+    const isTest = !event.livemode;
     if (
       [
         "checkout.session.completed",
@@ -68,17 +76,20 @@ async function route(req: Request) {
       ].includes(event.type) &&
       session?.payment_status === "paid"
     ) {
-      if (!UUID.test(session.metadata?.order_id || ""))
+      if (!UUID.test(session.metadata?.order_id || "")) {
         throw new ApiError("Chybí objednávka.");
+      }
       const result = await serviceClient().rpc("apply_payment", {
         p_event: event.id,
         p_order: session.metadata.order_id,
         p_amount: session.amount_total,
         p_currency: session.currency,
         p_provider: session.id,
+        p_is_test: isTest,
       });
-      if (result.error)
+      if (result.error) {
         throw new ApiError("Platbu se nepodařilo přiřadit.", 409);
+      }
     }
     if (
       ["invoice.finalized", "invoice.paid", "invoice.payment_failed"].includes(
@@ -90,11 +101,11 @@ async function route(req: Request) {
         try {
           const u = new URL(value || "");
           return u.protocol === "https:" &&
-            [
-              "invoice.stripe.com",
-              "pay.stripe.com",
-              "files.stripe.com",
-            ].includes(u.hostname)
+              [
+                "invoice.stripe.com",
+                "pay.stripe.com",
+                "files.stripe.com",
+              ].includes(u.hostname)
             ? u.href
             : null;
         } catch {
@@ -108,18 +119,19 @@ async function route(req: Request) {
           number: session.number,
           status: session.status,
           amount_minor: session.total,
-          tax_minor:
-            typeof session.total_excluding_tax === "number"
-              ? session.total - session.total_excluding_tax
-              : null,
+          tax_minor: typeof session.total_excluding_tax === "number"
+            ? session.total - session.total_excluding_tax
+            : null,
           currency: session.currency,
           hosted_url: safeUrl(session.hosted_invoice_url),
           pdf_url: safeUrl(session.invoice_pdf),
         },
         p_created: event.created,
+        p_is_test: isTest,
       });
-      if (result.error)
+      if (result.error) {
         throw new ApiError("Stripe fakturu se nepodařilo uložit.", 409);
+      }
     }
     if (
       event.type === "charge.refunded" &&
@@ -129,9 +141,11 @@ async function route(req: Request) {
         p_event: event.id,
         p_order: session.metadata.order_id,
         p_refunded: session.amount_refunded,
+        p_is_test: isTest,
       });
-      if (result.error)
+      if (result.error) {
         throw new ApiError("Vrácení platby se nepodařilo přiřadit.", 409);
+      }
     }
     return json({ received: true });
   }
@@ -146,8 +160,9 @@ async function route(req: Request) {
         signature,
         await hmacHex(config("CAL_WEBHOOK_SECRET"), raw),
       )
-    )
+    ) {
       throw new ApiError("Neplatný podpis.", 401);
+    }
     const event = JSON.parse(raw),
       p = event.payload;
     if (
@@ -165,22 +180,22 @@ async function route(req: Request) {
         p_email: p.attendees?.[0]?.email || "",
         p_title: p.title || "Konzultace",
         p_starts: p.startTime,
-        p_status:
-          event.triggerEvent === "BOOKING_CANCELLED"
-            ? "cancelled"
-            : event.triggerEvent === "BOOKING_REQUESTED" ||
-                p.requiresConfirmation
-              ? "pending"
-              : "accepted",
+        p_status: event.triggerEvent === "BOOKING_CANCELLED"
+          ? "cancelled"
+          : event.triggerEvent === "BOOKING_REQUESTED" ||
+              p.requiresConfirmation
+          ? "pending"
+          : "accepted",
         p_event_time: event.createdAt || new Date().toISOString(),
       });
-      if (result.error)
+      if (result.error) {
         throw new ApiError("Rezervaci se nepodařilo uložit.", 502);
+      }
     }
     return json({ received: true });
   }
   const { client } = await requireAdmin(req);
-  if (req.method === "GET" && path === "/status")
+  if (req.method === "GET" && path === "/status") {
     return json({
       ...mailStatus(),
       analytics: analyticsConfigured(),
@@ -199,12 +214,15 @@ async function route(req: Request) {
       bookings: Boolean(config("CAL_WEBHOOK_SECRET", false)),
       events: Boolean(config("EVENTS_HMAC_SECRET", false)),
     });
-  if (req.method === "GET" && path === "/analytics")
+  }
+  if (req.method === "GET" && path === "/analytics") {
     return json(await analyticsReport());
+  }
   if (req.method === "GET" && path === "/mail") {
     const rawUid = url.searchParams.get("uid");
-    if (rawUid && !/^[1-9]\d{0,9}$/.test(rawUid))
+    if (rawUid && !/^[1-9]\d{0,9}$/.test(rawUid)) {
       throw new ApiError("Neplatná zpráva.");
+    }
     return json(await readMail(rawUid ? Number(rawUid) : undefined));
   }
   if (req.method === "POST" && path === "/mail") {
@@ -212,23 +230,36 @@ async function route(req: Request) {
   }
   if (req.method === "POST" && path === "/checkout") {
     const input = await payload(req, 1000);
-    if (!UUID.test(input.order_id || ""))
+    if (!UUID.test(input.order_id || "")) {
       throw new ApiError("Neplatná objednávka.");
+    }
     const order = await client
       .from("orders")
       .select("*,clients(email)")
       .eq("id", input.order_id)
       .single();
-    if (order.error || !order.data || order.data.status !== "pending")
+    if (order.error || !order.data || order.data.status !== "pending") {
       throw new ApiError("Objednávka není připravená k úhradě.", 409);
+    }
     const o = order.data;
     const stripeKey = config("STRIPE_SECRET_KEY");
-    const reserved = await client.rpc("begin_checkout", { p_order: o.id });
-    if (reserved.error)
+    if (!/^sk_(test|live)_/.test(stripeKey)) {
       throw new ApiError(
-        "Objednávka už má místní fakturu nebo není připravená pro Stripe.",
+        "Zkontroluj serverový klíč Stripe v Supabase Secrets.",
+        503,
+      );
+    }
+    const isTest = stripeKey.startsWith("sk_test_");
+    const reserved = await client.rpc("begin_checkout", {
+      p_order: o.id,
+      p_is_test: isTest,
+    });
+    if (reserved.error) {
+      throw new ApiError(
+        "Objednávka už má místní fakturu, jiný režim Stripe nebo není připravená k úhradě. Po změně režimu vytvoř novou objednávku.",
         409,
       );
+    }
     const body = new URLSearchParams({
       mode: "payment",
       success_url: new URL("?payment=received", site()).href,
@@ -237,8 +268,9 @@ async function route(req: Request) {
       customer_creation: "always",
       billing_address_collection: "required",
       "tax_id_collection[enabled]": "true",
-      "automatic_tax[enabled]":
-        config("STRIPE_AUTOMATIC_TAX", false) === "true" ? "true" : "false",
+      "automatic_tax[enabled]": config("STRIPE_AUTOMATIC_TAX", false) === "true"
+        ? "true"
+        : "false",
       "invoice_creation[enabled]": "true",
       "invoice_creation[invoice_data][metadata][order_id]": o.id,
       "metadata[order_id]": o.id,
@@ -251,8 +283,9 @@ async function route(req: Request) {
     });
     const taxCode = config("STRIPE_PRODUCT_TAX_CODE", false);
     if (taxCode) {
-      if (!/^txcd_\d{8}$/.test(taxCode))
+      if (!/^txcd_\d{8}$/.test(taxCode)) {
         throw new ApiError("Zkontroluj daňový kód služby ve Stripe.", 503);
+      }
       body.set("line_items[0][price_data][product_data][tax_code]", taxCode);
     }
     const response = await fetch(
@@ -268,14 +301,16 @@ async function route(req: Request) {
         body,
       },
     );
-    if (!response.ok)
+    if (!response.ok) {
       throw new ApiError(
         "Platební odkaz se nepodařilo vytvořit. Zkontroluj Stripe před opakováním.",
         502,
       );
+    }
     const result = await response.json();
-    if (!result.url?.startsWith("https://checkout.stripe.com/"))
+    if (!result.url?.startsWith("https://checkout.stripe.com/")) {
       throw new ApiError("Platební odkaz se nepodařilo ověřit.", 502);
+    }
     return json({ url: result.url });
   }
   throw new ApiError("Tato funkce není dostupná.", 404);
@@ -285,24 +320,25 @@ export async function handle(req: Request) {
   const allowed = (config("ALLOWED_ORIGINS", false) || site().origin)
     .split(",")
     .map((s) => s.trim());
-  if (origin && !allowed.includes(origin))
+  if (origin && !allowed.includes(origin)) {
     return json({ error: "Nepovolený původ požadavku." }, 403);
+  }
   let response: Response;
   if (req.method === "OPTIONS") response = new Response(null, { status: 204 });
-  else
+  else {
     try {
       response = await route(req);
     } catch (error) {
       response = json(
         {
-          error:
-            error instanceof ApiError
-              ? error.message
-              : "Operace se nezdařila. Zkontroluj připojení služby.",
+          error: error instanceof ApiError
+            ? error.message
+            : "Operace se nezdařila. Zkontroluj připojení služby.",
         },
         error instanceof ApiError ? error.status : 502,
       );
     }
+  }
   if (origin) {
     response.headers.set("Access-Control-Allow-Origin", origin);
     response.headers.set("Vary", "Origin");
