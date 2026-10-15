@@ -135,6 +135,8 @@ PostgreSQL/RLS testy přes PGlite. Nikdy netestujte odesláním skutečné zprá
 nebo vytvořením skutečné platby bez výslovného zadání vlastníka.
 
 `npm run deploy:backend` potřebuje `SUPABASE_ACCESS_TOKEN` v bezpečném prostředí.
+Backend lze nasadit také ručně přes workflow **Deploy Supabase backend**;
+token patří do stejnojmenného repository secret v GitHub Actions.
 Web obsahuje veřejný publishable klíč Supabase dodaný vlastníkem. GitHub Actions
 Variable `VITE_SUPABASE_PUBLISHABLE_KEY` jej může přepsat. Serverové klíče
 a heslo pošty patří výhradně do Supabase Secrets.

@@ -44,6 +44,30 @@ také veřejné. Nikdy do nich nevkládejte serverové klíče ani heslo schrán
 
 ## 2. Nasazení backendu
 
+### Přes GitHub Actions
+
+Tato cesta nevyžaduje propojení Personal Vaultu s prostředím Codexu.
+
+1. Nejprve vytvořte účet `pruskaadam@me.com` v Supabase Authentication podle
+   následující sekce. Nasazovací skript mu pak přidělí oprávnění správce.
+2. V osobním účtu Supabase → Access Tokens vytvořte token. Pokud byl nějaký
+   token zveřejněný v chatu nebo v kódu, zrušte ho a použijte nový.
+3. V repozitáři otevřete **Settings → Secrets and variables → Actions →
+   New repository secret**. Název je `SUPABASE_ACCESS_TOKEN`; hodnotu vložte
+   pouze do chráněného pole Secret.
+4. Otevřete **Actions → Deploy Supabase backend → Run workflow** a vyberte
+   větev `main`. Workflow běží jen ručně a jen z této větve.
+5. Ověřte úspěch kroku **Deploy database and Edge Function** a zprávu
+   **Owner account appointed.** Pokud účet při prvním nasazení neexistoval,
+   vytvořte ho a workflow spusťte znovu.
+
+Workflow nejprve prověří databázová oprávnění a serverové handlery bez
+vytváření skutečných plateb nebo zpráv. Token dostane pouze nasazovací krok,
+ne prohlížeč ani veřejné sestavení webu. Samotné nasazení nenastavuje heslo
+správce, hostovaná nastavení Auth ani přístupové údaje externích služeb.
+
+### Z prostředí Codexu
+
 Pro nasazení z Codexu přidejte v bezpečném nastavení prostředí
 `SUPABASE_ACCESS_TOKEN`, vytvořený v osobním účtu Supabase → Access Tokens.
 Nejde o publishable klíč, databázové heslo ani projektový service_role klíč.

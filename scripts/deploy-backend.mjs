@@ -1,4 +1,4 @@
-// Run only with the owner's Supabase management token supplied through secure environment settings.
+// Run only with the owner's Supabase management token supplied through secure settings.
 import { readFile } from "node:fs/promises";
 import { spawnSync } from "node:child_process";
 import path from "node:path";
@@ -6,7 +6,7 @@ const ref = process.env.SUPABASE_PROJECT_REF || "lsofzsartjesgwetcpzw";
 const token = process.env.SUPABASE_ACCESS_TOKEN;
 if (!token) {
   console.error(
-    "Missing SUPABASE_ACCESS_TOKEN. Add it securely in the Codex environment settings, never to source code or chat.",
+    "Missing SUPABASE_ACCESS_TOKEN. Add it to GitHub Actions Secrets or secure Codex environment settings, never to source code or chat.",
   );
   process.exit(1);
 }
