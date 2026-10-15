@@ -52,6 +52,12 @@ do včerejška, takže aktuální návštěvu kontrolujte v Realtime GA4.
 
 ## 3. Stripe Payments a Invoicing
 
+Odloženo na žádost majitele. Aktuálně používáme vlastní faktury, bankovní
+převod a ruční označení úhrady v administraci. Nastavení a postup jsou v
+[admin-setup.md](admin-setup.md#7-fakturační-údaje-údržba-a-testy).
+Backend má výchozí `PAYMENT_MODE=offline` a uložené Stripe klíče ho nezapnou.
+Následující kroky jsou pouze pro případné pozdější zapnutí Stripe.
+
 Nejprve použijte testovací režim. Do Supabase Secrets patří serverový
 `STRIPE_SECRET_KEY` a podpis `STRIPE_WEBHOOK_SECRET` konkrétního webhooku.
 Veřejný `pk_test_…` samotné serverové připojení neaktivuje.

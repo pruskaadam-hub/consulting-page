@@ -85,6 +85,7 @@ const { HtmlValidate } = require("html-validate");
       events = [],
       gaRequests = 0;
     const clients = [],
+      invoices = [],
       orders = [],
       tasks = [];
     const business = {
@@ -204,6 +205,16 @@ const { HtmlValidate } = require("html-validate");
               clients: clients.length,
               bookings: 0,
             });
+          if (name === "rpc/issue_invoice") {
+            const body = req.postDataJSON();
+            assert.equal(body.p_order, orders[0].id);
+            const item = {id: crypto.randomUUID(), number:"202600001", order_id: body.p_order,
+              issue_date:"2026-10-15", due_date:body.p_due_date, supplier: business,
+              recipient: clients[0], description: orders[0].description,
+              amount_minor:150000, net_minor:150000, tax_minor:0, tax_rate:0};
+            invoices.push(item);
+            return ok(item);
+          }
           if (name === "rpc/analytics_summary")
             return ok({ events: [], days: [] });
           if (name === "business_settings") return ok(business);
@@ -212,7 +223,7 @@ const { HtmlValidate } = require("html-validate");
             orders,
             tasks,
             bookings: [],
-            invoices: [],
+            invoices: invoices.map((item) => ({...item, orders:{status: orders.find((order) => order.id === item.order_id)?.status}})),
             stripe_invoices: orders.filter((o) => o.is_test).map((o) => ({
               id: "in_test_fixture", number: "TEST-1", status: "paid",
               amount_minor: o.amount_minor, is_test: true,
@@ -233,6 +244,13 @@ const { HtmlValidate } = require("html-validate");
             });
             return ok(null, 201);
           }
+          if (method === "PATCH") {
+            assert.equal(name, "orders");
+            const row = rows.find((item) => item.id === u.searchParams.get("id")?.replace("eq.", ""));
+            assert.equal(row.source, "manual");
+            Object.assign(row, req.postDataJSON());
+            return ok(null);
+          }
           return ok(rows);
         }
         if (u.pathname.endsWith("/admin-api/events")) {
@@ -246,8 +264,9 @@ const { HtmlValidate } = require("html-validate");
             mail_send: mailSend,
             mail_provider: "icloud",
             analytics: false,
-            payments: orders.some((o) => o.is_test),
-            invoicing: orders.some((o) => o.is_test),
+            payment_mode: "offline",
+            payments: false,
+            invoicing: false,
             tax: false,
             stripe_mode: "test",
             bookings: false,
@@ -382,16 +401,39 @@ const { HtmlValidate } = require("html-validate");
       .filter({ hasText: "Objednávka byla vytvořena." })
       .waitFor();
     assert.equal(orders.length, 1);
-    Object.assign(orders[0], {source: "stripe", is_test: true, status: "paid"});
+    assert.equal(await page.getByRole("button", {name: "Platební odkaz", exact: true}).count(), 0);
+    await page.getByRole("navigation", {name: "Administrace"})
+      .getByRole("button", {name: "Faktury", exact: true}).click();
+    assert.equal(await page.getByRole("heading", {name: "Faktury Stripe", exact: true}).count(), 0);
+    await page.locator('select[name="order_id"]').selectOption(orders[0].id);
+    await page.getByLabel("Datum splatnosti", {exact: true}).fill("2030-12-31");
+    await page.getByRole("button", {name: "Vystavit fakturu", exact: true}).click();
+    await page.getByRole("region", {name: "Faktura 202600001", exact: true}).waitFor();
+    await page.getByRole("button", {name: "Tisk / uložit PDF", exact: true}).waitFor();
+    assert.equal(invoices.length, 1);
+    assert.equal(invoices[0].due_date, "2030-12-31");
+    await page.getByRole("navigation", {name: "Administrace"})
+      .getByRole("button", {name: "Objednávky", exact: true}).click();
+    await page.getByRole("button", {name: "Označit ručně uhrazené", exact: true}).click();
+    await page.getByRole("status").filter({hasText: "Uloženo."}).waitFor();
+    assert.equal(orders[0].status, "paid");
+    await page.getByRole("navigation", {name: "Administrace"})
+      .getByRole("button", {name: "Faktury", exact: true}).click();
+    await page.locator(".admin-list-row").filter({hasText:"202600001"}).getByText("Uhrazeno", {exact: true}).waitFor();
+    const overdueOrder = {...orders[0], id:crypto.randomUUID(), status:"pending", description:"Historická neuhrazená faktura"};
+    orders.push(overdueOrder);
+    invoices.push({...invoices[0],id:crypto.randomUUID(),number:"202000001",order_id:overdueOrder.id,issue_date:"2020-01-01",due_date:"2020-01-15"});
+    orders.push({...orders[0], id:crypto.randomUUID(), description:"Stripe test record", source: "stripe", is_test: true});
     await page.reload();
     await page.getByRole("navigation", {name: "Administrace"})
       .getByRole("button", {name: "Objednávky", exact: true}).click();
-    await page.getByText("Stripe je v testovacím režimu.", {exact: false}).waitFor();
+    assert.equal(await page.getByText("Stripe je v testovacím režimu.", {exact: false}).count(), 0);
     await page.getByText("Testovací platba", {exact: true}).waitFor();
-    assert.equal(await page.getByRole("button", {name: "Označit uhrazeno", exact: true}).count(), 0);
+    assert.equal(await page.getByRole("row").filter({hasText:"Stripe test record"}).getByRole("button", {name: "Označit ručně uhrazené", exact: true}).count(), 0);
     await page.getByRole("navigation", {name: "Administrace"})
       .getByRole("button", {name: "Faktury", exact: true}).click();
     await page.getByText("Testovací faktura", {exact: true}).waitFor();
+    await page.getByText("Po splatnosti", {exact: true}).waitFor();
     await page
       .getByRole("navigation", { name: "Administrace" })
       .getByRole("button", { name: "Pošta", exact: true })

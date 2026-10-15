@@ -37,6 +37,7 @@ export type Business = {
 };
 export type Invoice = {
   id: string;
+  orders?: { status: string };
   number: string;
   order_id: string;
   issue_date: string;
@@ -74,6 +75,7 @@ export type StripeInvoice = {
   pdf_url: string | null;
 };
 export type Integrations = {
+  payment_mode: "offline" | "stripe";
   mail: boolean;
   mail_read?: boolean;
   mail_send?: boolean;

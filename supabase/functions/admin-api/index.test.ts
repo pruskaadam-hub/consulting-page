@@ -419,6 +419,7 @@ Deno.test("CORS denies another origin; preflight grants no data", async () => {
 Deno.test(
   "webhooks reject invalid signatures and telemetry requires consent",
   async () => {
+    Deno.env.set("PAYMENT_MODE", "stripe");
     Deno.env.set("STRIPE_WEBHOOK_SECRET", "fake-signing-secret");
     Deno.env.set("CAL_WEBHOOK_SECRET", "fake-cal-secret");
     for (const path of ["/stripe-webhook", "/cal-webhook"]) {
@@ -436,6 +437,7 @@ Deno.test(
     );
     assert(response.status === 400);
     await response.body?.cancel();
+    Deno.env.delete("PAYMENT_MODE");
   },
 );
 Deno.test("large chunked requests are stopped while reading", async () => {
@@ -488,6 +490,7 @@ Deno.test(
   async () => {
     Deno.env.set("SUPABASE_URL", "https://project.supabase.co");
     Deno.env.set("SUPABASE_ANON_KEY", "fixture-public-key");
+    Deno.env.set("PAYMENT_MODE", "stripe");
     Deno.env.set("STRIPE_SECRET_KEY", "sk_test_fixture_not_real");
     Deno.env.set("STRIPE_AUTOMATIC_TAX", "true");
     const id = "11111111-1111-4111-8111-111111111111";
@@ -562,6 +565,7 @@ Deno.test(
       assert(checkout);
     } finally {
       globalThis.fetch = original;
+      Deno.env.delete("PAYMENT_MODE");
     }
   },
 );
@@ -569,6 +573,7 @@ Deno.test(
 Deno.test("signed Stripe snapshots forward test/live modes and reject inconsistent payloads", async () => {
   Deno.env.set("SUPABASE_URL", "https://project.supabase.co");
   Deno.env.set("SUPABASE_SERVICE_ROLE_KEY", "fixture-service-only");
+  Deno.env.set("PAYMENT_MODE", "stripe");
   Deno.env.set("STRIPE_WEBHOOK_SECRET", "fixture-signing-only");
   const original = globalThis.fetch;
   const calls: { target: string; body: Record<string, unknown> }[] = [];
@@ -652,6 +657,48 @@ Deno.test("signed Stripe snapshots forward test/live modes and reject inconsiste
       calls.length === count,
       "Invalid modes must never reach the database",
     );
+  } finally {
+    globalThis.fetch = original;
+    Deno.env.delete("PAYMENT_MODE");
+  }
+});
+
+Deno.test("offline invoice mode is the default and blocks Stripe despite stored credentials", async () => {
+  Deno.env.delete("PAYMENT_MODE");
+  Deno.env.set("STRIPE_SECRET_KEY", "sk_test_fixture_not_real");
+  Deno.env.set("STRIPE_WEBHOOK_SECRET", "fixture-signing-only");
+  Deno.env.set("STRIPE_AUTOMATIC_TAX", "true");
+  const original = globalThis.fetch;
+  globalThis.fetch = (input) => {
+    const target = String(input);
+    if (target.endsWith("/auth/v1/user")) {
+      return Promise.resolve(
+        Response.json({ id: "11111111-1111-4111-8111-111111111111" }),
+      );
+    }
+    if (target.endsWith("/rpc/is_admin")) {
+      return Promise.resolve(Response.json(true));
+    }
+    throw new Error(
+      "Offline mode must not contact Stripe or create a Checkout reservation",
+    );
+  };
+  try {
+    const headers = { Authorization: "Bearer fixture-token" };
+    const response = await handle(new Request(url + "/status", { headers }));
+    const status = await response.json();
+    assert(status.payment_mode === "offline");
+    assert(
+      status.payments === false && status.invoicing === false &&
+        status.tax === false,
+    );
+    for (const path of ["/checkout", "/stripe-webhook"]) {
+      const result = await handle(
+        new Request(url + path, { method: "POST", headers, body: "{}" }),
+      );
+      assert(result.status === 503);
+      await result.body?.cancel();
+    }
   } finally {
     globalThis.fetch = original;
   }

@@ -89,7 +89,8 @@ se stávajícími tabulkami se zastaví. Nevypisuje klíče ani odpovědi s tajn
 údaji. Verzi migrace eviduje v chráněné tabulce.
 
 Alternativně lze nové schéma vytvořit spuštěním migrací
-`202610150001_admin.sql` a poté `202610150002_stripe_modes.sql` ze složky
+`202610150001_admin.sql`, `202610150002_stripe_modes.sql` a
+`202610150003_invoice_due_dates.sql` ze složky
 `supabase/migrations` v Supabase SQL Editoru. Na existujícím schématu se
 spouštějí pouze dosud neaplikované migrace, každá v transakci. Automatický
 deploy tento výběr provádí podle tabulky verzí. Funkce se nasadí oficiálním CLI:
@@ -138,6 +139,7 @@ Tyto hodnoty patří výhradně do **Edge Functions → Secrets**:
 | `GA4_PROPERTY_ID` | Volitelné přepsání číselného ID služby; výchozí je `559071834` |
 | `GOOGLE_SERVICE_ACCOUNT_JSON` | JSON služebního účtu pouze pro čtení Analytics |
 | `STRIPE_SECRET_KEY` | Nejdřív testovací serverový klíč Stripe |
+| `PAYMENT_MODE` | Výchozí je `offline`, Stripe se aktivuje pouze explicitně hodnotou `stripe` |
 | `STRIPE_WEBHOOK_SECRET` | Podpisový klíč konkrétního webhooku Stripe |
 | `STRIPE_AUTOMATIC_TAX` | `true` až po nastavení Stripe Tax a registrací |
 | `STRIPE_PRODUCT_TAX_CODE` | Volitelný správný Stripe kód konkrétního typu služby |
@@ -161,6 +163,11 @@ složky Odeslané. Při nejistém výsledku není automatické opakování povol
 Přijetí zprávy SMTP serverem nepotvrzuje doručení adresátovi.
 
 ## 5. Stripe Payments, Invoicing a Tax
+
+Aktuálně majitel zvolil platby fakturou a bankovním převodem. Stripe je
+pozastavené. I s uloženými klíči backend odmítá Checkout a Stripe webhook,
+pokud není výslovně nastavené `PAYMENT_MODE=stripe`. Následující postup je
+pro případné pozdější zapnutí, nyní jej neprovádějte.
 
 První propojení proveďte v testovacím režimu. Veřejný `pk_test_…` klíč není
 pro hostovaný Checkout potřeba. Potřebujeme serverový klíč v Supabase Secrets
@@ -237,6 +244,16 @@ jméno, e-mail, obsah formulářů, URL dotazy ani obsah administrace se neměř
 Agregace kliknutí není účetní důkaz prodeje.
 
 ## 7. Fakturační údaje, údržba a testy
+
+Pro aktuální ruční fakturaci není potřeba platební ani fakturační služba.
+V Nastavení doplňte skutečné údaje dodavatele, účet a stav DPH. V Klientech
+založte odběratele včetně fakturační adresy, v Objednávkách službu a cenu.
+V sekci Faktury vyberte objednávku a datum splatnosti (výchozí je 14 dní),
+případně sazbu DPH a datum plnění. Splatnost nesmí předcházet vystavení.
+Vystavené údaje jsou uložené v soukromé databázi Supabase a dále se nemění.
+Tlačítkem Tisk / uložit PDF uložíte dokument pro ruční zaslání klientovi.
+Přijetí převodu označte v Objednávkách až po ověření na bankovním účtu.
+Přehled faktur rozlišuje čekající, uhrazené a neuhrazené po splatnosti.
 
 Pro ruční faktury vyplňte v administraci obchodní jméno, IČO, sídlo, bankovní
 účet a stav DPH, případně DIČ. Klient musí mít adresu; plátce musí při vystavení

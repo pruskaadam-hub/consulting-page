@@ -19,6 +19,7 @@ before(async () => {
     ),
   );
   await pg.exec(await readFile(new URL("../supabase/migrations/202610150002_stripe_modes.sql", import.meta.url), "utf8"));
+  await pg.exec(await readFile(new URL("../supabase/migrations/202610150003_invoice_due_dates.sql", import.meta.url), "utf8"));
   await pg.exec(
     await readFile(
       new URL("../supabase/appoint-owner.sql", import.meta.url),
@@ -370,4 +371,23 @@ test("mode-aware webhook RPCs remain service-only and legacy signatures are remo
     }
   }
   await assert.rejects(as("authenticated", outsider, "aal2", () => pg.query("select public.begin_checkout($1,true)", [order])), /Admin \+ MFA required/);
+});
+
+test("manual invoices store chosen due dates, reject dates before issue and preserve issued snapshots", async () => {
+  let manualOrder;
+  await as("authenticated", owner, "aal2", async () => {
+    manualOrder = (await pg.query("insert into public.orders(client_id,description,amount_minor) values($1,'Offline invoice',350000) returning id", [client])).rows[0].id;
+  });
+  await assert.rejects(as("authenticated", owner, "aal2", () => pg.query("select public.issue_invoice($1,0,current_date,current_date-1)", [manualOrder])), /Due date cannot precede/);
+  await as("authenticated", owner, "aal2", async () => {
+    const first = (await pg.query("select (public.issue_invoice($1,0,current_date,current_date+30)).*", [manualOrder])).rows[0];
+    const again = (await pg.query("select (public.issue_invoice($1,0,current_date,current_date+60)).*", [manualOrder])).rows[0];
+    assert.equal(first.id, again.id);
+    assert.equal(String(first.due_date), String(again.due_date));
+    assert.equal(first.amount_minor, 350000);
+    assert.equal(first.supplier.bank_account, "123/0100");
+    assert.equal((new Date(first.due_date)-new Date(first.issue_date))/86400000, 30);
+    await pg.query("update public.orders set status='paid',paid_at=now() where id=$1", [manualOrder]);
+    assert.equal((await pg.query("select public.business_summary() as data")).rows[0].data.revenue, 530000);
+  });
 });

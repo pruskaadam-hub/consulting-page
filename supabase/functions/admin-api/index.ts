@@ -13,6 +13,7 @@ import { limitedText } from "../_shared/http.ts";
 
 const site = () =>
   new URL(config("SITE_URL", false) || "https://adampruska.cz/");
+const stripeEnabled = () => config("PAYMENT_MODE", false) === "stripe";
 const json = (body: unknown, status = 200) =>
   Response.json(body, {
     status,
@@ -50,6 +51,9 @@ async function route(req: Request) {
     );
   }
   if (req.method === "POST" && path === "/stripe-webhook") {
+    if (!stripeEnabled()) {
+      throw new ApiError("Online platby jsou pozastavené.", 503);
+    }
     const raw = await limitedText(req, 100000);
     if (
       !(await verifyStripe(
@@ -199,15 +203,16 @@ async function route(req: Request) {
     return json({
       ...mailStatus(),
       analytics: analyticsConfigured(),
+      payment_mode: stripeEnabled() ? "stripe" : "offline",
       payments: Boolean(
-        config("STRIPE_SECRET_KEY", false) &&
+        stripeEnabled() && config("STRIPE_SECRET_KEY", false) &&
           config("STRIPE_WEBHOOK_SECRET", false),
       ),
       invoicing: Boolean(
-        config("STRIPE_SECRET_KEY", false) &&
+        stripeEnabled() && config("STRIPE_SECRET_KEY", false) &&
           config("STRIPE_WEBHOOK_SECRET", false),
       ),
-      tax: config("STRIPE_AUTOMATIC_TAX", false) === "true",
+      tax: stripeEnabled() && config("STRIPE_AUTOMATIC_TAX", false) === "true",
       stripe_mode: config("STRIPE_SECRET_KEY", false).startsWith("sk_live_")
         ? "live"
         : "test",
@@ -229,6 +234,12 @@ async function route(req: Request) {
     return json(await sendMail(await payload(req)));
   }
   if (req.method === "POST" && path === "/checkout") {
+    if (!stripeEnabled()) {
+      throw new ApiError(
+        "Online platby jsou pozastavené. Použij fakturu a bankovní převod.",
+        503,
+      );
+    }
     const input = await payload(req, 1000);
     if (!UUID.test(input.order_id || "")) {
       throw new ApiError("Neplatná objednávka.");

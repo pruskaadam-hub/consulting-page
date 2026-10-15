@@ -81,6 +81,14 @@ const date = (value: string) =>
     year: "numeric",
     timeZone: "Europe/Prague",
   }).format(new Date(value));
+function inputDate(days = 0) {
+  const today = new Intl.DateTimeFormat("en-CA", {
+    year: "numeric", month: "2-digit", day: "2-digit", timeZone: "Europe/Prague",
+  }).format(new Date());
+  const value = new Date(`${today}T12:00:00Z`);
+  value.setUTCDate(value.getUTCDate() + days);
+  return value.toISOString().slice(0, 10);
+}
 const fields = (event: FormEvent<HTMLFormElement>) =>
   Object.fromEntries(new FormData(event.currentTarget)) as Record<
     string,
@@ -534,7 +542,7 @@ function Workspace({
         .limit(100),
       db
         .from("invoices")
-        .select("*")
+        .select("*,orders(status)")
         .order("created_at", { ascending: false })
         .limit(100),
       db
@@ -1022,8 +1030,9 @@ function Workspace({
                     </p>
                   )}
                   <p>
-                    Posledních 100 objednávek. Ruční označení úhrady použij až
-                    po ověření přijaté platby.
+                    Posledních 100 objednávek. Pro platbu převodem vytvoř
+                    objednávku a v sekci Faktury vystav fakturu. Úhradu označ
+                    až po přijetí peněz na účet.
                   </p>
                   {paymentLink && (
                     <p className="admin-notice">
@@ -1077,7 +1086,7 @@ function Workspace({
                               <td>
                                 {o.status === "pending" && (
                                   <>
-                                    <button
+                                    {integration?.payments && <button
                                       className="admin-text-button"
                                       type="button"
                                       disabled={busy || !integration?.payments}
@@ -1096,7 +1105,7 @@ function Workspace({
                                       }
                                     >
                                       Platební odkaz
-                                    </button>
+                                    </button>}
                                     {o.source === "manual" && (
                                       <>
                                         <button
@@ -1212,7 +1221,7 @@ function Workspace({
             )}
             {section === "invoices" && (
               <>
-                <Panel title="Faktury Stripe">
+                {(integration?.payment_mode === "stripe" || s.stripeInvoices.length > 0) && <Panel title="Faktury Stripe">
                   <p>
                     Po úspěšné platbě přes Stripe Checkout vystaví Stripe
                     fakturu. Při zapnutí Tax zahrne automaticky vypočtenou daň.
@@ -1256,9 +1265,10 @@ function Workspace({
                       propojit účet a webhook.
                     </Empty>
                   )}
-                </Panel>
+                </Panel>}
                 <Panel title="Vystavené faktury">
                   <p>
+                    Fakturu ulož jako PDF a pošli klientovi k platbě převodem.
                     Čísla přiděluje databáze postupně. Vystavená faktura
                     uchovává původní údaje dodavatele i klienta.
                   </p>
@@ -1271,6 +1281,11 @@ function Workspace({
                         <span>
                           {money(item.amount_minor)} · splatnost{" "}
                           {date(item.due_date)}
+                        </span>
+                        <span className={`admin-badge ${item.orders?.status === "paid" ? "status-paid" : item.orders?.status === "pending" && item.due_date < inputDate() ? "status-cancelled" : ""}`}>
+                          {item.orders?.status === "pending"
+                            ? item.due_date < inputDate() ? "Po splatnosti" : "Čeká na úhradu"
+                            : item.orders ? statusLabel[item.orders.status] || item.orders.status : "Stav úhrady neověřen"}
                         </span>
                       </div>
                       <button
@@ -1300,10 +1315,11 @@ function Workspace({
                           p_order: f.order_id,
                           p_tax_rate: Number(f.tax_rate),
                           p_supply_date: f.supply_date || null,
+                          p_due_date: f.due_date,
                         });
                         if (result.error)
                           throw new Error(
-                            "Fakturu nelze vystavit. Zkontroluj údaje dodavatele, bankovní účet, DPH a fakturační adresu klienta.",
+                            "Fakturu nelze vystavit. Zkontroluj údaje dodavatele, bankovní účet, DPH, splatnost a fakturační adresu klienta.",
                           );
                         setInvoice(result.data);
                       }, "Faktura byla vystavena.");
@@ -1329,6 +1345,13 @@ function Workspace({
                           ))}
                       </select>
                     </label>
+                    <Field
+                      label="Datum splatnosti"
+                      name="due_date"
+                      type="date"
+                      value={inputDate(14)}
+                      required
+                    />
                     <label className="admin-field">
                       <span>Sazba DPH</span>
                       <select name="tax_rate" defaultValue="0">
@@ -1507,12 +1530,14 @@ function Workspace({
                 <Panel title="Propojení služeb">
                   <Connections integration={integration} />
                   <p className="admin-small">
-                    Stripe režim:{" "}
+                    {integration?.payment_mode === "stripe" ? <>Stripe režim:{" "}
                     {integration?.stripe_mode === "live"
                       ? "ostrý provoz"
                       : "testovací"}
                     . Tax vyžaduje správné sídlo, registrace a klasifikaci
-                    služeb ve Stripe účtu.
+                    služeb ve Stripe účtu.</> : <>Platby probíhají na fakturu
+                    bankovním převodem. Doplň fakturační údaje a bankovní účet
+                    výše. Přijaté úhrady eviduješ ručně v Objednávkách.</>}
                   </p>
                   <p className="admin-small">
                     Tajné klíče a heslo ke schránce se nastavují v Supabase
@@ -1537,24 +1562,28 @@ function Workspace({
   );
 }
 function Connections({ integration }: { integration: Integrations | null }) {
-  const connections: [string, boolean | undefined][] = [
+  const connections: [string, boolean | undefined, string?][] = [
     ["Příjem pošty", integration?.mail_read ?? integration?.mail],
     ["Odesílání pošty", integration?.mail_send ?? integration?.mail],
     ["GA4: sběr dat na webu", /^G-[A-Z0-9]+$/.test(import.meta.env.VITE_GA4_MEASUREMENT_ID || "")],
     ["GA4: přehledy v administraci", integration?.analytics],
-    ["Stripe Payments", integration?.payments],
-    ["Stripe Invoicing", integration?.invoicing],
-    ["Stripe Tax", integration?.tax],
+    ...(integration?.payment_mode === "stripe" ? [
+      ["Stripe Payments", integration.payments],
+      ["Stripe Invoicing", integration.invoicing],
+      ["Stripe Tax", integration.tax],
+    ] as [string, boolean][] : [
+      ["Platby fakturou a převodem", true, "Ruční evidence"],
+    ] as [string, boolean, string][]),
     ["Rezervace Cal.com", integration?.bookings],
     ["Měření kliknutí", integration?.events],
   ];
   return (
     <div className="admin-connections">
-      {connections.map(([name, on]) => (
+      {connections.map(([name, on, label]) => (
         <div key={name}>
           <span>{name}</span>
           <span className={`admin-badge ${on ? "status-paid" : ""}`}>
-            {on ? "Nastaveno" : "Čeká na propojení"}
+            {label || (on ? "Nastaveno" : "Čeká na propojení")}
           </span>
         </div>
       ))}
@@ -1666,6 +1695,8 @@ function InvoiceView({ invoice: i }: { invoice: Invoice }) {
             Datum uskutečnění plnění: {date(i.supply_date)}
           </>
         )}
+        <br />
+        Způsob úhrady: bankovní převod
         <br />
         Účet: {i.supplier.bank_account}
         <br />

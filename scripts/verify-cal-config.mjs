@@ -9,10 +9,12 @@ const types=[['intro',process.env.VITE_CAL_INTRO_SLUG,30],['individual',process.
 const now=new Date();
 const results=[];
 const fetchWithOrigin=(url,init={})=>fetch(url,{...init,signal:AbortSignal.timeout(20000),headers:{...init.headers,Origin:origin}}).then(response=>{
+ if(!response.ok)throw new Error(`Cal.com availability returned HTTP ${response.status}`);
  const allowed=response.headers.get('access-control-allow-origin');
  if(allowed!=='*' && allowed!==origin)throw new Error('Cal.com does not allow browser access from the production origin. A server-side integration is required.');
  return response;
 });
+async function verify(){
 for(const [name,slug,minutes] of types){
  if(!username || !slug)throw new Error(`Missing public Cal.com mapping: ${name}`);
  const slots=await loadSlots({username,eventTypeSlug:slug,year:now.getUTCFullYear(),month:now.getUTCMonth(),timeZone:'Europe/Prague',expectedMinutes:minutes},{fetchImpl:fetchWithOrigin});
@@ -32,3 +34,12 @@ for(const [path,method,headers] of [['slots','GET','cal-api-version'],['bookings
  console.log(`Cal.com ${path}: browser preflight verified.`);
 }
 if(process.env.GITHUB_STEP_SUMMARY)await appendFile(process.env.GITHUB_STEP_SUMMARY,`### Public Cal.com integration\n${results.join('\n')}\n- Browser GET and POST preflight verified.\n- No real booking was submitted.\n`);
+
+}
+try {
+ await verify();
+} catch (error) {
+ const message=String(error?.message || "Unknown Cal.com integration error").replaceAll("%","%25").replaceAll("\r","%0D").replaceAll("\n","%0A");
+ console.error(`::error title=Public Cal.com integration::${message}`);
+ process.exitCode=1;
+}

@@ -60,6 +60,7 @@ if (!existing[0]?.marker) {
 }
 for (const [version, filename] of [
   ["202610150002", "202610150002_stripe_modes.sql"],
+  ["202610150003", "202610150003_invoice_due_dates.sql"],
 ]) {
   const applied = await query(
     `select version from public.admin_backend_versions where version='${version}'`,
