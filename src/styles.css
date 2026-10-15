@@ -571,7 +571,7 @@ button.text-link { background: transparent; border-top: 0; border-left: 0; borde
 @media (hover: hover) and (prefers-reduced-motion: no-preference) {
   .link-arrow { transition: transform .2s ease; transform-origin: center; }
   :is(a, button):is(:hover, :focus-visible) .link-arrow { transform: translateX(3px); }
-  :is(a, button):is(:hover, :focus-visible) .link-arrow.is-diagonal { transform: translateX(3px) rotate(45deg); }
+  :is(a, button):not(.credential-free):is(:hover, :focus-visible) .link-arrow.is-diagonal { transform: translateX(3px) rotate(45deg); }
 }
 
 /* Authored guides: readable email examples, checklists and wide tables. */
