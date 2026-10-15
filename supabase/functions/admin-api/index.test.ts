@@ -1,7 +1,11 @@
 import { handle } from "./index.ts";
 import { limitedText } from "../_shared/http.ts";
 import { mailStatus, sendMail } from "../_shared/mail.ts";
-import { analyticsConfigured, analyticsReport } from "../_shared/google.ts";
+import {
+  analyticsConfigured,
+  analyticsReport,
+  reportError,
+} from "../_shared/google.ts";
 function assert(value: unknown, message = "Assertion failed") {
   if (!value) throw new Error(message);
 }
@@ -63,6 +67,59 @@ const mailMessage = {
   subject: "Fixture only",
   text: "This message must never reach a real provider.",
 };
+Deno.test("GA4 errors distinguish disabled Data API, property permissions and quotas without exposing raw diagnostics", async () => {
+  const secret = "DO_NOT_EXPOSE_PRIVATE_KEY_OR_TOKEN";
+  const email = "reader@fixture.iam.gserviceaccount.com";
+  const disabled = await reportError(
+    Response.json({
+      error: {
+        message: secret,
+        details: [{
+          "@type": "type.googleapis.com/google.rpc.ErrorInfo",
+          reason: "SERVICE_DISABLED",
+          metadata: {
+            consumer: "projects/123456789",
+            service: "analyticsdata.googleapis.com",
+            private_key: secret,
+          },
+        }],
+      },
+    }, { status: 403 }),
+    "559071834",
+    email,
+  );
+  assert(disabled.message.includes("Data API není zapnuté"));
+  assert(
+    disabled.message.includes("123456789") && disabled.message.includes(email),
+  );
+  const denied = await reportError(
+    Response.json({ error: { message: secret } }, { status: 403 }),
+    "559071834",
+    email,
+  );
+  assert(
+    denied.message.includes("559071834") && denied.message.includes("Viewer"),
+  );
+  assert(denied.message.includes(email));
+  const limited = await reportError(
+    new Response(secret, { status: 429 }),
+    "559071834",
+    email,
+  );
+  assert(limited.message.includes("HTTP 429"));
+  const unavailable = await reportError(
+    new Response(secret, { status: 503 }),
+    "559071834",
+    "not-a-service-account",
+  );
+  assert(
+    unavailable.message.includes("HTTP 503") &&
+      !unavailable.message.includes("not-a-service-account"),
+  );
+  for (const error of [disabled, denied, limited, unavailable]) {
+    assert(!error.message.includes(secret));
+  }
+});
 Deno.test("GA4 reports use the supplied property, a read-only token and provider totals; optional property override works", async () => {
   const previousProperty = Deno.env.get("GA4_PROPERTY_ID");
   const previousAccount = Deno.env.get("GOOGLE_SERVICE_ACCOUNT_JSON");

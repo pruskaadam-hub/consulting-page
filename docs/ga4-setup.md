@@ -5,6 +5,10 @@ Stream je nastavený v Pages workflow a číselná služba v backendu.
 Google tag se načte až po souhlasu návštěvníka. Soukromá administrace
 se neměří. Dodaný úryvek Google scriptu se nevkládá mimo tento mechanismus.
 
+Vlastník potvrdil úspěšné načítání reportu po zapnutí Google Analytics
+Data API v Cloud projektu služebního účtu. Původní odmítnutí nezpůsoboval
+chybějící měřicí kód; účet se úspěšně přihlásil, ale API ještě nebylo aktivní.
+
 ## Ověření sběru dat
 
 Otevřete https://adampruska.cz/, povolte měření a v Google Analytics
@@ -52,3 +56,10 @@ Při chybě zkontrolujte, že Data API je zapnuté ve stejném Cloud projektu
 jako služební účet, Viewer je přidělený k požadované službě GA4 a JSON
 obsahuje celý původní klíč. Chybové zprávy aplikace nevypisují soukromý klíč
 ani token.
+
+Pokud se report nenačte, aplikace rozlišuje vypnuté **Google Analytics Data
+API** od chybějícího přístupu ke konkrétní službě. U vypnutého API může
+zobrazit číslo Cloud projektu. U odmítnutých oprávnění zobrazí efektivní
+Property ID a e-mail skutečně použitého služebního účtu; porovnejte je
+s přístupem přidaným v GA4. Nejde o heslo ani soukromý klíč. Zprávy vrácené
+přímo Googlem a jiné údaje z jejich chybové odpovědi se nezobrazují.

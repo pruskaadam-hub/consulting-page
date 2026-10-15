@@ -10,6 +10,62 @@ export function analyticsConfigured() {
   return /^\d+$/.test(propertyId()) &&
     Boolean(config("GOOGLE_SERVICE_ACCOUNT_JSON", false));
 }
+export async function reportError(
+  response: Response,
+  property: string,
+  email: string,
+) {
+  // Inspect only documented codes. Provider messages may contain credentials or
+  // unrelated metadata and must never be returned to the browser or logged.
+  let reason = "", project = "";
+  try {
+    const body = await response.json();
+    const info = body?.error?.details?.find((item: { "@type"?: string }) =>
+      item?.["@type"] === "type.googleapis.com/google.rpc.ErrorInfo"
+    );
+    reason = typeof info?.reason === "string" ? info.reason : "";
+    const match = /^projects\/(\d{1,30})$/.exec(info?.metadata?.consumer || "");
+    project = match ? ` Projekt Google Cloud: ${match[1]}.` : "";
+  } catch { /* Keep the safe HTTP fallback for non-JSON provider failures. */ }
+  const actor =
+    /^[a-zA-Z0-9._+-]+@[a-zA-Z0-9.-]+\.iam\.gserviceaccount\.com$/.test(email)
+      ? ` Služební účet: ${email}.`
+      : "";
+  if (["SERVICE_DISABLED", "API_DISABLED"].includes(reason)) {
+    return new ApiError(
+      `Google Analytics Data API není zapnuté v projektu služebního účtu. Povol analyticsdata.googleapis.com v Google Cloud.${project}${actor}`,
+      502,
+    );
+  }
+  if (reason === "ACCESS_TOKEN_SCOPE_INSUFFICIENT") {
+    return new ApiError(
+      `Google odmítl rozsah oprávnění pro čtení Analytics. Ověř přístup služebního účtu ke službě GA4 ${property}.${actor}`,
+      502,
+    );
+  }
+  if (response.status === 403) {
+    return new ApiError(
+      `Google odmítl přístup ke službě GA4 ${property} (HTTP 403). Přidej níže uvedenému účtu roli Čtenář / Viewer přímo u této služby a ověř případné přepsání GA4_PROPERTY_ID v Supabase Secrets.${actor}`,
+      502,
+    );
+  }
+  if (response.status === 404) {
+    return new ApiError(
+      `Služba GA4 ${property} nebyla nalezena nebo není tomuto účtu přístupná. Ověř Property ID a roli Čtenář / Viewer.${actor}`,
+      502,
+    );
+  }
+  if (response.status === 429) {
+    return new ApiError(
+      "Google Analytics dočasně omezilo počet požadavků. Zkus přehled načíst později (HTTP 429).",
+      502,
+    );
+  }
+  return new ApiError(
+    `Google Analytics odmítlo report pro službu ${property} (HTTP ${response.status}). Ověř nastavení Data API a oprávnění služebního účtu.`,
+    502,
+  );
+}
 export async function analyticsReport() {
   const property = propertyId();
   if (!/^\d+$/.test(property)) {
@@ -84,10 +140,7 @@ export async function analyticsReport() {
     },
   );
   if (!response.ok) {
-    throw new ApiError(
-      "GA4 nevrátilo přehled. Ověř oprávnění účtu ke službě.",
-      502,
-    );
+    throw await reportError(response, property, account.client_email);
   }
   const report = await response.json();
   const totals = report.totals?.[0]?.metricValues || [];
