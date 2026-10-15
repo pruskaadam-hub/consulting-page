@@ -104,6 +104,10 @@ const path=require('node:path');
    for(const width of [375,1280]){
     await page.setViewportSize({width,height:900});
     assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,`overflow ${language}/${slug} at ${width}`);
+    if(!slug)for(const heading of await page.locator('.section-heading:has(> p)').all()){
+     const title=await heading.locator('h2').boundingBox(),intro=await heading.locator(':scope > p').boundingBox();
+     assert.ok(intro.y>=title.y+title.height,`section introduction below heading at ${width}`);
+    }
    }
    if(!slug){
     assert.equal(await page.locator('.help-card').count(),3);
@@ -113,13 +117,13 @@ const path=require('node:path');
     assert.equal(await page.locator('.credential-large').first().innerText(),'7');
     assert.equal(await page.locator('.credential-eth').innerText(),'ETH');
     assert.equal(await page.locator('.additional-services').isVisible(),true);
-    assert.equal(await page.locator('.media-grid > a').count(),10);
+    assert.equal(await page.locator('.media-grid > a').count(),8);
     assert.equal(await page.locator('.native-calendar').count(),0);
     assert.equal(await page.locator('a[href^="mailto:"],a[href^="tel:"]').count(),0);
     assert.equal(await page.locator('body').innerText().then(text=>text.includes('pruskaadam@me.com')),false);
     assert.equal(await page.locator('#blog').evaluate(el=>el.compareDocumentPosition(document.querySelector('.faq'))&Node.DOCUMENT_POSITION_FOLLOWING ? true : false),true);
     const comments=await page.evaluate(()=>{const walker=document.createTreeWalker(document.body,NodeFilter.SHOW_COMMENT);let node,count=0;while(node=walker.nextNode())if(node.textContent.includes('TODO Adam:'))count++;return count;});
-    assert.ok(comments>=8,'placeholder TODO comments');
+    assert.equal(comments,metadata.length,'only unconfirmed blog publication dates remain');
     for(const summary of await page.locator('.faq-list summary').all()){await summary.click();assert.equal(await summary.evaluate(el=>el.parentElement.open),true);assert.ok(await summary.evaluate(el=>el.parentElement.querySelector('p').textContent.trim()));}
    }
    if(slug.startsWith('blog/') && slug!=='blog/'){
@@ -178,7 +182,7 @@ const path=require('node:path');
  await go();await page.locator('.help-card').nth(2).getByRole('link').click();
  assert.equal(new URL(page.url()).hash,'#firmy');assert.equal(await page.locator('.native-calendar').count(),0);
  await page.getByRole('button',{name:'Zobrazit e-mail',exact:true}).first().click();
- assert.ok(await page.getByRole('link',{name:'pruskaadam@me.com',exact:true}).first().isVisible());
+ assert.ok(await page.getByRole('link',{name:'pruskaadam[at]me.com',exact:true}).first().isVisible());
  await page.getByRole('button',{name:'Zobrazit telefon',exact:true}).first().click();
  assert.ok(await page.getByRole('link',{name:'+420 735 891 769',exact:true}).first().isVisible());
  for(const relative of ['','sk/','en/']){
@@ -233,6 +237,9 @@ const path=require('node:path');
  await page.locator('.sticky-header').waitFor();const sticky=await page.locator('.sticky-header').boundingBox();assert.ok(sticky.x>=0 && sticky.x+sticky.width<=375);
  await page.setViewportSize({width:1280,height:900});await go();
  await page.locator('.help-card').first().hover();await page.waitForTimeout(300);assert.notEqual(await page.locator('.help-card').first().evaluate(el=>getComputedStyle(el).transform),'none');
+ await page.locator('.about-link').hover();await page.waitForTimeout(250);
+ const arrowRotation=await page.locator('.about-link svg').evaluate(el=>{const matrix=new DOMMatrix(getComputedStyle(el).transform);return Math.atan2(matrix.b,matrix.a)*180/Math.PI;});
+ assert.ok(Math.abs(arrowRotation-45)<1,'diagonal link arrow points horizontally on hover');
  await page.emulateMedia({reducedMotion:'reduce'});assert.equal(await page.locator('.help-card').first().evaluate(el=>getComputedStyle(el).transform),'none');
  if(process.env.SCREENSHOT_DIR){
   await fs.mkdir(process.env.SCREENSHOT_DIR,{recursive:true});
@@ -244,5 +251,5 @@ const path=require('node:path');
  }
  assert.deepEqual(errors,[]);
  await browser.close();await new Promise(resolve=>server.close(resolve));
- console.log('PASS: 33 static pages, full-card and keyboard selection, exact student prices, seven blog posts and JSON-LD, CZ/SK/EN metadata, 375/1280px, HTML validation, collapsed calendar, preserved topic and required intake, all consultation CTAs, safe booking states, contact reveal, 10 media links, article/language navigation, menu and reduced motion. All calendar responses mocked; no real booking created.');
+ console.log('PASS: 33 static pages, full-card and keyboard selection, exact student prices, seven blog posts and JSON-LD, CZ/SK/EN metadata, 375/1280px, HTML validation, collapsed calendar, preserved topic and required intake, all consultation CTAs, safe booking states, contact reveal, 8 media links, article/language navigation, menu and reduced motion. All calendar responses mocked; no real booking created.');
 })().catch(error=>{console.error(error);process.exit(1)});

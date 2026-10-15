@@ -47,18 +47,13 @@ jsou záměrně viditelné v každé jazykové verzi, aby se neztratily při dop
 | Značka | Umístění | Co dodat |
 | --- | --- | --- |
 | `[DOPLNIT: datum publikace]` | Nový blog, karty a záhlaví sedmi článků | Skutečná data publikace; nevkládají se do JSON-LD, dokud nejsou známá. |
-| `[DOPLNIT: cena / podmínky]` | `src/main.tsx`, výrazný blok praktických služeb | Cenu nebo pravidla úprav CV a dokumentů. |
-| `[DOPLNIT: předem přes Cal.com / převodem na fakturu]` | `src/main.tsx`, pod ceníkem a platební FAQ | Zvolený způsob platby, splatnost a případné potřebné údaje. |
-| `[DOPLNIT: konkrétní výsledek]` | `src/main.tsx`, všechny tři reference | Skutečný výsledek pro každou referenci. |
-| `[DOPLNIT: počet]` | `src/main.tsx`, řádek nad referencemi, klienti | Doložitelný počet klientů. |
-| `[DOPLNIT: počet]` | `src/main.tsx`, řádek nad referencemi, přihlášky | Doložitelný počet úspěšných přihlášek. |
 
 Reference jsou uložené v `src/content.ts` a překlady v
 `src/localized-content.ts`. Každá nyní podporuje `name` (i celé jméno),
 `context` (role), `photo`, `linkedIn`, `result`, `quote` a iniciály jako
-fallback. Neznámé celé jméno nebo fotografie nejsou domýšlené. Marie Č. má
-TODO k nahrazení referencí s měřitelným výsledkem. Při změně originální
-reference současně upravte oba překlady.
+fallback. Neznámé celé jméno nebo fotografie nejsou domýšlené. Konkrétní
+výsledky všech tří referencí doplnil vlastník. Při změně originální reference
+současně upravte oba překlady. Souhrnný řádek s neznámými počty byl odstraněn.
 
 ## Cal.com: aktuální nastavení a přesná pole
 
@@ -147,7 +142,14 @@ Karty pomoci nemají malé číslování. Zkušenosti zvýrazňuje velká 7 a ve
 Mediální odkazy mají kompaktní řádkové uspořádání ve dvou sloupcích, na mobilu
 v jednom. Celé karty konzultací jsou nativní odkazy, takže fungují kliknutím
 na libovolnou část i klávesou Enter. Během odesílání je změna nabídky blokovaná.
-Úprava CV a dokumentů je samostatný výrazný blok praktických služeb.
+Revize a úprava CV a dokumentů je samostatný výrazný blok praktických služeb.
+Revize CV stojí 800 Kč, finální úprava 1 500 Kč. Veřejné ceny jsou včetně DPH.
+Platba je převodem po vystavení faktury po ukončení spolupráce.
+
+Úvodní popisy sekcí jsou pod hlavními nadpisy. Favicon používá značku ap.
+Šikmé šipky odkazů se při hoveru otáčejí vodorovně; respektují omezení animací.
+Média mají osm odkazů s názvy dodanými vlastníkem, bez duplicity a Senátu.
+Medailonek zahrnuje VŠCHT, práci mezi Prahou a Brnem, projektové řízení a volejbal.
 
 Pevné ceny a odvozené slevy jsou v `src/pricing.mjs`. Individuální konzultace
 stojí 1 800 Kč, pro studenty 1 500 Kč (sleva 16,7 %). Balíček tří konzultací

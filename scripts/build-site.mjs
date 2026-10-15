@@ -13,9 +13,9 @@ const outDir=outIndex>=0 ? args[outIndex+1] : 'dist';
 await build({base:'./',build:{outDir}});
 const shell=await readFile(path.join(outDir,'index.html'),'utf8');
 const meta={
- cs:{title:'Adam Pruška | Studium, kariéra a business ve Švýcarsku',description:'Hlásíš se na ETH, hledáš práci v Curychu nebo rozjíždíš business v CH? Adam Pruška nabízí konzultace pro Švýcarsko. Prvních 30 minut zdarma.'},
- sk:{title:'Adam Pruška | Štúdium, kariéra a biznis vo Švajčiarsku',description:'Hlásiš sa na ETH, hľadáš prácu v Zürichu alebo rozbiehaš biznis v CH? Adam Pruška ponúka konzultácie pre Švajčiarsko. Prvých 30 minút zadarmo.'},
- en:{title:'Adam Pruška | Study, careers and business in Switzerland',description:'Applying to ETH, looking for work in Zurich or expanding into Switzerland? Consulting with Adam Pruška. Your first 30 minutes are free.'},
+ cs:{title:'Adam Pruška | Studium, kariéra a business ve Švýcarsku',description:'Tvůj první krok do Švýcarska. Studium na švýcarské univerzitě, práce i vlastní business. Adam Pruška nabízí konzultace pro Švýcarsko. Prvních 30 minut zdarma.'},
+ sk:{title:'Adam Pruška | Štúdium, kariéra a biznis vo Švajčiarsku',description:'Tvoj prvý krok do Švajčiarska. Štúdium na švajčiarskej univerzite, práca aj vlastný biznis. Adam Pruška ponúka konzultácie pre Švajčiarsko. Prvých 30 minút zadarmo.'},
+ en:{title:'Adam Pruška | Study, careers and business in Switzerland',description:'Your first step to Switzerland. University admissions, careers and business with Adam Pruška. Your first 30 minutes are free.'},
 };
 const escape=value=>String(value).replaceAll('&','&amp;').replaceAll('"','&quot;').replaceAll('<','&lt;').replaceAll('>','&gt;');
 const routes=LANGUAGES.flatMap(language=>[{language,slug:''},...articles.map(article=>({language,slug:article.slug,article})),{language,slug:'',blog:true},...blogPosts.map(post=>({language,slug:post.slug,blog:true,post}))]);

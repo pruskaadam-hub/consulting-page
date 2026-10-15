@@ -1,4 +1,5 @@
 // Fixed prices are authoritative; percentages are derived and rounded only for display.
+export const DOCUMENT_PRICES = { review:800, final:1500 };
 export const STUDENT_PRICES = { individual:1500, package:3500 };
 const discount = (regular, reduced) => (regular-reduced)/regular*100;
 const regularPrices = { individual:1800, package:4500 };

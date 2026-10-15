@@ -127,3 +127,20 @@ nezávislé ověření citovaných zdrojů. Převzaté znění má opravené zje
 a dlouhé pomlčky podle dřívějšího požadavku. Meta popisy, tabulky, checklist,
 vzorový e-mail a zdrojové odkazy jsou zachované. Příloha už neobsahuje dvě
 původní značky ověření; neznámá data publikace dál zůstávají označená.
+
+
+## Aktuální textové opravy z 15. 10. 2026
+
+Vlastník doplnil spolupráci se studenty VŠCHT, bydliště mezi Prahou a Brnem,
+projektové řízení a volejbal. Dodal také konkrétní výsledky tří referencí.
+Neověřené souhrnné počty klientů a přihlášek byly odstraněné.
+
+Všechny veřejné ceny jsou podle jeho zadání včetně DPH. Revize CV stojí
+800 Kč, finální úprava 1 500 Kč. Konzultační ceny zůstávají stejné. Platba
+je převodem na účet po vystavení faktury po ukončení spolupráce. Tato úprava
+veřejných textů nemění účetní nastavení plátcovství v administraci.
+
+Vlastník poskytl přesné nové názvy mediálních odkazů. Duplicitní video
+PDw1a5go0DM a odkaz na Senát byly odstraněné. V médiích zůstává osm položek.
+E-mail se zobrazuje jako pruskaadam[at]me.com; mailto se zpřístupní kliknutím.
+Tyto pozdější pokyny nahrazují historické údaje výše.

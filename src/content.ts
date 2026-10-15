@@ -38,8 +38,8 @@ export const content = {
   linkedIn: 'https://www.linkedin.com/in/adam-pruska/',
   help: [
     { icon: 'study', title: 'Chceš studovat v zahraničí', text: 'Vybereme univerzitu a výzkumnou skupinu pro Bc., Mgr. nebo PhD. Připravím tě na přijímací pohovor a pomůžu ti zorientovat se ve švýcarských grantech a stipendiích.', tags: ['Výběr univerzity', 'Přijímací pohovor', 'Granty & stipendia'], cta: 'Chci studovat v zahraničí' },
-    { icon: 'career', title: 'Hledáš práci nebo nové kontakty', text: 'Akademie, nebo průmysl? Společně nastavíme kariérní strategii a připravíme pohovor. Probereme švýcarskou mentalitu i firemní kulturu a propojím tě s česko-slovenskou komunitou v CH.', tags: ['Kariérní strategie', 'Síť kontaktů', 'Příprava na pohovor'], cta: 'Chci najít správnou práci' },
-    { icon: 'business', title: 'Máte firmu nebo projekt', text: 'Pomohu vám s analýzou trhu a kontakty v soukromé i státní sféře. Projdeme business strategii, rizika i možnosti financování vašeho projektu.', tags: ['Analýza trhu', 'Swiss kontakty', 'Business strategie'], cta: 'Chceme expandovat do CH' },
+    { icon: 'career', title: 'Hledáš práci nebo nové kontakty', text: 'Akademie, nebo průmysl? Společně nastavíme kariérní strategii a připravíme pohovor. Probereme švýcarskou mentalitu i firemní kulturu a propojím tě s česko-slovenskou komunitou ve Švýcarsku.', tags: ['Kariérní strategie', 'Síť kontaktů', 'Příprava na pohovor'], cta: 'Chci najít správnou práci' },
+    { icon: 'business', title: 'Máte firmu nebo projekt', text: 'Pomohu vám s analýzou trhu a kontakty v soukromé i státní sféře. Projdeme business strategii, rizika i možnosti financování vašeho projektu.', tags: ['Analýza trhu', 'Swiss kontakty', 'Business strategie'], cta: 'Chceme expandovat do Švýcarska' },
   ],
   process: [
     { title: 'Nezávazná schůzka zdarma', text: 'Zavolej nebo napiš. Zdarma zjistíme, s čím přesně ti mohu pomoci a jestli si vzájemně sedíme. Žádné skryté podmínky, žádný tlak.' },
@@ -47,17 +47,17 @@ export const content = {
     { title: 'Jedeme', text: 'Pracujeme společně online, v Praze nebo Brně. Průběžně ladíme postup podle toho, jak se věci vyvíjí. Jsem dostupný i mezi konzultacemi.' },
   ],
   testimonials: [
-    { initials: 'MP', name: 'Michaela P.', context: 'Hledala práci v Zurichu', quote: 'Adam nám přiblížil, jak to ve Švýcarsku chodí a otevřel oči, že hledat práci z Česka nebude úplně možné. Už první CV upravené podle jeho rad mi pomohlo dostat se přes první kolo pohovorů.' },
-    { initials: 'MČ', name: 'Marie Č.', context: 'Kariéra v korporátním sektoru CH', quote: 'Nikdy jsem nevěděla, že i takové drobnosti jako je doba příchodu hrají takovou roli. Díky Adame. Chodit pozdě se nemá a chodit příliš brzy je tlak na toho druhého.' },
-    { initials: 'KM', name: 'Karel M.', context: 'Expanze firmy do Švýcarska', quote: 'Naše firma hledala způsob, jak se spojit s lidmi ve Švýcarsku. Adamovy kontakty nám ušetřily měsíce práce a spoustu peněz. Na první emaily jsme dostali odpověď.' },
+    { initials: 'MP', name: 'Michaela P.', context: 'Práce v biotechnologiích u Basileje', result: 'Našla laboratorní práci v biotechnologické firmě u Basileje', quote: 'Adam nám přiblížil, jak to ve Švýcarsku chodí a otevřel oči, že hledat práci z Česka nebude úplně možné. Už první CV upravené podle jeho rad mi pomohlo dostat se přes první kolo pohovorů.' },
+    { initials: 'MČ', name: 'Marie Č.', context: 'Kariéra v korporátním sektoru Švýcarska', result: 'Zlepšil se její první dojem a naladila se na švýcarskou mentalitu', quote: 'Nikdy jsem nevěděla, že i takové drobnosti jako je doba příchodu hrají takovou roli. Díky Adame. Chodit pozdě se nemá a chodit příliš brzy je tlak na toho druhého.' },
+    { initials: 'KM', name: 'Karel M.', context: 'Expanze firmy do Švýcarska', result: 'Získal první zakázky na svou službu u švýcarských firem', quote: 'Naše firma hledala způsob, jak se spojit s lidmi ve Švýcarsku. Adamovy kontakty nám ušetřily měsíce práce a spoustu peněz. Na první emaily jsme dostali odpověď.' },
   ] as Testimonial[],
   faq: [
-    { question: 'Jak se platí?', answer: '' },
+    { question: 'Jak se platí?', answer: 'Po ukončení naší spolupráce vystavím fakturu. Platbu provedeš převodem na účet uvedený na faktuře.' },
     { question: 'Je první konzultace opravdu zdarma?', answer: 'Ano. Úvodní online setkání trvá 30 minut a je nezávazné. Probereme tvou situaci a zjistíme, zda spolupráce dává smysl.' },
     { question: 'Musím mít konkrétní plán nebo otázku?', answer: 'Nemusíš mít hotový plán. Pomůže, když si předem promyslíš, kde se právě nacházíš a co bys chtěl nebo chtěla posunout.' },
-    { question: 'Jak probíhá individuální konzultace?', answer: 'Individuální online konzultace trvá 50 minut a stojí 1 800 Kč. Je věnovaná konkrétnímu tématu, které potřebuješ probrat.' },
-    { question: 'Máš slevu pro studenty? A můžeme se potkat osobně?', answer: `Bc. a Mgr. studenti mají individuální konzultaci o ${discountLabel(PRICES.studentIndividualDiscount)} % levnější, tedy za ${currencyLabel(STUDENT_PRICES.individual)}. Balíček je pro studenty o ${discountLabel(PRICES.studentPackageDiscount)} % levnější než běžný balíček, za ${currencyLabel(STUDENT_PRICES.package)}. Osobní setkání v Praze nebo Brně je možné po předchozí domluvě.` },
-    { question: 'Co obsahuje balíček tří konzultací?', answer: `Balíček obsahuje tři konzultace po 50 minutách za ${currencyLabel(PRICES.package)}, tedy o ${discountLabel(PACKAGE_DISCOUNT)} % méně než tři jednotlivé konzultace. Jedna se uskuteční osobně na místě dle tvé volby. Místo a praktické podmínky osobního setkání domluvíme předem. V kalendáři vybíráš termín prvního setkání; další dva domluvíme společně.` },
+    { question: 'Jak probíhá individuální konzultace?', answer: 'Individuální online konzultace trvá 50 minut a stojí 1 800 Kč včetně DPH. Je věnovaná konkrétnímu tématu, které potřebuješ probrat.' },
+    { question: 'Máš slevu pro studenty? A můžeme se potkat osobně?', answer: `Bc. a Mgr. studenti mají individuální konzultaci o ${discountLabel(PRICES.studentIndividualDiscount)} % levnější, tedy za ${currencyLabel(STUDENT_PRICES.individual)}. Balíček je pro studenty o ${discountLabel(PRICES.studentPackageDiscount)} % levnější než běžný balíček, za ${currencyLabel(STUDENT_PRICES.package)}. Všechny ceny jsou včetně DPH. Osobní setkání v Praze nebo Brně je možné po předchozí domluvě.` },
+    { question: 'Co obsahuje balíček tří konzultací?', answer: `Balíček obsahuje tři konzultace po 50 minutách za ${currencyLabel(PRICES.package)}, tedy o ${discountLabel(PACKAGE_DISCOUNT)} % méně než tři jednotlivé konzultace. Jedna se uskuteční osobně na místě dle tvé volby. Místo a praktické podmínky osobního setkání domluvíme předem. Cena je včetně DPH. V kalendáři vybíráš termín prvního setkání; další dva domluvíme společně.` },
     { question: 'Co když potřebuji změnit termín?', answer: `Možnosti změny nebo zrušení termínu najdeš v potvrzení rezervace. Pokud si nejsi jistý nebo jistá, napiš mi přes kontaktní sekci.` },
   ],
 };

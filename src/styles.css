@@ -81,7 +81,8 @@ h1 em { white-space: nowrap; }
 
 .section-heading { display: grid; grid-template-columns: 1.15fr 1fr; gap: 48px; align-items: end; margin-bottom: 42px; }
 .section-heading h2 { margin-bottom: 0; }
-.section-heading > p { font-size: 15px; color: var(--muted); max-width: 370px; margin-bottom: 0; }
+.section-heading:has(> p) { display: block; }
+.section-heading > p { font-size: 15px; color: var(--muted); max-width: 650px; margin: 20px 0 0; }
 .section-heading > .text-link { justify-self: end; }
 .help-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
 .help-card { background: var(--surface); border: 1px solid transparent; padding: 30px; border-radius: 24px; display: flex; flex-direction: column; align-items: flex-start; }
@@ -502,7 +503,12 @@ button.text-link { background: transparent; border-top: 0; border-left: 0; borde
 .additional-services h3 { font-size: 34px; line-height: 1.1; margin-bottom: 18px; }
 .additional-services h4 { font-size: 19px; font-weight: 500; margin: 0 0 12px; letter-spacing: -.03em; }
 .additional-services p { color: var(--muted); font-size: 13px; margin: 0; }
-.additional-price .placeholder { display: block; color: var(--accent-strong); font-size: 15px; margin-top: 12px; }
+.document-prices { margin: 0; }
+.document-prices > div { display: flex; align-items: baseline; justify-content: space-between; gap: 20px; padding: 12px 0; border-bottom: 1px solid var(--line); }
+.document-prices dt { font-size: 14px; }
+.document-prices dd { margin: 0; font-size: 24px; font-weight: 500; white-space: nowrap; letter-spacing: -.04em; }
+.additional-services .document-vat { margin-top: 10px; font-size: 12px; }
+.offer-price > .price-vat { font-size: 12px; color: var(--muted); }
 .additional-services .text-link { margin-top: 22px; font-size: 12px; }
 .payment-note { color: var(--muted); font-size: 12px; margin-top: 24px; }
 
@@ -553,7 +559,6 @@ button.text-link { background: transparent; border-top: 0; border-left: 0; borde
   .additional-services { padding: 26px; gap: 24px; }
   .additional-services h3 { font-size: 29px; }
   .additional-services h4 { font-size: 18px; }
-  .additional-price .placeholder { font-size: 14px; }
   .related-articles > a { padding: 24px; }
   .related-articles h3 { font-size: 24px; }
   .authored-prose h2, .authored-prose h3 { font-size: 27px; }
@@ -561,6 +566,12 @@ button.text-link { background: transparent; border-top: 0; border-left: 0; borde
   .article-authored-cta { max-width: 100%; font-size: 11px; padding: 12px 18px; text-align: center; }
   .authored-prose table { font-size: 11px; }
   .authored-prose th, .authored-prose td { padding: 10px 8px; }
+}
+
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .link-arrow { transition: transform .2s ease; transform-origin: center; }
+  :is(a, button):is(:hover, :focus-visible) .link-arrow { transform: translateX(3px); }
+  :is(a, button):is(:hover, :focus-visible) .link-arrow.is-diagonal { transform: translateX(3px) rotate(45deg); }
 }
 
 /* Authored guides: readable email examples, checklists and wide tables. */
