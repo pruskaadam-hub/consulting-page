@@ -100,33 +100,21 @@ Téma se předvyplní ze studijní nebo kariérní karty. Odkazy z článků pou
 `?tema=study#kalendar` nebo `?tema=career#kalendar`. API potvrzení dostane jazyk
 `cs`, `sk` nebo `en`; interní souhrn pro Adama používá české názvy položek.
 
-## Vlastní doména: až bude zvolená
+## Vlastní doména adampruska.cz (FORPSI)
 
-**Aktivní CNAME nebyl vytvořen.** Hodnotu `[DOPLNIT: doména]` nevkládejte do
-DNS ani do aktivního souboru; nahraďte ji skutečnou doménou.
+Vlastník zvolil `adampruska.cz` a uvedl správu DNS u FORPSI. Produkční
+`SITE_URL` je připravený na `https://adampruska.cz/`. Připojení domény v Pages,
+DNS a certifikát vyžadují dokončení v účtech vlastníka a nejsou touto změnou
+kódu potvrzené. Přesný postup a DNS záznamy jsou v
+[domain-forpsi.md](domain-forpsi.md).
 
-1. Vlastní doménu kupte/spravujte u registrátora. Na GitHubu lze nejprve
-   ověřit její vlastnictví v osobním Settings → Pages → Add a domain pomocí
-   předepsaného TXT záznamu.
-2. Pro doménu bez `www` nastavte čtyři DNS záznamy typu **A**, host `@`:
-   `185.199.108.153`, `185.199.109.153`, `185.199.110.153`, `185.199.111.153`.
-   Pro `www` nastavte **CNAME**, host `www`, cíl `pruskaadam-hub.github.io`.
-   Do cíle nepatří `https://` ani `/consulting-page/`. Nahraďte konfliktní
-   záznamy pro tento host podle možností svého DNS správce.
-3. V repozitáři Settings → Pages → Custom domain zadejte skutečnou doménu
-   (například `www.vasadomena.cz`), uložte a počkejte na DNS kontrolu a certifikát.
-4. Teprve pak vytvořte `public/CNAME`, jeden řádek se skutečnou doménou, bez
-   protokolu a cesty. Vite jej zkopíruje do publikovaného `dist/CNAME`.
-5. V `src/site-config.mjs` změňte jediný výchozí `SITE_URL` na
-   `https://vasadomena.cz/` nebo `https://www.vasadomena.cz/`, podle nastavení
-   v Pages. Alternativně nastavte veřejnou build proměnnou `VITE_SITE_URL` v
-   prostředí/workflow. Při její změně je nutné znovu sestavit a publikovat web.
-6. Canonical, Open Graph, jazykové alternativy, sitemap, robots.txt i původ
-   pro živou CORS kontrolu se přepočítají ze stejného nastavení. Relativní
-   cesty assetů fungují i bez projektového podadresáře. E-mail je na jediném
-   místě `CONTACT_EMAIL` v tomtéž souboru a může zůstat `pruskaadam@me.com`.
-7. Po zpřístupnění certifikátu zapněte Enforce HTTPS. Ověřte základní stránku,
-   `/sk/`, `/en/` a přímé adresy článků i rezervace po změně domény.
+Canonical, Open Graph, jazykové alternativy, JSON-LD, sitemap, robots.txt
+a původ pro živou CORS kontrolu vycházejí z téhož `SITE_URL`. Relativní
+assety fungují v kořeni domény i pod projektovým adresářem. Veřejná proměnná
+`VITE_SITE_URL` umožňuje použít jinou adresu při sestavení; po její změně je
+nutné znovu sestavit a publikovat. Testovací server používá cestu vybranou
+stejným nastavením. Při nasazení přes GitHub Actions soubor `CNAME` doménu
+v nastavení Pages nezapíná; je nutné vyplnit Custom domain přímo na GitHubu.
 
 ## Články a původní Wix slug
 

@@ -13,8 +13,8 @@ const path=require('node:path');
  const server=http.createServer(async(req,res)=>{
   try{
    const url=new URL(req.url,'http://localhost');
-   if(!url.pathname.startsWith('/consulting-page/')){res.writeHead(404);res.end();return;}
-   let relative=decodeURIComponent(url.pathname.slice('/consulting-page/'.length));
+   if(!url.pathname.startsWith(productionPath)){res.writeHead(404);res.end();return;}
+   let relative=decodeURIComponent(url.pathname.slice(productionPath.length));
    if(!relative || relative.endsWith('/'))relative+='index.html';
    const file=path.resolve(root,relative);
    if(!file.startsWith(root+path.sep)){res.writeHead(403);res.end();return;}
@@ -24,7 +24,7 @@ const path=require('node:path');
   }catch{res.writeHead(404);res.end();}
  });
  await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
- const base=`http://127.0.0.1:${server.address().port}/consulting-page/`;
+ const base=`http://127.0.0.1:${server.address().port}${productionPath}`;
  const browser=await chromium.launch({headless:true,args:['--no-sandbox'],...(process.env.CHROMIUM_EXECUTABLE_PATH ? {executablePath:process.env.CHROMIUM_EXECUTABLE_PATH} : {})});
  const page=await browser.newPage({viewport:{width:1280,height:900}});
  await page.context().grantPermissions(['clipboard-read','clipboard-write']);
@@ -92,6 +92,7 @@ const path=require('node:path');
    assert.equal(await page.locator('link[hreflang]').count(),4);
    assert.equal(await page.locator('.language-switch a').count(),3);
    const canonical=await page.locator('link[rel="canonical"]').getAttribute('href');
+   assert.equal(new URL(canonical).origin,new URL(SITE_URL).origin);
    assert.equal(new URL(canonical).pathname,productionPath+prefix+slug);
    for(const img of await page.locator('img').all()){await img.scrollIntoViewIfNeeded();await img.evaluate(el=>el.decode());assert.ok((await img.getAttribute('alt'))?.trim());}
    for(const width of [375,1280]){
@@ -124,10 +125,10 @@ const path=require('node:path');
     assert.equal('datePublished' in structured,false);
     assert.equal(await page.locator('.related-articles > a').count(),2);
     assert.equal(await page.locator('.authored-prose .article-authored-cta').count(),1);
-    assert.equal(await page.locator('.authored-prose .article-authored-cta').getAttribute('href'),'/consulting-page/'+prefix+(['ceska-firma-ve-svycarsku','firma-kontakty-pres-komunitu'].includes(post.slug)?'#firmy':'#rezervace'));
+    assert.equal(await page.locator('.authored-prose .article-authored-cta').getAttribute('href'),productionPath+prefix+(['ceska-firma-ve-svycarsku','firma-kontakty-pres-komunitu'].includes(post.slug)?'#firmy':'#rezervace'));
     assert.equal((await page.locator('.authored-prose').innerText()).includes('Meta popis:'),false);
     if(post.companion){
-     assert.equal(await page.locator('.article-companion a').getAttribute('href'),'/consulting-page/'+prefix+'blog/'+post.companion+'/');
+     assert.equal(await page.locator('.article-companion a').getAttribute('href'),productionPath+prefix+'blog/'+post.companion+'/');
     }
     if(post.slug==='email-profesorovi-eth'){
      await page.getByRole('button',{name:'Kopírovat',exact:true}).click();

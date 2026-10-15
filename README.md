@@ -19,7 +19,9 @@ npm run dev -- --port 5173
 ```
 
 `npm run build` provede kontrolu typů a produkční sestavení do `dist/`.
-Relativní cesty fungují pod `/consulting-page/` na GitHub Pages.
+Produkční adresa je `https://adampruska.cz/`. Relativní cesty podporují také
+projektový podadresář; pro test původní adresy nastavte `VITE_SITE_URL`.
+Připojení domény a DNS u FORPSI: [docs/domain-forpsi.md](docs/domain-forpsi.md).
 `npm test` spustí testy časových pásem, dostupnosti, kvalifikace a potvrzování rezervací.
 `npm run test:ui` po `npm run build` provede HTML validaci a prohlížečové testy
 všech 33 stránek na 375/1280 px s výhradně testovacími odpověďmi Cal.com.
