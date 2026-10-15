@@ -16,6 +16,7 @@ import type {
 } from "./types";
 import { internalUrl } from "../routes";
 import { PRICES, STUDENT_PRICES } from "../pricing.mjs";
+import { InvoiceForm } from "./InvoiceForm";
 import "./admin.css";
 
 const sections = [
@@ -1304,80 +1305,11 @@ function Workspace({
                     </Empty>
                   )}
                 </Panel>
-                <Panel title="Vystavit fakturu z objednávky">
-                  <form
-                    className="admin-form-grid"
-                    onSubmit={(e) => {
-                      e.preventDefault();
-                      const f = fields(e);
-                      void work(async () => {
-                        const result = await db!.rpc("issue_invoice", {
-                          p_order: f.order_id,
-                          p_tax_rate: Number(f.tax_rate),
-                          p_supply_date: f.supply_date || null,
-                          p_due_date: f.due_date,
-                        });
-                        if (result.error)
-                          throw new Error(
-                            "Fakturu nelze vystavit. Zkontroluj údaje dodavatele, bankovní účet, DPH, splatnost a fakturační adresu klienta.",
-                          );
-                        setInvoice(result.data);
-                      }, "Faktura byla vystavena.");
-                    }}
-                  >
-                    <label className="admin-field">
-                      <span>Objednávka</span>
-                      <select name="order_id" required defaultValue="">
-                        <option value="" disabled>
-                          Vyber objednávku
-                        </option>
-                        {s.orders
-                          .filter(
-                            (o) =>
-                              !["cancelled", "refunded"].includes(o.status) &&
-                              o.source !== "stripe",
-                          )
-                          .map((o) => (
-                            <option key={o.id} value={o.id}>
-                              {o.clients?.name} · {o.description} ·{" "}
-                              {money(o.amount_minor)}
-                            </option>
-                          ))}
-                      </select>
-                    </label>
-                    <Field
-                      label="Datum splatnosti"
-                      name="due_date"
-                      type="date"
-                      value={inputDate(14)}
-                      required
-                    />
-                    <label className="admin-field">
-                      <span>Sazba DPH</span>
-                      <select name="tax_rate" defaultValue="0">
-                        <option value="0">0 % / neplátce</option>
-                        {s.business.vat_registered && (
-                          <>
-                            <option value="12">12 %</option>
-                            <option value="21">21 %</option>
-                          </>
-                        )}
-                      </select>
-                    </label>
-                    <Field
-                      label="Datum uskutečnění plnění"
-                      name="supply_date"
-                      type="date"
-                      required={s.business.vat_registered === true}
-                    />
-                    <button
-                      className="button primary"
-                      type="submit"
-                      disabled={busy}
-                    >
-                      Vystavit fakturu
-                    </button>
-                  </form>
+                <Panel title="Vystavit fakturu">
+                  <InvoiceForm snapshot={s} busy={busy} dueDate={inputDate(14)} today={inputDate()}
+                    onClients={() => setSection("clients")}
+                    onIssue={(issue) => void work(async () => setInvoice(await issue()), "Faktura byla vystavena.")}
+                  />
                 </Panel>
                 {invoice && <InvoiceView invoice={invoice} />}
               </>
@@ -1703,7 +1635,10 @@ function InvoiceView({ invoice: i }: { invoice: Invoice }) {
         Variabilní symbol: {i.number}
       </p>
       <div className="admin-list-row">
-        <span>{i.description}</span>
+        <div>
+          <strong>{i.description}</strong>
+          {i.service_details && <p className="admin-service-details">{i.service_details}</p>}
+        </div>
         <strong>{money(i.amount_minor)}</strong>
       </div>
       {i.supplier.vat_registered ? (

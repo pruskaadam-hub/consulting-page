@@ -89,8 +89,8 @@ se stávajícími tabulkami se zastaví. Nevypisuje klíče ani odpovědi s tajn
 údaji. Verzi migrace eviduje v chráněné tabulce.
 
 Alternativně lze nové schéma vytvořit spuštěním migrací
-`202610150001_admin.sql`, `202610150002_stripe_modes.sql` a
-`202610150003_invoice_due_dates.sql` ze složky
+`202610150001_admin.sql`, `202610150002_stripe_modes.sql`,
+`202610150003_invoice_due_dates.sql` a `202610150004_service_invoices.sql` ze složky
 `supabase/migrations` v Supabase SQL Editoru. Na existujícím schématu se
 spouštějí pouze dosud neaplikované migrace, každá v transakci. Automatický
 deploy tento výběr provádí podle tabulky verzí. Funkce se nasadí oficiálním CLI:
@@ -247,9 +247,17 @@ Agregace kliknutí není účetní důkaz prodeje.
 
 Pro aktuální ruční fakturaci není potřeba platební ani fakturační služba.
 V Nastavení doplňte skutečné údaje dodavatele, účet a stav DPH. V Klientech
-založte odběratele včetně fakturační adresy, v Objednávkách službu a cenu.
-V sekci Faktury vyberte objednávku a datum splatnosti (výchozí je 14 dní),
-případně sazbu DPH a datum plnění. Splatnost nesmí předcházet vystavení.
+založte odběratele včetně fakturační adresy. V sekci Faktury je výchozí
+volba Nová konzultace nebo služba: zvolte klienta, konzultaci z aktuálního
+ceníku nebo Vlastní službu. Název, podrobný popis i konečnou cenu lze upravit.
+Vyberte datum splatnosti (výchozí je 14 dní), případně sazbu DPH a datum plnění.
+Objednávka a faktura vzniknou v jedné transakci. Chyba v údajích nevytvoří
+neúplnou objednávku; opakování stejného požadavku nevytvoří další fakturu.
+Podrobný popis se uloží jako neměnná součást faktury a objeví se také v PDF.
+Volba Existující objednávka umožní použít dříve vytvořenou ruční objednávku.
+Již vyfakturované, zrušené, refundované a Stripe objednávky v této nabídce
+nejsou. Prázdná nabídka vysvětluje, jak pokračovat přímým vystavením.
+Splatnost nesmí předcházet vystavení.
 Vystavené údaje jsou uložené v soukromé databázi Supabase a dále se nemění.
 Tlačítkem Tisk / uložit PDF uložíte dokument pro ruční zaslání klientovi.
 Přijetí převodu označte v Objednávkách až po ověření na bankovním účtu.

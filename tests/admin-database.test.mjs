@@ -20,6 +20,7 @@ before(async () => {
   );
   await pg.exec(await readFile(new URL("../supabase/migrations/202610150002_stripe_modes.sql", import.meta.url), "utf8"));
   await pg.exec(await readFile(new URL("../supabase/migrations/202610150003_invoice_due_dates.sql", import.meta.url), "utf8"));
+  await pg.exec(await readFile(new URL("../supabase/migrations/202610150004_service_invoices.sql", import.meta.url), "utf8"));
   await pg.exec(
     await readFile(
       new URL("../supabase/appoint-owner.sql", import.meta.url),
@@ -390,4 +391,48 @@ test("manual invoices store chosen due dates, reject dates before issue and pres
     await pg.query("update public.orders set status='paid',paid_at=now() where id=$1", [manualOrder]);
     assert.equal((await pg.query("select public.business_summary() as data")).rows[0].data.revenue, 530000);
   });
+});
+
+test("direct service invoices atomically create a manual order and immutable service snapshot with retry protection", async () => {
+  const request = crypto.randomUUID();
+  await as("authenticated", owner, "aal2", async () => {
+    const args = [request, client, "Úprava CV", "Rozbor dokumentů\nDoporučení a finální úpravy.", 250050];
+    const sql = "select (public.issue_service_invoice($1,$2,$3,$4,$5,0,current_date,current_date+21)).*";
+    const first = (await pg.query(sql, args)).rows[0];
+    const again = (await pg.query(sql, args)).rows[0];
+    assert.equal(first.id, again.id);
+    assert.equal(first.order_id, request);
+    assert.equal(first.description, args[2]);
+    assert.equal(first.service_details, args[3]);
+    assert.equal(first.amount_minor, 250050);
+    assert.equal((await pg.query("select count(*)::int as n from public.orders where id=$1", [request])).rows[0].n, 1);
+    assert.equal((await pg.query("select count(*)::int as n from public.invoices where order_id=$1", [request])).rows[0].n, 1);
+    const o = (await pg.query("select * from public.orders where id=$1", [request])).rows[0];
+    assert.equal(o.status, "pending");
+    assert.equal(o.source, "manual");
+    assert.equal(o.is_test, false);
+    assert.equal(o.service_details, args[3]);
+    await pg.query("update public.orders set service_details='Later order edit' where id=$1", [request]);
+    assert.equal((await pg.query("select service_details from public.invoices where id=$1", [first.id])).rows[0].service_details, args[3]);
+  });
+  await assert.rejects(as("authenticated", owner, "aal2", () => pg.query("select public.issue_service_invoice($1,$2,'Different service','',1,0,current_date)", [request, client])), /Invoice request mismatch/);
+});
+
+test("invalid direct invoices roll back the new order and never consume invoice numbers", async () => {
+  const counters = (await pg.query("select * from public.invoice_counters order by year")).rows;
+  for (const scenario of ["missing address", "past due date", "invalid amount"]) {
+    const request = crypto.randomUUID();
+    await assert.rejects(as("authenticated", owner, "aal2", async () => {
+      if (scenario === "missing address") await pg.query("update public.clients set address='' where id=$1", [client]);
+      return pg.query("select public.issue_service_invoice($1,$2,'Konzultace','Podrobný popis',$3,0,current_date,current_date+$4::int)", [request, client, scenario === "invalid amount" ? 0 : 180000, scenario === "past due date" ? -1 : 14]);
+    }), /Complete billing identities|Due date cannot precede|check constraint/);
+    assert.equal((await pg.query("select count(*)::int as n from public.orders where id=$1", [request])).rows[0].n, 0);
+  }
+  assert.deepEqual((await pg.query("select * from public.invoice_counters order by year")).rows, counters);
+});
+
+test("direct service invoicing requires owner membership and MFA before writing data", async () => {
+  for (const [role, sub, aal] of [["anon", null, null], ["authenticated", outsider, "aal2"], ["authenticated", owner, "aal1"]]) {
+    await assert.rejects(as(role, sub, aal, () => pg.query("select public.issue_service_invoice($1,$2,'Service','Description',180000)", [crypto.randomUUID(), client])), /permission denied|Admin \+ MFA required/);
+  }
 });

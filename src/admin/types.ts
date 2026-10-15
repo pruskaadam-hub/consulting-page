@@ -11,6 +11,7 @@ export type Order = {
   id: string;
   client_id: string;
   description: string;
+  service_details: string;
   amount_minor: number;
   status: string;
   source: string;
@@ -46,6 +47,7 @@ export type Invoice = {
   supplier: Business;
   recipient: Client;
   description: string;
+  service_details: string;
   amount_minor: number;
   net_minor: number;
   tax_minor: number;

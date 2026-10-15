@@ -78,6 +78,8 @@ const { HtmlValidate } = require("html-validate");
       other = "22222222-2222-4222-8222-222222222222",
       factor = "33333333-3333-4333-8333-333333333333";
     let mailRead = true, mailSend = true;
+    let failDirectInvoice = true;
+    const directRequests = [];
     let current = owner,
       level = "aal1",
       privateReads = 0,
@@ -205,6 +207,24 @@ const { HtmlValidate } = require("html-validate");
               clients: clients.length,
               bookings: 0,
             });
+          if (name === "rpc/issue_service_invoice") {
+            const body = req.postDataJSON();
+            directRequests.push(body);
+            if (failDirectInvoice) {
+              failDirectInvoice = false;
+              return ok({message:"Complete billing identities and VAT status first",code:"P0001"},400);
+            }
+            const order = {id:body.p_request,client_id:body.p_client,description:body.p_name,service_details:body.p_details,
+              amount_minor:body.p_amount,status:"pending",source:"manual",is_test:false,
+              created_at:new Date().toISOString(),clients:{name:clients[0].name,email:clients[0].email}};
+            orders.push(order);
+            const item = {id:crypto.randomUUID(),number:"202600002",order_id:order.id,
+              issue_date:"2026-10-15",due_date:body.p_due_date,supplier:business,recipient:clients[0],
+              description:order.description,service_details:order.service_details,
+              amount_minor:order.amount_minor,net_minor:order.amount_minor,tax_minor:0,tax_rate:0};
+            invoices.push(item);
+            return ok(item);
+          }
           if (name === "rpc/issue_invoice") {
             const body = req.postDataJSON();
             assert.equal(body.p_order, orders[0].id);
@@ -375,14 +395,18 @@ const { HtmlValidate } = require("html-validate");
         );
       }
     }
-    await page
-      .getByRole("navigation", { name: "Administrace" })
-      .getByRole("button", { name: "Klienti", exact: true })
-      .click();
+    await page.getByRole("navigation", {name:"Administrace"}).getByRole("button", {name:"Faktury",exact:true}).click();
+    await page.getByLabel("Existující objednávka", {exact:true}).check();
+    assert.equal(await page.getByLabel("Objednávka k fakturaci", {exact:true}).isDisabled(), true);
+    assert.equal(await page.getByRole("button", {name:"Vystavit fakturu",exact:true}).isDisabled(), true);
+    await page.getByText("Mezi posledními 100 objednávkami není žádná", {exact:false}).waitFor();
+    await page.getByLabel("Nová konzultace nebo služba", {exact:true}).check();
+    await page.getByRole("button", {name:"Přejít na klienty",exact:true}).click();
     await page.getByLabel("Jméno nebo firma").fill("Client Test");
     await page
       .getByLabel("E-mail", { exact: true })
       .fill("client@example.test");
+    await page.getByLabel("Fakturační adresa včetně země", {exact:true}).fill("Praha, Česká republika");
     await page.getByRole("button", { name: "Uložit klienta" }).click();
     await page.getByRole("status").filter({ hasText: "Uloženo." }).waitFor();
     assert.equal(clients.length, 1);
@@ -405,6 +429,7 @@ const { HtmlValidate } = require("html-validate");
     await page.getByRole("navigation", {name: "Administrace"})
       .getByRole("button", {name: "Faktury", exact: true}).click();
     assert.equal(await page.getByRole("heading", {name: "Faktury Stripe", exact: true}).count(), 0);
+    await page.getByLabel("Existující objednávka", {exact:true}).check();
     await page.locator('select[name="order_id"]').selectOption(orders[0].id);
     await page.getByLabel("Datum splatnosti", {exact: true}).fill("2030-12-31");
     await page.getByRole("button", {name: "Vystavit fakturu", exact: true}).click();
@@ -420,6 +445,44 @@ const { HtmlValidate } = require("html-validate");
     await page.getByRole("navigation", {name: "Administrace"})
       .getByRole("button", {name: "Faktury", exact: true}).click();
     await page.locator(".admin-list-row").filter({hasText:"202600001"}).getByText("Uhrazeno", {exact: true}).waitFor();
+    await page.getByLabel("Nová konzultace nebo služba", {exact:true}).check();
+    const invoiceService = page.getByLabel("Konzultace nebo vlastní služba", {exact:true});
+    for (const [id,price] of [["individual","1800"],["student","1500"],["package","4500"],["student-package","3500"]]) {
+      await invoiceService.selectOption(id);
+      assert.equal(await page.getByLabel("Celková cena služby v Kč", {exact:true}).inputValue(), price);
+    }
+    await invoiceService.selectOption("custom");
+    await page.getByLabel("Klient pro fakturu", {exact:true}).selectOption(clients[0].id);
+    await page.getByLabel("Název služby", {exact:true}).fill("Úprava CV a dokumentů");
+    const customDetails = "Rozbor CV\nDoporučení pro <švýcarský trh> a pohovory.";
+    await page.getByLabel("Podrobný popis služby", {exact:true}).fill(customDetails);
+    await page.getByLabel("Celková cena služby v Kč", {exact:true}).fill("0");
+    await page.getByRole("button", {name:"Vystavit fakturu",exact:true}).click();
+    await page.getByRole("alert").filter({hasText:"Zadej částku"}).waitFor();
+    assert.equal(directRequests.length,0);
+    await page.getByLabel("Celková cena služby v Kč", {exact:true}).fill("2500,50");
+    await page.getByLabel("Datum splatnosti", {exact:true}).fill("2030-12-31");
+    await page.getByRole("button", {name:"Vystavit fakturu",exact:true}).click();
+    await page.getByRole("alert").filter({hasText:"Údaje formuláře zůstaly zachované"}).waitFor();
+    assert.equal(invoices.length,1);
+    assert.equal(orders.length,1);
+    assert.equal(await page.getByLabel("Podrobný popis služby", {exact:true}).inputValue(),customDetails);
+    await page.getByRole("button", {name:"Vystavit fakturu",exact:true}).click();
+    const customInvoice = page.getByRole("region", {name:"Faktura 202600002",exact:true});
+    await customInvoice.waitFor();
+    assert.equal(directRequests.length,2);
+    assert.equal(directRequests[0].p_request,directRequests[1].p_request);
+    assert.equal(invoices.length,2);
+    assert.equal(orders.length,2);
+    assert.equal(invoices[1].amount_minor,250050);
+    assert.equal(await customInvoice.locator(".admin-service-details").innerText(),customDetails);
+    await validate("custom service invoice");
+    await page.emulateMedia({media:"print"});
+    assert.equal(await customInvoice.isVisible(),true);
+    assert.equal(await page.locator(".admin-panel").first().isVisible(),false);
+    const pdf=await page.pdf({format:"A4"});
+    assert.equal(pdf.subarray(0,5).toString(),"%PDF-");
+    await page.emulateMedia({media:"screen"});
     const overdueOrder = {...orders[0], id:crypto.randomUUID(), status:"pending", description:"Historická neuhrazená faktura"};
     orders.push(overdueOrder);
     invoices.push({...invoices[0],id:crypto.randomUUID(),number:"202000001",order_id:overdueOrder.id,issue_date:"2020-01-01",due_date:"2020-01-15"});
