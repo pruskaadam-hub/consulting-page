@@ -77,6 +77,7 @@ const { HtmlValidate } = require("html-validate");
     const owner = "11111111-1111-4111-8111-111111111111",
       other = "22222222-2222-4222-8222-222222222222",
       factor = "33333333-3333-4333-8333-333333333333";
+    let mailRead = true, mailSend = true;
     let current = owner,
       level = "aal1",
       privateReads = 0,
@@ -237,7 +238,10 @@ const { HtmlValidate } = require("html-validate");
         }
         if (u.pathname.endsWith("/admin-api/status"))
           return ok({
-            mail: true,
+            mail: mailRead && mailSend,
+            mail_read: mailRead,
+            mail_send: mailSend,
+            mail_provider: "icloud",
             analytics: false,
             payments: false,
             invoicing: false,
@@ -400,6 +404,23 @@ const { HtmlValidate } = require("html-validate");
       .waitFor();
     assert.equal(sends, 1);
     assert.equal(events.length, 0);
+    for (const [read, send] of [[false, true], [true, false]]) {
+      mailRead = read;
+      mailSend = send;
+      await page.reload();
+      await page.getByRole("navigation", { name: "Administrace" })
+        .getByRole("button", { name: "Pošta", exact: true }).click();
+      if (read) await page.getByRole("button", { name: "Načíst posledních 25 zpráv" }).waitFor();
+      else await page.getByText("Příjem pošty zatím není připojený.", { exact: false }).waitFor();
+      assert.equal(await page.getByRole("button", { name: "Načíst posledních 25 zpráv" }).count(), read ? 1 : 0);
+      const submit = page.getByRole("button", { name: "Odeslat zprávu" });
+      if (send) await submit.waitFor();
+      else await page.getByText("Odesílání zatím není připojené.", { exact: false }).waitFor();
+      assert.equal(await submit.isDisabled(), !send);
+    }
+    mailRead = mailSend = true;
+    await page.reload();
+    await page.getByRole("navigation", { name: "Administrace" }).waitFor();
     if (process.env.SCREENSHOT_DIR) {
       await fs.mkdir(process.env.SCREENSHOT_DIR, { recursive: true });
       await page

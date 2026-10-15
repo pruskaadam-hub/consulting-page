@@ -2,6 +2,12 @@ name: Deploy Supabase backend
 
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'supabase/**'
+      - 'scripts/deploy-backend.mjs'
+      - '.github/workflows/backend.yml'
 
 permissions:
   contents: read

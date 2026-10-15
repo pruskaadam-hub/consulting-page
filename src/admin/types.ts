@@ -73,6 +73,9 @@ export type StripeInvoice = {
 };
 export type Integrations = {
   mail: boolean;
+  mail_read?: boolean;
+  mail_send?: boolean;
+  mail_provider?: "icloud" | "forpsi";
   analytics: boolean;
   payments: boolean;
   invoicing: boolean;

@@ -5,18 +5,21 @@ Původní vstup na GitHub Pages: `https://pruskaadam-hub.github.io/consulting-pa
 GitHub může původní adresu přesměrovat na nastavenou vlastní doménu.
 
 Projekt Supabase: `lsofzsartjesgwetcpzw`, URL `https://lsofzsartjesgwetcpzw.supabase.co`.
-Správce: `pruskaadam@me.com`. Obchodní pošta: `adam@adampruska.cz` u FORPSI.
+Správce: `pruskaadam@me.com`. Obchodní pošta: `adam@adampruska.cz` přes iCloud+,
+odesílání z administrace přes Resend. FORPSI spravuje DNS domény.
 
 ## Co je připravené a co vyžaduje účty
 
 Zdrojový kód obsahuje přihlášení, povinné TOTP ověření, databázová oprávnění,
 klienty, objednávky, příjmy, rezervace, úkoly, ruční faktury s tiskem do PDF,
-poštu FORPSI, GA4 a propojení Stripe Payments, Invoicing a Tax.
+poštu iCloud/Resend, GA4 a propojení Stripe Payments, Invoicing a Tax.
 
 Zveřejnění statické stránky administrace nevytvoří tabulky ani nenasadí Edge
 Function do Supabase. Před živým používáním musí být provedené kroky níže.
 Veřejný publishable klíč dodaný vlastníkem je již součástí připojení webu.
-Nasazení databáze, Edge Function a založení účtu správce zatím není potvrzené.
+Nasazení databáze a Edge Function potvrdil úspěšný GitHub Actions běh
+`38747099021`. Přihlášení vlastníka ani skutečné propojení poskytovatelů
+tímto během ověřené není.
 Bez serverových tajných údajů
 budou příslušná propojení označená jako čekající. Přehledy neobsahují ukázkové
 klienty ani vymyšlené příjmy. Stav „Nastaveno“ u služby potvrzuje konfiguraci,
@@ -56,7 +59,7 @@ Tato cesta nevyžaduje propojení Personal Vaultu s prostředím Codexu.
    New repository secret**. Název je `SUPABASE_ACCESS_TOKEN`; hodnotu vložte
    pouze do chráněného pole Secret.
 4. Otevřete **Actions → Deploy Supabase backend → Run workflow** a vyberte
-   větev `main`. Workflow běží jen ručně a jen z této větve.
+   větev `main`. Workflow se spouští také po změnách backendu na `main`.
 5. Ověřte úspěch kroku **Deploy database and Edge Function** a zprávu
    **Owner account appointed.** Pokud účet při prvním nasazení neexistoval,
    vytvořte ho a workflow spusťte znovu.
@@ -121,6 +124,11 @@ Tyto hodnoty patří výhradně do **Edge Functions → Secrets**:
 | `ALLOWED_ORIGINS` | `https://adampruska.cz` (případně také GitHub origin oddělený čárkou při přechodu) |
 | `FORPSI_USERNAME` | `adam@adampruska.cz`, až je schránka aktivní |
 | `FORPSI_PASSWORD` | Skutečné heslo této schránky |
+| `MAIL_PROVIDER` | `icloud` (výchozí), nebo `forpsi` pro starší připojení |
+| `MAIL_FROM_EMAIL` | `adam@adampruska.cz`, doména musí být ověřená pro odesílání |
+| `ICLOUD_USERNAME` | Přihlašovací adresa iCloud Mail |
+| `ICLOUD_APP_PASSWORD` | Heslo pro konkrétní aplikaci vytvořené u Applu |
+| `RESEND_API_KEY` | Klíč pro odesílání z ověřené domény přes HTTPS |
 | `GA4_PROPERTY_ID` | Číselné ID služby Google Analytics |
 | `GOOGLE_SERVICE_ACCOUNT_JSON` | JSON služebního účtu pouze pro čtení Analytics |
 | `STRIPE_SECRET_KEY` | Nejdřív testovací serverový klíč Stripe |
@@ -133,7 +141,11 @@ Tyto hodnoty patří výhradně do **Edge Functions → Secrets**:
 Supabase samo dodává `SUPABASE_URL`, `SUPABASE_ANON_KEY` a serverový
 `SUPABASE_SERVICE_ROLE_KEY`. Nikdy nekopírujte service_role do webu.
 
-FORPSI se připojuje s ověřováním TLS certifikátů na `imap.forpsi.com:993`
+Aktuální postup pro iCloud+ a Resend je v [mail-icloud.md](mail-icloud.md).
+Příjem a odesílání mají samostatné stavy. Bez schránky FORPSI není možné
+použít její přístupové údaje; pro iCloud platí nové proměnné v tabulce.
+
+Volitelné starší připojení FORPSI se připojuje s ověřováním TLS certifikátů na `imap.forpsi.com:993`
 a `smtp.forpsi.com:465`. Supabase blokuje odchozí SMTP na portech 25 a 587;
 proto se používá 465. Hosty ani porty nelze měnit požadavkem z prohlížeče.
 Zobrazuje se posledních 25 zpráv a prostý text, bez načítání vzdálených

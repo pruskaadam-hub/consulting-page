@@ -343,7 +343,7 @@ export default function Admin() {
               "Návštěvnost a zájem",
               "Rezervace a klienti",
               "Objednávky a faktury",
-              "Pošta FORPSI",
+              "Firemní pošta",
             ].map((text, i) => (
               <div key={text}>
                 <span aria-hidden="true">
@@ -1353,7 +1353,9 @@ function Workspace({
             )}
             {section === "mail" && (
               <Mailbox
-                connected={Boolean(integration?.mail)}
+                readConnected={Boolean(integration?.mail_read ?? integration?.mail)}
+                sendConnected={Boolean(integration?.mail_send ?? integration?.mail)}
+                provider={integration?.mail_provider || "icloud"}
                 mailbox={integration?.mailbox || "adam@adampruska.cz"}
                 outbox={s.outbox}
                 refresh={reload}
@@ -1528,7 +1530,8 @@ function Workspace({
 }
 function Connections({ integration }: { integration: Integrations | null }) {
   const connections: [string, boolean | undefined][] = [
-    ["Pošta FORPSI", integration?.mail],
+    ["Příjem pošty", integration?.mail_read ?? integration?.mail],
+    ["Odesílání pošty", integration?.mail_send ?? integration?.mail],
     ["Google Analytics 4", integration?.analytics],
     ["Stripe Payments", integration?.payments],
     ["Stripe Invoicing", integration?.invoicing],
@@ -1681,12 +1684,16 @@ function InvoiceView({ invoice: i }: { invoice: Invoice }) {
   );
 }
 function Mailbox({
-  connected,
+  readConnected,
+  sendConnected,
+  provider,
   mailbox,
   outbox,
   refresh,
 }: {
-  connected: boolean;
+  readConnected: boolean;
+  sendConnected: boolean;
+  provider: "icloud" | "forpsi";
   mailbox: string;
   outbox: Snapshot["outbox"];
   refresh: () => Promise<void>;
@@ -1747,7 +1754,7 @@ function Mailbox({
   return (
     <>
       <Panel title={mailbox}>
-        {connected ? (
+        {readConnected ? (
           <>
             <button
               className="admin-outline"
@@ -1759,13 +1766,19 @@ function Mailbox({
             </button>
             <p className="admin-small">
               Zprávy se zobrazují jako prostý text. Přílohy a HTML verzi otevři
-              ve webmailu FORPSI.
+              ve své poštovní aplikaci.
             </p>
+            {provider === "icloud" && (
+              <p className="admin-small">
+                iCloud používá společnou doručenou poštu. Mohou se tu zobrazit
+                také zprávy pro tvé osobní adresy.
+              </p>
+            )}
           </>
         ) : (
           <Empty>
-            Schránka FORPSI zatím není připojená. Je potřeba dokončit její
-            aktivaci a uložit přístupové údaje v Supabase Secrets.
+            Příjem pošty zatím není připojený. Dokonči nastavení schránky
+            a ulož přístupové údaje v Supabase Secrets.
           </Empty>
         )}
         {error && (
@@ -1819,6 +1832,14 @@ function Mailbox({
         )}
       </Panel>
       <Panel title="Nová zpráva">
+        {!sendConnected && (
+          <Empty>
+            Odesílání zatím není připojené. {provider === "icloud"
+              ? "Ověř doménu v Resend a přidej jeho API klíč do Supabase Secrets."
+              : "Ulož přístupové údaje schránky do Supabase Secrets."}
+          </Empty>
+        )}
+        <p className="admin-small">Odesílatel: Adam Pruška &lt;{mailbox}&gt;</p>
         <form onSubmit={send}>
           <label className="admin-field">
             <span>Komu</span>
@@ -1828,7 +1849,7 @@ function Mailbox({
               onChange={(e) => setTo(e.target.value)}
               required
               maxLength={254}
-              disabled={!connected || busy || uncertain}
+              disabled={!sendConnected || busy || uncertain}
             />
           </label>
           <label className="admin-field">
@@ -1839,7 +1860,7 @@ function Mailbox({
               onChange={(e) => setSubject(e.target.value)}
               required
               maxLength={200}
-              disabled={!connected || busy || uncertain}
+              disabled={!sendConnected || busy || uncertain}
             />
           </label>
           <label className="admin-field">
@@ -1850,19 +1871,19 @@ function Mailbox({
               onChange={(e) => setBody(e.target.value)}
               required
               maxLength={20000}
-              disabled={!connected || busy || uncertain}
+              disabled={!sendConnected || busy || uncertain}
             />
           </label>
           <button
             className="button primary"
             type="submit"
-            disabled={!connected || busy || uncertain}
+            disabled={!sendConnected || busy || uncertain}
           >
             {busy ? "Odesílám…" : "Odeslat zprávu"}
           </button>
           {uncertain && (
             <p className="admin-small">
-              Automatické opakování je zablokované. Ověř výsledek ve FORPSI a v
+              Automatické opakování je zablokované. Ověř výsledek u poskytovatele pošty a v
               přehledu odesílání.
             </p>
           )}
@@ -1870,7 +1891,7 @@ function Mailbox({
       </Panel>
       <Panel title="Přehled odesílání">
         <p className="admin-small">
-          Zprávy odeslané z této administrace. SMTP přijetí nepotvrzuje doručení
+          Zprávy odeslané z této administrace. Přijetí poskytovatelem nepotvrzuje doručení
           adresátovi.
         </p>
         {outbox.map((item) => (

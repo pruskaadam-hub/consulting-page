@@ -8,7 +8,7 @@ import {
 } from "../_shared/contracts.mjs";
 import { config, requireAdmin, serviceClient } from "../_shared/auth.ts";
 import { analyticsReport } from "../_shared/google.ts";
-import { mailConfigured, readMail, sendMail } from "../_shared/mail.ts";
+import { mailStatus, readMail, sendMail } from "../_shared/mail.ts";
 import { limitedText } from "../_shared/http.ts";
 
 const site = () =>
@@ -182,7 +182,7 @@ async function route(req: Request) {
   const { client } = await requireAdmin(req);
   if (req.method === "GET" && path === "/status")
     return json({
-      mail: mailConfigured(),
+      ...mailStatus(),
       analytics: Boolean(
         config("GA4_PROPERTY_ID", false) &&
           config("GOOGLE_SERVICE_ACCOUNT_JSON", false),
@@ -201,7 +201,6 @@ async function route(req: Request) {
         : "test",
       bookings: Boolean(config("CAL_WEBHOOK_SECRET", false)),
       events: Boolean(config("EVENTS_HMAC_SECRET", false)),
-      mailbox: config("FORPSI_USERNAME", false) || "adam@adampruska.cz",
     });
   if (req.method === "GET" && path === "/analytics")
     return json(await analyticsReport());
@@ -212,8 +211,6 @@ async function route(req: Request) {
     return json(await readMail(rawUid ? Number(rawUid) : undefined));
   }
   if (req.method === "POST" && path === "/mail") {
-    if (!mailConfigured())
-      throw new ApiError("Nejprve připoj schránku FORPSI.", 503);
     return json(await sendMail(await payload(req)));
   }
   if (req.method === "POST" && path === "/checkout") {

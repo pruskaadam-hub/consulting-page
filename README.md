@@ -121,7 +121,8 @@ je třeba po obnovení prostředí spustit znovu.
 Soukromý vstup je `/admin/`, hlavní doména `https://adampruska.cz/`.
 Přihlášení pro `pruskaadam@me.com` vyžaduje povolený účet a TOTP MFA.
 Celý backend běží v Supabase: Auth, PostgreSQL s RLS a Edge Function `admin-api`.
-Pošta FORPSI používá IMAP/TLS 993 a SMTP/TLS 465. Připravená jsou propojení
+Pošta iCloud používá IMAP/TLS 993 a pro odesílání Resend přes HTTPS.
+Postup: [docs/mail-icloud.md](docs/mail-icloud.md). Připravená jsou propojení
 GA4, Cal.com a Stripe Payments, Invoicing a Tax.
 
 Nasazení souborů na Pages samo neaktivuje Supabase ani externí služby.

@@ -1,5 +1,6 @@
 import { handle } from "./index.ts";
 import { limitedText } from "../_shared/http.ts";
+import { mailStatus, sendMail } from "../_shared/mail.ts";
 function assert(value: unknown, message = "Assertion failed") {
   if (!value) throw new Error(message);
 }
@@ -20,12 +21,169 @@ Deno.test(
         assert(response.status === 401, path);
         await response.body?.cancel();
       }
+      const send = await handle(
+        new Request(url + "/mail", { method: "POST", body: "{}" }),
+      );
+      assert(send.status === 401);
+      await send.body?.cancel();
       assert(calls === 0);
     } finally {
       globalThis.fetch = original;
     }
   },
 );
+
+async function withMailFixture(run: () => void | Promise<void>) {
+  const values: Record<string, string> = {
+    MAIL_PROVIDER: "icloud",
+    MAIL_FROM_EMAIL: "adam@adampruska.cz",
+    ICLOUD_USERNAME: "owner@icloud.com",
+    ICLOUD_APP_PASSWORD: "fixture-app-password",
+    RESEND_API_KEY: "re_fixture_only",
+    SUPABASE_URL: "https://project.supabase.co",
+    SUPABASE_SERVICE_ROLE_KEY: "fixture-service-key",
+  };
+  const previous = new Map(
+    Object.keys(values).map((key) => [key, Deno.env.get(key)]),
+  );
+  for (const [key, value] of Object.entries(values)) Deno.env.set(key, value);
+  try {
+    await run();
+  } finally {
+    for (const [key, value] of previous) {
+      if (value === undefined) Deno.env.delete(key);
+      else Deno.env.set(key, value);
+    }
+  }
+}
+const mailMessage = {
+  id: "55555555-5555-4555-8555-555555555555",
+  to: "client@example.test",
+  subject: "Fixture only",
+  text: "This message must never reach a real provider.",
+};
+Deno.test("iCloud receipt and HTTPS sending are configured independently and status never exposes secrets", () =>
+  withMailFixture(() => {
+    assert(mailStatus().mail);
+    assert(!JSON.stringify(mailStatus()).includes("fixture"));
+    Deno.env.delete("RESEND_API_KEY");
+    assert(
+      mailStatus().mail_read && !mailStatus().mail_send && !mailStatus().mail,
+    );
+    Deno.env.set("RESEND_API_KEY", "re_fixture_only");
+    Deno.env.delete("ICLOUD_APP_PASSWORD");
+    assert(!mailStatus().mail_read && mailStatus().mail_send);
+  }));
+Deno.test("unconfigured sending stops before writing an outbox entry or contacting providers", () =>
+  withMailFixture(async () => {
+    Deno.env.delete("RESEND_API_KEY");
+    const original = globalThis.fetch;
+    let calls = 0;
+    globalThis.fetch = () => {
+      calls++;
+      throw new Error("Unexpected request");
+    };
+    try {
+      let status = 0;
+      try {
+        await sendMail(mailMessage);
+      } catch (error) {
+        status = (error as { status: number }).status;
+      }
+      assert(status === 503 && calls === 0);
+    } finally {
+      globalThis.fetch = original;
+    }
+  }));
+Deno.test("HTTPS mail claims the outbox first, fixes From and Reply-To to the domain, and uses idempotency", () =>
+  withMailFixture(async () => {
+    const original = globalThis.fetch;
+    const calls: string[] = [];
+    globalThis.fetch = (input, init) => {
+      const target = String(input);
+      calls.push(target);
+      if (target === "https://api.resend.com/emails") {
+        assert(calls.length === 2, "Claim must precede delivery");
+        const body = JSON.parse(String(init?.body));
+        assert(body.from === "Adam Pruška <adam@adampruska.cz>");
+        assert(body.reply_to === "adam@adampruska.cz");
+        assert(body.to.length === 1 && body.to[0] === mailMessage.to);
+        assert(body.text === mailMessage.text && body.html === undefined);
+        const headers = new Headers(init?.headers);
+        assert(headers.get("Authorization") === "Bearer re_fixture_only");
+        assert(headers.get("Idempotency-Key") === `mail/${mailMessage.id}`);
+        return Promise.resolve(Response.json({ id: "provider-message-id" }));
+      }
+      assert(target.includes("/rest/v1/mail_outbox"));
+      const body = JSON.parse(String(init?.body));
+      assert(body.status === (init?.method === "PATCH" ? "sent" : "sending"));
+      if (init?.method === "PATCH") {
+        assert(body.message_id === "provider-message-id");
+      }
+      return Promise.resolve(new Response(null, { status: 201 }));
+    };
+    try {
+      const result = await sendMail({
+        ...mailMessage,
+        from: "spoof@other.example",
+        reply_to: "other@other.example",
+      });
+      assert(result.status === "sent" && calls.length === 3);
+    } finally {
+      globalThis.fetch = original;
+    }
+  }));
+Deno.test("duplicate mail claims cannot contact the delivery provider", () =>
+  withMailFixture(async () => {
+    const original = globalThis.fetch;
+    let calls = 0;
+    globalThis.fetch = (input) => {
+      calls++;
+      assert(String(input).includes("/rest/v1/mail_outbox"));
+      return Promise.resolve(
+        Response.json({ code: "23505", message: "Duplicate" }, { status: 409 }),
+      );
+    };
+    try {
+      let status = 0;
+      try {
+        await sendMail(mailMessage);
+      } catch (error) {
+        status = (error as { status: number }).status;
+      }
+      assert(status === 409 && calls === 1);
+    } finally {
+      globalThis.fetch = original;
+    }
+  }));
+Deno.test("uncertain HTTPS delivery is recorded without retrying or leaking provider errors", () =>
+  withMailFixture(async () => {
+    const original = globalThis.fetch;
+    let attempts = 0, uncertain = false;
+    globalThis.fetch = (input, init) => {
+      if (String(input) === "https://api.resend.com/emails") {
+        attempts++;
+        throw new Error("Private provider diagnostics re_fixture_only");
+      }
+      assert(String(input).includes("/rest/v1/mail_outbox"));
+      if (init?.method === "PATCH") {
+        uncertain = JSON.parse(String(init.body)).status === "uncertain";
+      }
+      return Promise.resolve(new Response(null, { status: 201 }));
+    };
+    try {
+      let message = "";
+      try {
+        await sendMail(mailMessage);
+      } catch (error) {
+        message = (error as Error).message;
+      }
+      assert(attempts === 1 && uncertain && message.includes("není jistý"));
+      assert(!message.includes("fixture"));
+    } finally {
+      globalThis.fetch = original;
+    }
+  }));
 Deno.test("CORS denies another origin; preflight grants no data", async () => {
   const denied = await handle(
     new Request(url + "/status", {
@@ -92,9 +250,9 @@ Deno.test("valid user still needs database authorization and MFA", async () => {
       Response.json(
         target.includes("/auth/v1/user")
           ? {
-              id: "11111111-1111-4111-8111-111111111111",
-              email: "fixture@example.test",
-            }
+            id: "11111111-1111-4111-8111-111111111111",
+            email: "fixture@example.test",
+          }
           : false,
       ),
     );
@@ -145,15 +303,18 @@ Deno.test(
           Response.json({ url: "https://checkout.stripe.com/c/pay/fixture" }),
         );
       }
-      if (target.includes("/auth/v1/user"))
+      if (target.includes("/auth/v1/user")) {
         return Promise.resolve(
           Response.json({ id, email: "fixture@example.test" }),
         );
-      if (target.includes("/rpc/is_admin"))
+      }
+      if (target.includes("/rpc/is_admin")) {
         return Promise.resolve(Response.json(true));
-      if (target.includes("/rpc/begin_checkout"))
+      }
+      if (target.includes("/rpc/begin_checkout")) {
         return Promise.resolve(Response.json({ id }));
-      if (target.includes("/rest/v1/orders"))
+      }
+      if (target.includes("/rest/v1/orders")) {
         return Promise.resolve(
           Response.json({
             id,
@@ -163,6 +324,7 @@ Deno.test(
             clients: { email: "client@example.test" },
           }),
         );
+      }
       throw new Error("Unexpected request " + target);
     };
     try {
