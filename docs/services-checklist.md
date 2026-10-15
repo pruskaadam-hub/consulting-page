@@ -20,6 +20,14 @@ používají pouze zachycené odpovědi a do produkčních statistik nic nevklá
 
 ## 2. Google Analytics 4
 
+Vlastník dodal veřejné měřicí ID `G-L6HVJMS1XE`. Workflow Pages ho používá
+jako výchozí hodnotu; GitHub Actions Variable `VITE_GA4_MEASUREMENT_ID` ji
+může přepsat. Google tag se načte pouze po souhlasu. Přehledy přímo
+v administraci navíc potřebují Property ID a služební účet podle kroků níže.
+Administrace proto ukazuje samostatně **GA4: sběr dat na webu** a
+**GA4: přehledy v administraci**. Nastavení měřicího ID nepotvrzuje doručení
+událostí do Google ani oprávnění k reportům.
+
 1. Na https://analytics.google.com/ založte účet a službu pro Adam Pruška.
    Zvolte časové pásmo Praha a měnu CZK.
 2. Vytvořte webový datový stream pro `https://adampruska.cz`.

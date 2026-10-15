@@ -29,7 +29,7 @@ jobs:
       VITE_SUPABASE_URL: https://lsofzsartjesgwetcpzw.supabase.co
       VITE_SUPABASE_PUBLISHABLE_KEY: ${{ vars.VITE_SUPABASE_PUBLISHABLE_KEY }}
       VITE_ENABLE_EVENTS: 'true'
-      VITE_GA4_MEASUREMENT_ID: ${{ vars.VITE_GA4_MEASUREMENT_ID }}
+      VITE_GA4_MEASUREMENT_ID: ${{ vars.VITE_GA4_MEASUREMENT_ID || 'G-L6HVJMS1XE' }}
     steps:
       - name: Check out source
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6

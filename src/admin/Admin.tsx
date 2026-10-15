@@ -1532,7 +1532,8 @@ function Connections({ integration }: { integration: Integrations | null }) {
   const connections: [string, boolean | undefined][] = [
     ["Příjem pošty", integration?.mail_read ?? integration?.mail],
     ["Odesílání pošty", integration?.mail_send ?? integration?.mail],
-    ["Google Analytics 4", integration?.analytics],
+    ["GA4: sběr dat na webu", /^G-[A-Z0-9]+$/.test(import.meta.env.VITE_GA4_MEASUREMENT_ID || "")],
+    ["GA4: přehledy v administraci", integration?.analytics],
     ["Stripe Payments", integration?.payments],
     ["Stripe Invoicing", integration?.invoicing],
     ["Stripe Tax", integration?.tax],
