@@ -2,7 +2,11 @@ import { createClient } from "@supabase/supabase-js";
 export const projectUrl =
   import.meta.env.VITE_SUPABASE_URL ||
   "https://lsofzsartjesgwetcpzw.supabase.co";
-const publicKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || "";
+// Public browser key. Authorization still requires Auth, MFA and database RLS.
+// Environment configuration can override it when changing Supabase projects.
+const publicKey =
+  import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
+  "sb_publishable_yye0yQ6BO85LYPA-8McyIA_jdghM6E5";
 function validPublicKey(key: string) {
   if (key.startsWith("sb_publishable_")) return true;
   try {

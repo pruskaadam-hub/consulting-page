@@ -15,26 +15,29 @@ poštu FORPSI, GA4 a propojení Stripe Payments, Invoicing a Tax.
 
 Zveřejnění statické stránky administrace nevytvoří tabulky ani nenasadí Edge
 Function do Supabase. Před živým používáním musí být provedené kroky níže.
-Bez veřejného klíče zůstane přihlášení zamčené. Bez serverových tajných údajů
+Veřejný publishable klíč dodaný vlastníkem je již součástí připojení webu.
+Nasazení databáze, Edge Function a založení účtu správce zatím není potvrzené.
+Bez serverových tajných údajů
 budou příslušná propojení označená jako čekající. Přehledy neobsahují ukázkové
 klienty ani vymyšlené příjmy. Stav „Nastaveno“ u služby potvrzuje konfiguraci,
 nikoli provedení skutečné platby nebo doručení e-mailu.
 
 ## 1. Připojení webu
 
-V Supabase Settings → API Keys najděte **Publishable key** (`sb_publishable_…`)
-nebo starší `anon` klíč. Jde o veřejný údaj určený do prohlížeče. Nesmí se
+Web již obsahuje vlastníkem dodaný **Publishable key** (`sb_publishable_…`)
+pro výše uvedený projekt. Pro zveřejnění přihlašovacího formuláře není nutné
+nastavovat GitHub variable. Jde o veřejný údaj určený do prohlížeče. Nesmí se
 použít `secret` ani `service_role` klíč. Stripe `pk_test_…` je jiný klíč a
 pro přihlášení k Supabase nefunguje.
 
-Pro místní vývoj patří veřejný klíč do ignorovaného `.env.local`:
+Při změně projektu lze výchozí připojení přepsat v ignorovaném `.env.local`:
 
 ```dotenv
 VITE_SUPABASE_URL=https://lsofzsartjesgwetcpzw.supabase.co
 VITE_SUPABASE_PUBLISHABLE_KEY=skutecny_verejny_klic
 ```
 
-Pro GitHub Pages nastavte repozitářovou **Actions variable**
+Pro přepsání klíče na GitHub Pages nastavte repozitářovou **Actions variable**
 `VITE_SUPABASE_PUBLISHABLE_KEY` v Settings → Secrets and variables → Actions
 → Variables. Pak znovu spusťte workflow Pages. Ostatní hodnoty `VITE_` jsou
 také veřejné. Nikdy do nich nevkládejte serverové klíče ani heslo schránky.
