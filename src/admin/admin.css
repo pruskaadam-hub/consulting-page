@@ -222,8 +222,8 @@
 .invoice-supplier-editor { border: 1px solid #e2e4e8; border-radius: 12px; padding: 0 18px 18px; }
 .invoice-supplier-editor > summary { position: relative; padding: 18px 32px 18px 0; list-style: none; cursor: pointer; font-size: 14px; font-weight: 500; }
 .invoice-supplier-editor > summary::-webkit-details-marker { display: none; }
-.invoice-supplier-editor > summary::after { content: ""; position: absolute; right: 3px; top: 24px; width: 7px; height: 7px; border-right: 1.7px solid #535b66; border-bottom: 1.7px solid #535b66; transform: rotate(45deg); }
-.invoice-supplier-editor[open] > summary::after { transform: rotate(225deg); top: 28px; }
+.invoice-supplier-editor > summary::after { content: ""; position: absolute; right: 3px; top: 50%; width: 7px; height: 7px; border-right: 1.7px solid #535b66; border-bottom: 1.7px solid #535b66; transform: translateY(-50%) rotate(45deg); }
+.invoice-supplier-editor[open] > summary::after { transform: translateY(-50%) rotate(225deg); }
 .invoice-editor-preview .admin-invoice { padding: 25px; margin: 16px 0 0; font-size: 12px; }
 .admin-invoice { border-top: 5px solid var(--invoice-accent, #d7202b); overflow-wrap: anywhere; }
 .invoice-brand { display: flex; gap: 12px; align-items: center; }
