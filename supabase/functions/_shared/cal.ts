@@ -1,3 +1,4 @@
+import { mailReadiness } from "./mail-readiness.ts";
 import { safeMeetingUrl, sendBookingConfirmation } from "./booking-mail.ts";
 import { saveBooking, syncBookings } from "./cal-sync.ts";
 import { mailStatus } from "./mail.ts";
@@ -69,6 +70,7 @@ export async function calRoute(req: Request, path: string) {
       );
     }
     return Response.json({
+      mailDelivery: await mailReadiness(),
       calendarConnected: true,
       bookingRead: true,
       organizerAddressMatches:
@@ -89,6 +91,7 @@ export async function calRoute(req: Request, path: string) {
     ) throw new ApiError("Účet Cal.com se nepodařilo ověřit.", 502);
     const mail = mailStatus();
     return Response.json({
+      mailDelivery: await mailReadiness(),
       calendarEmail: result.data.email,
       calendarUsername: result.data.username || "",
       sender: mail.mailbox,

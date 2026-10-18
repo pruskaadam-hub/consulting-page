@@ -11,9 +11,9 @@ Požadované nastavení vlastníka z 19. 10. 2026:
 | Čtení schránky v administraci | iCloud IMAP |
 | Odesílání z administrace při iCloudu | Resend HTTPS s ověřenou doménou |
 
-Při testu na adam.pruska@cometx.ch je tento účet klientem, zatímco účet Cal.com
+Při testu na jiné vlastní adrese je tento účet klientem, zatímco účet Cal.com
 je pořadatelem. Zpráva v každé z těchto schránek tedy může být očekávaná.
-Pozvánka „Adam Pruska vás zve na událost…“ s Reply-To pruskaadam@yahoo.co.uk
+Pozvánka „Adam Pruska vás zve na událost…“ s Reply-To na původní adrese Yahoo
 je jiná zpráva než vlastní potvrzení webu. Její identita se musí ověřit v připojeném
 kalendáři / účtu Cal.com. Změna Reply-To v aplikaci nezmění pozvánky iCloudu.
 
@@ -72,3 +72,9 @@ Synchronizace historických rezervací žádné e-maily neposílá.
 Po nastavení provést jednu výslovně dohodnutou testovací rezervaci: zkontrolovat
 adresáta pořadatele, klientské potvrzení, Reply-To, funkčnost obou odkazů a storno.
 Automatické testy tyto zprávy neposílají a nevytvářejí živé rezervace.
+
+Ověření „Mail readiness“ pouze čte nastavení domény v Resend; neposílá e-maily.
+`missing_key` znamená chybějící RESEND_API_KEY, `domain_pending` čekající DNS,
+`ready` ověřenou doménu. `key_scope_unknown` znamená, že klíč nemá oprávnění
+číst domény; neznamená automaticky nefunkční odesílání. Soukromý seznam domén
+ani API klíče se do diagnostiky nevracejí.

@@ -1,3 +1,4 @@
+import { mailReadiness } from "../_shared/mail-readiness.ts";
 import { syncBookings, bookingRecord } from "../_shared/cal-sync.ts";
 import { bookingMailText, sendBookingConfirmation } from "../_shared/booking-mail.ts";
 import { handle } from "./index.ts";
@@ -819,10 +820,23 @@ Deno.test('An uncertain confirmation email never turns an accepted booking into 
 Deno.test('Public Cal readiness verifies authenticated read access without exposing account or booking data',()=>withMailFixture(async()=>{
   const original=globalThis.fetch,previous=Deno.env.get('CAL_API_KEY');Deno.env.set('CAL_API_KEY','fixture-cal-key');let calls=0;
   globalThis.fetch=(input,init)=>{
-    calls++;const target=String(input),headers=new Headers(init?.headers);assert(headers.get('authorization')==='Bearer fixture-cal-key');
+    calls++;const target=String(input),headers=new Headers(init?.headers);
+    if(target.startsWith('https://api.resend.com/domains'))return Promise.resolve(Response.json({data:[{name:'adampruska.cz',status:'verified'}]}));
+    assert(headers.get('authorization')==='Bearer fixture-cal-key');
     if(target.endsWith('/v2/me')) {assert(headers.get('cal-api-version')==='2024-06-14');return Promise.resolve(Response.json({status:'success',data:{email:'private-host@example.test',username:'private-profile'}}));}
     assert(target.includes('/bookings?take=1'));assert(headers.get('cal-api-version')==='2024-08-13');return Promise.resolve(Response.json({status:'success',data:[{uid:'private-booking',attendees:[{email:'private-client@example.test'}]}]}));
   };
-  try{const response=await handle(new Request(url+'/cal/health'));const body=await response.text();assert(response.status===200 && calls===2);assert(body.includes('"bookingRead":true') && body.includes('"organizerAddressMatches":false'));assert(!body.includes('private-') && !body.includes('fixture-cal-key'));}
+  try{const response=await handle(new Request(url+'/cal/health'));const body=await response.text();assert(response.status===200 && calls===3);assert(body.includes('"bookingRead":true') && body.includes('"organizerAddressMatches":false'));assert(!body.includes('private-') && !body.includes('fixture-cal-key'));}
   finally{globalThis.fetch=original;if(previous===undefined)Deno.env.delete('CAL_API_KEY');else Deno.env.set('CAL_API_KEY',previous);}
+}));
+Deno.test('Mail readiness checks key and domain without sending a message or leaking domain lists',()=>withMailFixture(async()=>{
+  const original=globalThis.fetch;let calls=0,mode='ready';
+  globalThis.fetch=(input,init)=>{calls++;assert(String(input)==='https://api.resend.com/domains?limit=100' && (!init?.method || init.method==='GET'));
+    if(mode==='limited')return Promise.resolve(Response.json({error:'not allowed'},{status:403}));
+    return Promise.resolve(Response.json({data:[{name:'private-other-domain.test',status:'verified'},{name:'adampruska.cz',status:mode==='pending'?'pending':'verified'}]}));};
+  try {
+    const ready=await mailReadiness();assert(ready.status==='ready' && ready.domainVerified===true);assert(!JSON.stringify(ready).includes('private-other-domain'));
+    mode='pending';assert((await mailReadiness()).status==='domain_pending');mode='limited';assert((await mailReadiness()).status==='key_scope_unknown');
+    Deno.env.delete('RESEND_API_KEY');const before=calls;assert((await mailReadiness()).status==='missing_key' && calls===before);
+  }finally{globalThis.fetch=original;}
 }));
