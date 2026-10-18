@@ -40,7 +40,7 @@ test('all seven authored posts have related links and honest Article metadata',a
   assert.doesNotMatch(text,/[—–]/);
   assert.equal(post.related.length,2);assert.ok(post.related.every(slug=>slug!==post.slug && metadata.some(p=>p.slug===slug)));
   const schema=articleStructuredData(post,blogUrl('cs',post.slug),'https://example.test/image.jpg');
-  assert.equal(schema.author.name,'Adam Pruška');assert.equal('datePublished' in schema,false);
+  assert.equal(schema.author.name,'Adam Pruška');assert.equal(schema.datePublished,post.published);assert.ok(post.published >= '2024-10-19' && post.published <= '2026-10-19');
   assert.equal(blogPath('en',post.slug),'en/blog/'+post.slug+'/');
   if(post.companion)assert.ok(metadata.some(item=>item.slug===post.companion && item.companion===post.slug));
  }

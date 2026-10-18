@@ -380,10 +380,10 @@ test("manual invoices store chosen due dates, reject dates before issue and pres
   await as("authenticated", owner, "aal2", async () => {
     manualOrder = (await pg.query("insert into public.orders(client_id,description,amount_minor) values($1,'Offline invoice',350000) returning id", [client])).rows[0].id;
   });
-  await assert.rejects(as("authenticated", owner, "aal2", () => pg.query("select public.issue_invoice($1,0,current_date,current_date-1)", [manualOrder])), /Due date cannot precede/);
+  await assert.rejects(as("authenticated", owner, "aal2", () => pg.query("select public.issue_invoice($1,0,(now() at time zone 'Europe/Prague')::date,(now() at time zone 'Europe/Prague')::date-1)", [manualOrder])), /Due date cannot precede/);
   await as("authenticated", owner, "aal2", async () => {
-    const first = (await pg.query("select (public.issue_invoice($1,0,current_date,current_date+30)).*", [manualOrder])).rows[0];
-    const again = (await pg.query("select (public.issue_invoice($1,0,current_date,current_date+60)).*", [manualOrder])).rows[0];
+    const first = (await pg.query("select (public.issue_invoice($1,0,(now() at time zone 'Europe/Prague')::date,(now() at time zone 'Europe/Prague')::date+30)).*", [manualOrder])).rows[0];
+    const again = (await pg.query("select (public.issue_invoice($1,0,(now() at time zone 'Europe/Prague')::date,(now() at time zone 'Europe/Prague')::date+60)).*", [manualOrder])).rows[0];
     assert.equal(first.id, again.id);
     assert.equal(String(first.due_date), String(again.due_date));
     assert.equal(first.amount_minor, 350000);

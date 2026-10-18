@@ -1,3 +1,4 @@
+import { calRoute } from "../_shared/cal.ts";
 import {
   ApiError,
   eventInput,
@@ -33,6 +34,7 @@ async function payload(req: Request, max = 30000) {
 async function route(req: Request) {
   const url = new URL(req.url),
     path = url.pathname.split("/admin-api")[1] || "/";
+  if (path.startsWith("/cal/")) return calRoute(req, path);
   if (req.method === "POST" && path === "/events") {
     const item = eventInput(await payload(req, 1500));
     const ip = req.headers.get("x-forwarded-for")?.split(",")[0] || "unknown";

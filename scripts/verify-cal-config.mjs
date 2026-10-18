@@ -22,8 +22,8 @@ for(const [name,slug,minutes] of types){
  results.push(`- ${name}: public event found, duration checked where slots exist, ${count} available starts this month.`);
  console.log(`Cal.com ${name}: public availability verified (${count} starts).`);
 }
-for(const [path,method,headers] of [['slots','GET','cal-api-version'],['bookings','POST','cal-api-version,content-type']]){
- const response=await fetch(`https://api.cal.com/v2/${path}`,{method:'OPTIONS',signal:AbortSignal.timeout(20000),headers:{Origin:origin,'Access-Control-Request-Method':method,'Access-Control-Request-Headers':headers}});
+for(const [path,method,headers] of [['slots','GET','content-type'],['bookings','POST','content-type']]){
+ const response=await fetch(`${process.env.VITE_SUPABASE_URL || 'https://lsofzsartjesgwetcpzw.supabase.co'}/functions/v1/admin-api/cal/${path}`,{method:'OPTIONS',signal:AbortSignal.timeout(20000),headers:{Origin:origin,'Access-Control-Request-Method':method,'Access-Control-Request-Headers':headers}});
  if(!response.ok)throw new Error(`Cal.com ${path} preflight failed with HTTP ${response.status}`);
  const allowed=response.headers.get('access-control-allow-origin');
  const methods=(response.headers.get('access-control-allow-methods')||'').toUpperCase();

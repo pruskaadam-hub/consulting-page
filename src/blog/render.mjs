@@ -37,6 +37,6 @@ export function articleStructuredData(post,url,imageUrl) {
     '@context':'https://schema.org','@type':'Article',headline:post.title,
     description:post.description,author:{'@type':'Person',name:'Adam Pruška'},
     inLanguage:'cs',mainEntityOfPage:{'@type':'WebPage','@id':url},url,image:imageUrl,
-    // Unknown publication dates are deliberately omitted, never invented.
+    datePublished:post.published,
   };
 }

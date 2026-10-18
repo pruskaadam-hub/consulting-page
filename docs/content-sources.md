@@ -135,8 +135,8 @@ Vlastník doplnil spolupráci se studenty VŠCHT, bydliště mezi Prahou a Brnem
 projektové řízení a volejbal. Dodal také konkrétní výsledky tří referencí.
 Neověřené souhrnné počty klientů a přihlášek byly odstraněné.
 
-Všechny veřejné ceny jsou podle jeho zadání včetně DPH. Revize CV stojí
-800 Kč, finální úprava 1 500 Kč. Konzultační ceny zůstávají stejné. Platba
+Všechny veřejné ceny jsou podle jeho zadání včetně DPH. Revize dokumentu stojí
+800 Kč, celková úprava dokumentu 1 500 Kč. Konzultační ceny zůstávají stejné. Platba
 je převodem na účet po vystavení faktury po ukončení spolupráce. Tato úprava
 veřejných textů nemění účetní nastavení plátcovství v administraci.
 
@@ -144,3 +144,12 @@ Vlastník poskytl přesné nové názvy mediálních odkazů. Duplicitní video
 PDw1a5go0DM a odkaz na Senát byly odstraněné. V médiích zůstává osm položek.
 E-mail se zobrazuje jako pruskaadam[at]me.com; mailto se zpřístupní kliknutím.
 Tyto pozdější pokyny nahrazují historické údaje výše.
+
+
+## Dokončení podle zadání z 19. 10. 2026
+
+Sedmi českým článkům byla přidělena redakční data od listopadu 2024 do září 2026
+podle požadavku vlastníka na poslední dva roky. Nejde o nezávisle doložená data
+původního zveřejnění. Všechny karty i detaily a JSON-LD používají stejný údaj.
+Devět samostatných tematických AI ilustrací je v public/images pod názvy slugů.
+Jsou ilustrační; nezobrazují skutečné klienty ani skutečná setkání.

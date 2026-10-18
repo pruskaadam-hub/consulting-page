@@ -62,8 +62,8 @@ test('successful booking returns provider confirmation, and checks that the book
  let request;
  const result=await createBooking(attendee,{fetchImpl:async(url,init)=>{request={url,init};return response({status:'success',data:{uid:'fixture',start:slot.start,status:'accepted'}});}});
  assert.equal(result.status,'accepted');
- assert.equal(request.url,'https://api.cal.com/v2/bookings');
- assert.equal(request.init.headers['cal-api-version'],'2024-08-13');
+ assert.equal(request.url,'https://lsofzsartjesgwetcpzw.supabase.co/functions/v1/admin-api/cal/bookings');
+ assert.equal(request.init.headers['cal-api-version'],undefined);
  assert.equal('Authorization' in request.init.headers,false);
  await assert.rejects(createBooking(attendee,{fetchImpl:async()=>response({status:'success',data:{uid:'fixture',start:'2030-06-04T09:00:00Z',status:'accepted'}})}),error=>error.kind==='uncertain');
 });
@@ -90,8 +90,8 @@ test('intro qualification is required and preserves CTA topic in notes and metad
  assert.doesNotMatch(career.bookingFieldsResponses.notes,/Financování/);
  assert.doesNotMatch(career.bookingFieldsResponses.notes,/not relevant/);
 });
-test('paid consultation keeps qualification optional and bundle identity survives',()=>{
- const body=bookingPayload({...attendee,serviceId:'package',consultationTopic:'career',situation:'',horizon:''});
+test('paid consultation requires qualification and bundle identity survives',()=>{
+ const body=bookingPayload({...attendee,serviceId:'package',consultationTopic:'career'});
  assert.match(body.bookingFieldsResponses.notes,/4\s500\sKč/);
  assert.equal(body.metadata.service,'package');
  assert.equal(body.metadata.topic,'career');

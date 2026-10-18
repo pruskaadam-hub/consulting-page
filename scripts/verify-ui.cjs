@@ -30,12 +30,13 @@ const path=require('node:path');
  await page.context().grantPermissions(['clipboard-read','clipboard-write']);
  const errors=[];page.on('pageerror',error=>errors.push(error.message));
  let reads=0,posts=0,mode='accepted',lastPayload;
- await page.route('https://api.cal.com/v2/**',async route=>{
+ const {bookingPayload}=await import('../src/cal-client.mjs');
+ await page.route('https://*.supabase.co/functions/v1/admin-api/cal/**',async route=>{
   const request=route.request(),url=new URL(request.url());
   const headers={'Access-Control-Allow-Origin':'*','Access-Control-Allow-Headers':'cal-api-version,content-type','Access-Control-Allow-Methods':'GET,POST,OPTIONS'};
   assert.equal(request.headers()['authorization'],undefined);
   if(request.method()==='OPTIONS')return route.fulfill({status:204,headers});
-  if(url.pathname==='/v2/slots'){
+  if(url.pathname.endsWith('/cal/slots')){
    reads++;
    const start=new Date(url.searchParams.get('start'));start.setUTCDate(start.getUTCDate()+1);
    const year=start.getUTCFullYear(),month=start.getUTCMonth(),today=new Date();
@@ -45,8 +46,8 @@ const path=require('node:path');
    const times=[14,15].map(hour=>new Date(Date.UTC(year,month,day,hour))).filter(date=>date>Date.now());
    return route.fulfill({headers,contentType:'application/json',body:JSON.stringify({status:'success',data:{fixture:times.map(date=>({start:date.toISOString(),end:new Date(+date+duration*60000).toISOString()}))}})});
   }
-  if(request.method()==='POST' && url.pathname==='/v2/bookings'){
-   posts++;lastPayload=request.postDataJSON();
+  if(request.method()==='POST' && url.pathname.endsWith('/cal/bookings')){
+   posts++;lastPayload=bookingPayload(request.postDataJSON());
    await new Promise(resolve=>setTimeout(resolve,150));
    if(mode==='conflict')return route.fulfill({status:409,headers,contentType:'application/json',body:'{"status":"error"}'});
    if(mode==='uncertain')return route.abort('failed');
@@ -123,7 +124,7 @@ const path=require('node:path');
     assert.equal(await page.locator('body').innerText().then(text=>text.includes('pruskaadam@me.com')),false);
     assert.equal(await page.locator('#blog').evaluate(el=>el.compareDocumentPosition(document.querySelector('.faq'))&Node.DOCUMENT_POSITION_FOLLOWING ? true : false),true);
     const comments=await page.evaluate(()=>{const walker=document.createTreeWalker(document.body,NodeFilter.SHOW_COMMENT);let node,count=0;while(node=walker.nextNode())if(node.textContent.includes('TODO Adam:'))count++;return count;});
-    assert.equal(comments,metadata.length,'only unconfirmed blog publication dates remain');
+    assert.equal(comments,0,'publication dates no longer contain editorial placeholders');
     for(const summary of await page.locator('.faq-list summary').all()){await summary.click();assert.equal(await summary.evaluate(el=>el.parentElement.open),true);assert.ok(await summary.evaluate(el=>el.parentElement.querySelector('p').textContent.trim()));}
    }
    if(slug.startsWith('blog/') && slug!=='blog/'){
@@ -132,7 +133,7 @@ const path=require('node:path');
     assert.equal(await page.locator('meta[name="description"]').getAttribute('content'),post.description);
     const structured=JSON.parse(await page.locator('script[type="application/ld+json"]').textContent());
     assert.equal(structured['@type'],'Article');assert.equal(structured.author.name,'Adam Pruška');
-    assert.equal('datePublished' in structured,false);
+    assert.equal(structured.datePublished,post.published);
     assert.equal(await page.locator('.related-articles > a').count(),2);
     assert.equal(await page.locator('.authored-prose .article-authored-cta').count(),1);
     assert.equal(await page.locator('.authored-prose .article-authored-cta').getAttribute('href'),productionPath+prefix+(['ceska-firma-ve-svycarsku','firma-kontakty-pres-komunitu'].includes(post.slug)?'#firmy':'#rezervace'));

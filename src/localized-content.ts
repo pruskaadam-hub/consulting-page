@@ -31,7 +31,7 @@ const translated = {
       {question:'Ako prebieha individuálna konzultácia?',answer:'Individuálna online konzultácia trvá 50 minút a stojí 1 800 Kč vrátane DPH. Venujeme ju konkrétnej téme, ktorú potrebuješ prebrať.'},
       {question:'Máš zľavu pre študentov? A môžeme sa stretnúť osobne?',answer:`Bc. a Mgr. študenti majú individuálnu konzultáciu o ${discountLabel(PRICES.studentIndividualDiscount,'sk')} % lacnejšiu, za ${currencyLabel(STUDENT_PRICES.individual,'sk')}. Balíček je pre študentov o ${discountLabel(PRICES.studentPackageDiscount,'sk')} % lacnejší než bežný balíček, za ${currencyLabel(STUDENT_PRICES.package,'sk')}. Všetky ceny sú vrátane DPH. Osobné stretnutia v Prahe alebo Brne sú možné po dohode.`},
       {question:'Čo obsahuje balíček troch konzultácií?',answer:`Tri konzultácie po 50 minútach za ${currencyLabel(PRICES.package,'sk')}, o ${discountLabel(PACKAGE_DISCOUNT,'sk')} % menej než tri samostatné konzultácie. Jedna je osobne na mieste podľa tvojej voľby; miesto a praktické podmienky dohodneme vopred. Cena je vrátane DPH. V kalendári rezervuješ prvé stretnutie, ďalšie dve dohodneme spoločne.`},
-      {question:'Čo ak potrebujem zmeniť termín?',answer:'Možnosti zmeny alebo zrušenia nájdeš v potvrdení rezervácie. Ak si nie si istý alebo istá, napíš mi.'},
+      {question:'Čo ak potrebujem zmeniť termín?',answer:'Rezerváciu môžeš zrušiť ty aj ja najneskôr 24 hodín pred začiatkom stretnutia. Pre zmenu termínu mi napíš pred touto lehotou.'},
     ],
   },
   en: {
@@ -62,7 +62,7 @@ const translated = {
       {question:'How does an individual consultation work?',answer:'An individual online consultation is 50 minutes and costs CZK 1,800 including VAT. We focus on the specific topic you want to discuss.'},
       {question:'Is there a student discount? Can we meet in person?',answer:`Bachelor’s and master’s students receive a ${discountLabel(PRICES.studentIndividualDiscount,'en')}% discount on individual consultations, bringing the price to ${currencyLabel(STUDENT_PRICES.individual,'en')}. The package is ${discountLabel(PRICES.studentPackageDiscount,'en')}% cheaper than the regular package for students at ${currencyLabel(STUDENT_PRICES.package,'en')}. All prices include VAT. In-person meetings in Prague or Brno are possible by arrangement.`},
       {question:'What does the three-consultation package include?',answer:`Three 50-minute consultations for ${currencyLabel(PRICES.package,'en')}, ${discountLabel(PACKAGE_DISCOUNT,'en')}% less than three individual sessions. One is in person at a location of your choice; the location and practical details are agreed in advance. The price includes VAT. You book the first meeting in the calendar and we arrange the other two together.`},
-      {question:'What if I need to change the time?',answer:'You can find rescheduling and cancellation options in your booking confirmation. If you are unsure, email me.'},
+      {question:'What if I need to change the time?',answer:'Either of us can cancel up to 24 hours before the meeting starts. To reschedule, email me before this deadline.'},
     ],
   },
 };

@@ -1,7 +1,7 @@
 # Adam Pruška — Mentoring & Consulting
 
 Česká responzivní landing page: React, TypeScript, Vite a vlastní rezervační
-rozhraní pro veřejné API Cal.com. Obsahuje češtinu, slovenštinu, angličtinu
+rozhraní pro Cal.com přes Supabase. Obsahuje češtinu, slovenštinu, angličtinu
 a původní článkové podstránky v každém jazyce. Přehled `/blog/` přidává sedm
 dodaných českých článků s vlastním HTML vstupem, JSON-LD a souvisejícími odkazy. Aktuální předání, seznam
 značek k doplnění a návody pro Cal.com/doménu jsou v
@@ -28,69 +28,45 @@ všech 33 stránek na 375/1280 px s výhradně testovacími odpověďmi Cal.com.
 Prohlížeč: `npx playwright install chromium`, nebo nastavte
 `CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium` pro systémový Chromium.
 
-## Cal.com: vlastní kalendář, bez iframe
+## Cal.com: vlastní kalendář a serverové API
 
-V `.env.local` nastavte veřejný profil a ověřené slugs událostí:
+Vlastní React kalendář zůstává zachovaný. Prohlížeč volá Supabase Edge Function
+`admin-api/cal/slots`, `/bookings` a `/cancel`. Teprve server kontaktuje Cal.com
+s klíčem `CAL_API_KEY` ze Supabase Secrets. Klíč nepatří do `VITE_` ani do GitHubu.
+Nasazení existujícího `admin-api` přes backend workflow zahrne také tyto endpointy.
 
-```dotenv
-VITE_CAL_USERNAME=adam-pruska
-VITE_CAL_INTRO_SLUG=nezavazna-konzultace
-VITE_CAL_INDIVIDUAL_SLUG=soukroma-konzultace
-VITE_CAL_PACKAGE_SLUG=soukroma-konzultace
-```
+Veřejné nastavení je v `.env.example` a `.github/workflows/pages.yml`:
+profil `adam-pruska`, úvod `nezavazna-konzultace` (30 minut), individuální konzultace
+`soukroma-konzultace` (50 minut). Balíček používá stejnou událost jako individuální
+konzultace a rezervuje první setkání. Server povoluje pouze tyto služby.
+`VITE_SUPABASE_URL` musí odpovídat nasazenému backendu.
 
-Slug je poslední část odkazu `https://cal.com/adam-pruska/SLUG`.
-Nepřidávejte API klíč do `VITE_` proměnné. Veřejná rozhraní Cal.com podporují
-anonymní dotaz na volné termíny a vytvoření rezervace podle username + slug.
-Použité verze API: slots `2024-09-04`, bookings `2024-08-13`.
-Dokumentovaný kontrakt byl ověřen v oficiálním zdrojovém kódu:
+Všechny rezervace vyžadují jméno, platný e-mail, téma, popis situace a časový horizont.
+Financování studia a dodatečná poznámka zůstávají volitelné. Stejná validace běží
+v prohlížeči i na serveru. Cal.com dostane odpovědi v poznámce a téma a jazyk
+v metadatech. Platba zůstává převodem po vystavení faktury, bez online checkoutu.
 
-* [Veřejné termíny](https://github.com/calcom/cal.diy/blob/v5.8.4/apps/api/v2/src/modules/slots/slots-2024-09-04/controllers/slots.controller.ts)
-* [Vytvoření rezervace](https://github.com/calcom/cal.diy/blob/v5.8.4/apps/api/v2/src/ee/bookings/2024-08-13/controllers/bookings.controller.ts)
+Obě strany mohou přes web zrušit rezervaci nejpozději 24 hodin před začátkem.
+Klient dostává soukromý podepsaný odkaz v potvrzení na webu; může si ho uložit
+pro pozdější použití. Správce má tlačítko v administraci za přihlášením a MFA.
+Server před každým stornem načte aktuální termín z Cal.com a ověří stejnou lhůtu.
+Přesun termínu v Cal.com tedy nezneplatní kontrolu lhůty. Odkaz nevytváří storno
+pouhým otevřením: vyžaduje stisknutí tlačítka. Odkaz obsahuje oprávnění ke stornu,
+proto ho nesdílejte veřejně. Rotace `CAL_API_KEY` zneplatní staré odkazy.
 
-Vlastník dodal dvě veřejné události v Cal.com:
+Pravidlo této aplikace neomezuje samostatné rozhraní Cal.com ani nativní odkazy
+v jeho e-mailech. Před ostrým provozem je potřeba zkontrolovat storno a změny termínu
+také v nastavení obou událostí Cal.com, aby tyto cesty neobcházely lhůtu webu.
+Odkaz pro správu web neposílá samostatným e-mailem; potvrzení schůzky nadále posílá Cal.com.
 
-* `nezavazna-konzultace`: 30 minut online, zdarma.
-* `soukroma-konzultace`: 50 minut online.
+## Ověření
 
-Balíček používá `soukroma-konzultace` pro první 50minutové setkání; další
-dvě se domlouvají samostatně. Nabídka balíčku se předává v poznámce a
-metadatech rezervace, nikoli jako potvrzení platby.
-
-Nastavte jejich skutečnou dostupnost a zapněte kontrolu kolizí u připojených
-kalendářů. Připojený účet sám o sobě neprokazuje, že každý kalendář kontroluje
-obsazenost. U chráněného firemního účtu jsou rozhodující oprávnění poskytovatele.
-
-Vlastní formulář podporuje jméno, e-mail a poznámku. U úvodu vyžaduje téma,
-popis situace a časový horizont; volitelné financování pouze pro studium.
-Odpovědi se spojují do `bookingFieldsResponses.notes`, téma a jazyk jsou
-také v metadatech. Záměr z karty či článku se předvyplní. Pokud
-událost vyžaduje další povinná pole, ověření e-mailu nebo platbu předem, je
-nutné rozšířit tento průchod podle konkrétního nastavení. Stránka nyní
-nevybírá platby a nepotvrzuje úhradu balíčku. Cena je nabídka služby.
-
-Po změně proměnných restartujte Vite a znovu sestavte web. Stejné veřejné slugs jsou nastavené v build jobu
-`.github/workflows/pages.yml`. Balíček používá událost individuální konzultace
-pro první setkání a přidává údaje o nabídce do poznámky a metadat;
-zbytek balíčku se domlouvá samostatně. Bez slugu UI pravdivě nabízí domluvení termínu e-mailem;
-nezobrazuje vymyšlené volné časy ani nevytváří rezervaci.
-
-## Ověření a aktuální omezení
-
-Lokální testy ověřují kontrakt API s testovacími odpověďmi, včetně skutečného
-průchodu rozhraním, kolizí, nepotvrzených žádostí a neurčité síťové odpovědi.
-To není důkaz fungování živého účtu. Přístup k cal.com a api.cal.com z tohoto
-prostředí byl blokovaný proxy (403). Potřebné domény jsou uložené v návrhu
-nastavení prostředí. Nasazovací workflow provádí pouze čtení skutečné dostupnosti a kontrolu CORS
-přístupu z produkční domény. To běží na GitHub runneru, zatímco lokální
-prohlížečové testy používají výhradně testovací odpovědi. Výsledek živého
-ověření musí být doložen dokončeným CI runem; přímý přístup z tohoto cloudového
-prostředí zůstává samostatná kontrola po aplikaci nastavení. Nevytvářejte skutečné
-rezervace nebo e-mailové pozvánky při běžném smoke testu bez výslovného zadání.
-
-UI hlásí potvrzení pouze po odpovědi API se stavem `accepted` a odpovídajícím
-termínem. Stav `pending` je žádost čekající na potvrzení. Při neznámém výsledku
-POST se rezervace automaticky neopakuje a návštěvník je vyzván ke kontrole e-mailu.
+`npm test` ověřuje kontrakty, obsah a databázová oprávnění. `npm run test:backend`
+ověřuje včetně serverové validace rezervací, tajného klíče a storno lhůty s izolovanými
+odpověďmi poskytovatelů. `npm run test:ui` kontroluje všechny veřejné stránky a rezervace.
+`node scripts/verify-cal-config.mjs` ověřuje skutečnou dostupnost přes nasazenou
+Supabase funkci a její CORS, bez vytváření rezervací. `pending` zůstává žádostí,
+`accepted` je potvrzení. Po neurčité odpovědi se POST automaticky neopakuje.
 
 ## Obsah
 
@@ -98,8 +74,9 @@ Zdroj je https://pruskaadam4.wixstudio.com/pruska, jeho blog a údaje dodané
 vlastníkem. Zdroje viz [docs/content-sources.md](docs/content-sources.md).
 Tři reference klientů, medailonek, konkrétní texty a odkazy na Adamovy
 fotografie dodal vlastník. Deset mediálních odkazů je v `src/media.ts`.
-Fotografie u doktorandského
-článku je pohled z ETH Zürich převzatý z původního článku.
+Devět článků používá samostatné tematické AI ilustrace v `public/images/`.
+Sedmi českým článkům byla podle zadání přidělena redakční data v období
+listopad 2024 až září 2026; původní dva články zachovávají svá data z roku 2025.
 
 Design používá švýcarskou červenou `#d52b1e`, šedou a černou. Úvod vyplňuje
 šířku i výšku viewportu (`100svh`); na nízkých obrazovkách může růst podle

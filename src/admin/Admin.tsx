@@ -888,7 +888,7 @@ function Workspace({
               <Panel title="Rezervace z Cal.com">
                 <p>
                   Posledních 100 rezervací. Přehled aktualizují podepsaná
-                  oznámení z Cal.com.
+                  oznámení z Cal.com. Obě strany mohou rezervaci zrušit nejpozději 24 hodin předem.
                 </p>
                 {s.bookings.length ? (
                   <div className="admin-table-scroll">
@@ -930,6 +930,7 @@ function Workspace({
                                     : b.status
                                 }
                               />
+                              {b.status !== 'cancelled' && Date.parse(b.starts_at)-Date.now()>=86400000 && <button type="button" disabled={busy} onClick={()=>work(()=>api('/cal/cancel',{uid:b.uid}),'Rezervace zrušena.')}>Zrušit rezervaci</button>}
                             </td>
                           </tr>
                         ))}

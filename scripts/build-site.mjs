@@ -48,7 +48,7 @@ for(const route of routes){
   const structured=JSON.stringify(articleStructuredData(post,url,image)).replaceAll('<','\\u003c');
   html=html.replace('</head>',`    <script type="application/ld+json">${structured}</script>\n  </head>`);
   const body=renderBlogMarkdown(post.markdown,{home:new URL(pageUrl(language)).pathname,blogLink:slug=>new URL(blogUrl(language,slug)).pathname});
-  const preview=`<main class="article-detail" lang="cs"><header class="article-intro wrap"><h1>${escape(post.title)}</h1><p>Adam Pruška · [DOPLNIT: datum publikace]</p><!-- TODO Adam: ověřit před publikací --></header><div class="article-prose authored-prose">${body}</div></main>`;
+  const preview=`<main class="article-detail" lang="cs"><header class="article-intro wrap"><h1>${escape(post.title)}</h1><p>Adam Pruška · <time datetime="${escape(post.published)}">${escape(new Intl.DateTimeFormat({cs:"cs-CZ",sk:"sk-SK",en:"en-GB"}[language],{day:"numeric",month:"long",year:"numeric",timeZone:"UTC"}).format(new Date(post.published+"T12:00:00Z")))}</time></p></header><div class="article-prose authored-prose">${body}</div></main>`;
   html=html.replace('<div id="root"></div>',`<div id="root">${preview}</div>`);
  }
  const target=path.join(outDir,relative);await mkdir(target,{recursive:true});await writeFile(path.join(target,'index.html'),html);

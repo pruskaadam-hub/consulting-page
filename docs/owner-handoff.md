@@ -143,7 +143,7 @@ Mediální odkazy mají kompaktní řádkové uspořádání ve dvou sloupcích,
 v jednom. Celé karty konzultací jsou nativní odkazy, takže fungují kliknutím
 na libovolnou část i klávesou Enter. Během odesílání je změna nabídky blokovaná.
 Revize a úprava CV a dokumentů je samostatný výrazný blok praktických služeb.
-Revize CV stojí 800 Kč, finální úprava 1 500 Kč. Veřejné ceny jsou včetně DPH.
+Revize dokumentu stojí 800 Kč, celková úprava dokumentu 1 500 Kč. Veřejné ceny jsou včetně DPH.
 Platba je převodem po vystavení faktury po ukončení spolupráce.
 
 Úvodní popisy sekcí jsou pod hlavními nadpisy. Favicon používá značku ap.

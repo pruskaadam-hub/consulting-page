@@ -703,3 +703,46 @@ Deno.test("offline invoice mode is the default and blocks Stripe despite stored 
     globalThis.fetch = original;
   }
 });
+
+Deno.test('Cal proxy keeps credentials server-side, validates intake and enforces cancellation cutoff', async()=>{
+  const original=globalThis.fetch, previous=Deno.env.get('CAL_API_KEY');
+  Deno.env.set('CAL_API_KEY','fixture-cal-key');
+  const start=new Date(Date.now()+3*86400000).toISOString();
+  const options={username:'adam-pruska',eventTypeSlug:'soukroma-konzultace',serviceId:'individual',start,name:'Fixture',email:'test@example.invalid',timeZone:'Europe/Prague',consultationTopic:'career',situation:'Career planning',horizon:'soon'};
+  let calls=0,late=false;
+  globalThis.fetch=async(input,init)=>{
+    calls++;
+    assert(String(input).startsWith('https://api.cal.com/v2/'));
+    assert((init?.headers as Record<string,string>).Authorization==='Bearer fixture-cal-key');
+    if(init?.method==='POST' && String(input).endsWith('/bookings')){
+      const body=JSON.parse(String(init.body));
+      assert(body.metadata.service==='individual');
+      assert(body.bookingFieldsResponses.notes.includes('Career planning'));
+    }
+    return Response.json({status:'success',data:{uid:'fixture-booking',start:late?new Date(Date.now()+23*3600000).toISOString():start,status:'accepted'}});
+  };
+  const post=(path:string,body:unknown)=>handle(new Request(url+path,{method:'POST',headers:{Origin:'https://adampruska.cz','Content-Type':'application/json'},body:JSON.stringify(body)}));
+  try {
+    let response=await post('/cal/bookings',{...options,situation:''});
+    assert(response.status===400);assert(calls===0);await response.body?.cancel();
+    response=await post('/cal/bookings',{...options,eventTypeSlug:'other-account'});
+    assert(response.status===400);assert(calls===0);await response.body?.cancel();
+    response=await post('/cal/bookings',options);
+    assert(response.status===200);
+    const result=await response.json();assert(result.cancellationToken);assert(!JSON.stringify(result).includes('fixture-cal-key'));
+    const before=calls;
+    response=await post('/cal/cancel',{cancellationToken:result.cancellationToken+'bad'});
+    assert(response.status===403);assert(calls===before);await response.body?.cancel();
+    response=await post('/cal/cancel',{uid:'fixture-booking'});
+    assert(response.status===401);assert(calls===before);await response.body?.cancel();
+    late=true;
+    response=await post('/cal/cancel',{cancellationToken:result.cancellationToken});
+    assert(response.status===409);assert(calls===before+1);await response.body?.cancel();
+    late=false;
+    response=await post('/cal/cancel',{cancellationToken:result.cancellationToken});
+    assert(response.status===200);assert(calls===before+3);await response.body?.cancel();
+  } finally {
+    globalThis.fetch=original;
+    if(previous===undefined)Deno.env.delete('CAL_API_KEY');else Deno.env.set('CAL_API_KEY',previous);
+  }
+});

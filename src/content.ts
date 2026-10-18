@@ -58,6 +58,6 @@ export const content = {
     { question: 'Jak probíhá individuální konzultace?', answer: 'Individuální online konzultace trvá 50 minut a stojí 1 800 Kč včetně DPH. Je věnovaná konkrétnímu tématu, které potřebuješ probrat.' },
     { question: 'Máš slevu pro studenty? A můžeme se potkat osobně?', answer: `Bc. a Mgr. studenti mají individuální konzultaci o ${discountLabel(PRICES.studentIndividualDiscount)} % levnější, tedy za ${currencyLabel(STUDENT_PRICES.individual)}. Balíček je pro studenty o ${discountLabel(PRICES.studentPackageDiscount)} % levnější než běžný balíček, za ${currencyLabel(STUDENT_PRICES.package)}. Všechny ceny jsou včetně DPH. Osobní setkání v Praze nebo Brně je možné po předchozí domluvě.` },
     { question: 'Co obsahuje balíček tří konzultací?', answer: `Balíček obsahuje tři konzultace po 50 minutách za ${currencyLabel(PRICES.package)}, tedy o ${discountLabel(PACKAGE_DISCOUNT)} % méně než tři jednotlivé konzultace. Jedna se uskuteční osobně na místě dle tvé volby. Místo a praktické podmínky osobního setkání domluvíme předem. Cena je včetně DPH. V kalendáři vybíráš termín prvního setkání; další dva domluvíme společně.` },
-    { question: 'Co když potřebuji změnit termín?', answer: `Možnosti změny nebo zrušení termínu najdeš v potvrzení rezervace. Pokud si nejsi jistý nebo jistá, napiš mi přes kontaktní sekci.` },
+    { question: 'Co když potřebuji změnit termín?', answer: `Rezervaci můžeš zrušit ty i já nejpozději 24 hodin před začátkem schůzky. Pro změnu termínu mi napiš před touto lhůtou.` },
   ],
 };

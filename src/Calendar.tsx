@@ -2,11 +2,11 @@ import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { content, type Service } from './content';
 import { copies, type Language, type Topic } from './locales';
 import { formatPrice } from './localized-content';
-import { BookingError, createBooking, dateKey, loadSlots, monthDays } from './cal-client.mjs';
+import { BookingError, cancelBooking, createBooking, dateKey, loadSlots, monthDays } from './cal-client.mjs';
 import {trackEvent} from './Analytics';
 
 type Slot = {start: string; end: string | null};
-type Confirmation = {uid: string; start: string; status: string};
+type Confirmation = {uid: string; start: string; status: string; cancellationToken: string};
 const localZone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'Europe/Prague';
 const zones = [...new Set([localZone, 'Europe/Prague', 'Europe/Zurich', 'Europe/London', 'America/New_York', 'UTC'])];
 type Props = {service:Service; language:Language; intentTopic:Topic; onTopicChange:(topic:Topic)=>void; onSubmittingChange:(busy:boolean)=>void};
@@ -33,6 +33,8 @@ export function Calendar({service, language, intentTopic, onTopicChange, onSubmi
   const [situation, setSituation] = useState('');
   const [horizon, setHorizon] = useState('');
   const [financing, setFinancing] = useState('');
+  const [cancelled,setCancelled] = useState(false);
+  const cancellationPolicy = language==='cs' ? 'Rezervaci můžeš zrušit ty i já nejpozději 24 hodin před začátkem schůzky.' : language==='sk' ? 'Rezerváciu môžeš zrušiť ty aj ja najneskôr 24 hodín pred začiatkom stretnutia.' : 'Either of us can cancel up to 24 hours before the meeting starts.';
   const disabled=submitting || uncertain;
   const today = dateKey(Date.now(), timeZone);
   const todayParts = today.split('-').map(Number);
@@ -74,12 +76,17 @@ export function Calendar({service, language, intentTopic, onTopicChange, onSubmi
   }
 
   if(confirmation)return <div className="calendar-confirmation" role="status">
+    {cancelled ? <p>{language==='en' ? 'Booking cancelled.' : language==='sk' ? 'Rezervácia zrušená.' : 'Rezervace zrušena.'}</p> : <>
     <span className="confirmation-check" aria-hidden="true">✓</span>
     <h3>{confirmation.status==='accepted' ? t.acceptedTitle : t.pendingTitle}</h3>
     <p>{confirmation.status==='accepted' ? t.accepted : t.pending}</p>
     <p>{service.title}<br /><strong>{displayDate(confirmation.start)}</strong><br />{t.timezone}: {timeZone}</p>
     <p>{confirmation.status==='accepted' ? t.acceptedText : t.pendingText}</p>
     {service.id==='package' && <p>{t.packageConfirmed}</p>}
+    <p>{cancellationPolicy}</p>
+    {confirmation.cancellationToken && <p><a href={`${location.pathname}?sprava-rezervace#${confirmation.cancellationToken}`} target="_blank" rel="noopener noreferrer">{language==='en' ? 'Save this private cancellation link' : language==='sk' ? 'Ulož si tento súkromný odkaz na zrušenie rezervácie' : 'Ulož si tento soukromý odkaz pro zrušení rezervace'}</a></p>}
+    {confirmation.cancellationToken && Date.parse(confirmation.start)-Date.now()>=86400000 && <button type="button" className="text-link" disabled={submitting} onClick={async()=>{setSubmitting(true);setSubmitError('');try{await cancelBooking(confirmation.cancellationToken);setCancelled(true);}catch{setSubmitError(t.errorRejected);}finally{setSubmitting(false);}}}>{language==='en' ? 'Cancel booking' : language==='sk' ? 'Zrušiť rezerváciu' : 'Zrušit rezervaci'}</button>}
+    {submitError && <p role="alert">{submitError}</p>}</>}
   </div>;
 
   return <div className="native-calendar" aria-busy={loading || submitting}>
@@ -104,14 +111,14 @@ export function Calendar({service, language, intentTopic, onTopicChange, onSubmi
       <label>{t.name}<input type="text" autoComplete="name" name="name" required maxLength={100} value={name} disabled={disabled} onChange={e=>setName(e.target.value)} /></label>
       <label>{t.emailLabel}<input autoComplete="email" name="email" type="email" required maxLength={254} value={email} disabled={disabled} onChange={e=>setEmail(e.target.value)} /></label>
       {service.id==='intro' && <p className="qualification-note">{t.qualification}</p>}
-      <label>{t.topic}<select name="consultationTopic" value={intentTopic} required={service.id==='intro'} disabled={disabled} onChange={e=>onTopicChange(e.target.value as Topic)}><option value="">{t.selectTopic}</option><option value="study">{t.topicStudy}</option><option value="career">{t.topicCareer}</option><option value="project">{t.topicProject}</option><option value="other">{t.topicOther}</option></select></label>
-      {service.id==='intro' && <>
+      <label>{t.topic}<select name="consultationTopic" value={intentTopic} required disabled={disabled} onChange={e=>onTopicChange(e.target.value as Topic)}><option value="">{t.selectTopic}</option><option value="study">{t.topicStudy}</option><option value="career">{t.topicCareer}</option><option value="project">{t.topicProject}</option><option value="other">{t.topicOther}</option></select></label>
+      <>
         <label>{t.situation}<textarea name="situation" rows={3} required maxLength={2000} value={situation} disabled={disabled} onChange={e=>setSituation(e.target.value)} /></label>
         <label>{t.horizon}<select name="horizon" required value={horizon} disabled={disabled} onChange={e=>setHorizon(e.target.value)}><option value="">{t.selectHorizon}</option><option value="soon">{t.soon}</option><option value="year">{t.year}</option><option value="later">{t.later}</option></select></label>
         {intentTopic==='study' && <label>{t.financing} <span className="muted">{t.optional}</span><input type="text" name="financing" maxLength={500} value={financing} disabled={disabled} onChange={e=>setFinancing(e.target.value)} /></label>}
-      </>}
+      </>
       {service.id!=='intro' && <label>{t.notes} <span className="muted">{t.optional}</span><textarea name="notes" rows={3} maxLength={1000} value={notes} disabled={disabled} onChange={e=>setNotes(e.target.value)} /></label>}
-      <p className="privacy-note">{t.privacy} <a href="https://cal.com/privacy" target="_blank" rel="noopener noreferrer">{t.privacyLink}</a></p>
+      <p className="privacy-note">{cancellationPolicy}</p><p className="privacy-note">{t.privacy} <a href="https://cal.com/privacy" target="_blank" rel="noopener noreferrer">{t.privacyLink}</a></p>
       <button type="submit" className="button primary" disabled={disabled}>{submitting ? t.submitting : service.id==='package' ? t.bookPackage : t.confirm} <span aria-hidden="true">↗</span></button>
     </form>}
     <p className="calendar-provider">{t.provider}</p>

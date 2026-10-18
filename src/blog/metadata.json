@@ -4,65 +4,70 @@
     "title": "Jak napsat profesorovi na ETH, aby ti odpověděl",
     "description": "Na doktorát ve Švýcarsku se nehlásíš přihláškou, ale e-mailem konkrétnímu člověku. Jak vybrat skupinu a napsat zprávu, která nezapadne mezi stovkami dalších.",
     "language": "cs",
-    "image": "zurich.jpg",
-    "alt": "Pohled na Curych z Polyterrasse u ETH Zürich",
+    "image": "email-profesorovi-eth.png",
+    "alt": "AI ilustrace: Jak napsat profesorovi na ETH, aby ti odpověděl",
     "related": [
       "svycarske-cv",
       "prace-ve-svycarsku-entry-point"
-    ]
+    ],
+    "published": "2026-09-16"
   },
   {
     "slug": "svycarske-cv",
     "title": "Švýcarské CV: 9 věcí, které rozhodují",
     "description": "České CV přeložené do angličtiny ve Švýcarsku často neprojde ani prvním sítem. Co personalisté v Curychu, Basileji nebo Ženěvě čekají a co naopak nesnesou.",
     "language": "cs",
-    "image": "planning.jpg",
-    "alt": "Ilustrační fotografie rukou při úpravě pracovních dokumentů",
+    "image": "svycarske-cv.png",
+    "alt": "AI ilustrace: Švýcarské CV: 9 věcí, které rozhodují",
     "related": [
       "prace-ve-svycarsku-entry-point",
       "akademie-nebo-prumysl"
-    ]
+    ],
+    "published": "2026-06-10"
   },
   {
     "slug": "prace-ve-svycarsku-entry-point",
     "title": "Práce ve Švýcarsku z Česka: najdi svůj „entry point“",
     "description": "Rozesílání CV z Česka do Švýcarska často končí tichem. Proč to tak je, jaké bariéry tě čekají a kudy vede cesta, která funguje.",
     "language": "cs",
-    "image": "zurich.jpg",
-    "alt": "Pohled na Curych z Polyterrasse u ETH Zürich",
+    "image": "prace-ve-svycarsku-entry-point.png",
+    "alt": "AI ilustrace: Práce ve Švýcarsku z Česka: najdi svůj „entry point“",
     "related": [
       "akademie-nebo-prumysl",
       "ceska-firma-ve-svycarsku"
-    ]
+    ],
+    "published": "2026-03-18"
   },
   {
     "slug": "akademie-nebo-prumysl",
     "title": "Akademie, nebo průmysl? Být kariérně ztracený nevadí",
     "description": "Končíš doktorát nebo postdoc a nevíš, kam dál? Jak se rozhodnout mezi akademií a průmyslem, aniž by sis zavřel dveře, a proč to není rozhodnutí na celý život.",
     "language": "cs",
-    "image": "mentoring.jpg",
-    "alt": "Ilustrační fotografie společné práce a plánování dalšího postupu",
+    "image": "akademie-nebo-prumysl.png",
+    "alt": "AI ilustrace: Akademie, nebo průmysl? Být kariérně ztracený nevadí",
     "related": [
       "ceska-firma-ve-svycarsku",
       "email-profesorovi-eth"
-    ]
+    ],
+    "published": "2025-12-03"
   },
   {
     "slug": "ceska-firma-ve-svycarsku",
     "title": "Česká firma ve Švýcarsku: jak získat první partnery",
     "description": "Švýcarsko je bohatý, ale uzavřený trh. Co české firmy a startupy při vstupu nejvíc podceňují, jak oslovit první partnery a jak se prezentovat, aby vám věřili.",
     "language": "cs",
-    "image": "consultation.jpg",
-    "alt": "Ilustrační fotografie rozhovoru dvou lidí při pracovním setkání",
+    "image": "ceska-firma-ve-svycarsku.png",
+    "alt": "AI ilustrace: Česká firma ve Švýcarsku: jak získat první partnery",
     "related": [
       "email-profesorovi-eth",
       "svycarske-cv"
-    ]
+    ],
+    "published": "2025-09-17"
   },
   {
     "language": "cs",
-    "image": "mentoring.jpg",
-    "alt": "Ilustrační fotografie společného plánování a sdílení zkušeností",
+    "image": "kontakty-pres-komunitu.png",
+    "alt": "AI ilustrace: První kontakty ve Švýcarsku přes česko-slovenskou komunitu",
     "slug": "kontakty-pres-komunitu",
     "title": "První kontakty ve Švýcarsku přes česko-slovenskou komunitu",
     "description": "Jak využít české a slovenské spolky, akce a skupiny ve Švýcarsku k prvním pracovním kontaktům. Výhody, nevýhody, konkrétní místa, postup krok za krokem a kolik to trvá času.",
@@ -71,12 +76,13 @@
       "prace-ve-svycarsku-entry-point"
     ],
     "companion": "firma-kontakty-pres-komunitu",
-    "companionLabel": "Jste firma? Přečtěte si verzi pro firmy"
+    "companionLabel": "Jste firma? Přečtěte si verzi pro firmy",
+    "published": "2025-05-21"
   },
   {
     "language": "cs",
-    "image": "consultation.jpg",
-    "alt": "Ilustrační fotografie pracovního setkání",
+    "image": "firma-kontakty-pres-komunitu.png",
+    "alt": "AI ilustrace: Česká firma a první kontakty ve Švýcarsku: jak využít krajanskou síť",
     "slug": "firma-kontakty-pres-komunitu",
     "title": "Česká firma a první kontakty ve Švýcarsku: jak využít krajanskou síť",
     "description": "Češi a Slováci ve Švýcarsku pracují ve firmách, které chcete oslovit. Jak přes komunitu, obchodní komory a ambasádu získat první schůzky, co od toho čekat a jak dlouho to trvá.",
@@ -85,6 +91,7 @@
       "ceska-firma-ve-svycarsku"
     ],
     "companion": "kontakty-pres-komunitu",
-    "companionLabel": "Hledáš kontakty jako jednotlivec?"
+    "companionLabel": "Hledáš kontakty jako jednotlivec?",
+    "published": "2024-11-13"
   }
 ]

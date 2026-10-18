@@ -1,5 +1,6 @@
 import { PRICES, STUDENT_PRICES, currencyLabel } from './pricing.mjs';
 const API_ORIGIN = 'https://api.cal.com';
+const BACKEND = (import.meta.env?.VITE_SUPABASE_URL || 'https://lsofzsartjesgwetcpzw.supabase.co') + '/functions/v1/admin-api/cal';
 const slugPattern = /^[a-z0-9][a-z0-9-]*$/i;
 export class BookingError extends Error {
   constructor(message, kind = 'unavailable') { super(message); this.name = 'BookingError'; this.kind = kind; }
@@ -64,7 +65,7 @@ export function parseSlots(payload, {year, month, timeZone, expectedMinutes, now
  * @param {{fetchImpl?:typeof fetch,signal?:AbortSignal}} [config]
  */
 export async function loadSlots(options, {fetchImpl = fetch, signal} = {}) {
-  const response = await fetchImpl(slotsUrl(options), {headers:{'cal-api-version':'2024-09-04'}, signal, credentials:'omit'});
+  const response = await fetchImpl(`${BACKEND}/slots?${new URL(slotsUrl(options)).searchParams}`, {signal, credentials:'omit'});
   if (!response.ok) throw new BookingError('Volné termíny se nepodařilo načíst. Zkus to znovu nebo mi napiš.');
   return parseSlots(await response.json(), options);
 }
@@ -78,7 +79,7 @@ export function bookingPayload({username, eventTypeSlug, start, name, email, tim
   const topics = {study:'Studium v zahraničí', career:'Práce a kariéra', project:'Vlastní projekt', other:'Jiné téma'};
   const horizons = {soon:'Do 3 měsíců', year:'3 až 12 měsíců', later:'Později'};
   if (!['cs','sk','en'].includes(language)) throw new BookingError('Vyber podporovaný jazyk.', 'validation');
-  if (serviceId === 'intro' && (!topics[consultationTopic] || !situation.trim() || situation.trim().length > 2000 || !horizons[horizon])) {
+  if (!topics[consultationTopic] || !situation.trim() || situation.trim().length > 2000 || !horizons[horizon]) {
     throw new BookingError('Doplň téma, svou situaci a časový horizont.', 'validation');
   }
   const intake = [
@@ -100,13 +101,13 @@ export function parseBooking(payload) {
   if (payload?.status !== 'success' || !booking || Array.isArray(booking) || typeof booking.uid !== 'string' || !booking.uid.trim() || !Number.isFinite(Date.parse(booking.start))) throw new BookingError('Potvrzení se nepodařilo ověřit. Zkontroluj prosím e-mail před opakováním rezervace.', 'uncertain');
   const status = String(booking.status || '').toLowerCase();
   if (!['accepted', 'pending'].includes(status)) throw new BookingError('Rezervaci se nepodařilo potvrdit. Zkontroluj prosím e-mail před opakováním.', 'uncertain');
-  return {uid:booking.uid, start:new Date(booking.start).toISOString(), status};
+  return {uid:booking.uid, start:new Date(booking.start).toISOString(), status, cancellationToken:payload.cancellationToken || ''};
 }
 export async function createBooking(options, {fetchImpl = fetch} = {}) {
   const body = bookingPayload(options);
   let response;
   try {
-    response = await fetchImpl(`${API_ORIGIN}/v2/bookings`, {method:'POST', headers:{'Content-Type':'application/json','cal-api-version':'2024-08-13'}, body:JSON.stringify(body), credentials:'omit'});
+    response = await fetchImpl(`${BACKEND}/bookings`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(options), credentials:'omit'});
   } catch {
     throw new BookingError('Potvrzení se nepodařilo načíst. Zkontroluj prosím e-mail před opakováním rezervace.', 'uncertain');
   }
@@ -121,4 +122,10 @@ export async function createBooking(options, {fetchImpl = fetch} = {}) {
     return booking;
   }
   catch (error) { if (error instanceof BookingError) throw error; throw new BookingError('Potvrzení se nepodařilo načíst. Zkontroluj prosím e-mail před opakováním rezervace.', 'uncertain'); }
+}
+
+export async function cancelBooking(cancellationToken, {fetchImpl = fetch} = {}) {
+  const response = await fetchImpl(`${BACKEND}/cancel`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({cancellationToken}), credentials:'omit'});
+  if (!response.ok) throw new BookingError('Rezervaci nelze zrušit. Storno je možné nejpozději 24 hodin předem.');
+  return response.json();
 }
