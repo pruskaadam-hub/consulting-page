@@ -708,7 +708,7 @@ Deno.test('Cal proxy keeps credentials server-side, validates intake and enforce
   const original=globalThis.fetch, previous=Deno.env.get('CAL_API_KEY');
   Deno.env.set('CAL_API_KEY','fixture-cal-key');
   const start=new Date(Date.now()+3*86400000).toISOString();
-  const options={username:'adam-pruska',eventTypeSlug:'soukroma-konzultace',serviceId:'individual',start,name:'Fixture',email:'test@example.invalid',timeZone:'Europe/Prague',consultationTopic:'career',situation:'Career planning',horizon:'soon'};
+  const options={username:'adam-pruska',eventTypeSlug:'individualni-konzultace',serviceId:'individual',start,name:'Fixture',email:'test@example.invalid',timeZone:'Europe/Prague',consultationTopic:'career',situation:'Career planning',horizon:'soon'};
   let calls=0,late=false;
   globalThis.fetch=async(input,init)=>{
     calls++;

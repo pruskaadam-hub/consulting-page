@@ -9,7 +9,13 @@ const types=[['intro',process.env.VITE_CAL_INTRO_SLUG,30],['individual',process.
 const now=new Date();
 const results=[];
 const fetchWithOrigin=(url,init={})=>fetch(url,{...init,signal:AbortSignal.timeout(20000),headers:{...init.headers,Origin:origin}}).then(async response=>{
- if(!response.ok){const detail=await response.json().catch(()=>({}));throw new Error(`Cal.com availability returned HTTP ${response.status}: ${typeof detail.error==='string' ? detail.error : 'no diagnostic'}`);}
+ if(!response.ok){
+  const detail=await response.json().catch(()=>({}));
+  // Compare the same public event without a credential; never create a booking.
+  const direct=await fetch(`https://api.cal.com/v2/slots?${new URL(url).searchParams}`,{headers:{'cal-api-version':'2024-09-04'},signal:AbortSignal.timeout(20000)}).catch(()=>null);
+  throw new Error(`Cal.com availability returned HTTP ${response.status}: ${typeof detail?.error==='string' ? detail.error : 'no diagnostic'} Public event check: HTTP ${direct?.status || 'unavailable'}.`);
+ }
+
  const allowed=response.headers.get('access-control-allow-origin');
  if(allowed!=='*' && allowed!==origin)throw new Error('Cal.com does not allow browser access from the production origin. A server-side integration is required.');
  return response;

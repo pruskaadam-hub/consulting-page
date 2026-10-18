@@ -50,7 +50,7 @@ také z těchto pozdějších instrukcí.
   Polyterrasse/centra Curychu přímo z doktorandského článku, varianta Wix CDN.
   Nahrazuje obecnou ilustraci v kartě článku o doktorátu.
 * Skutečné události dodané vlastníkem: /adam-pruska/nezavazna-konzultace a
-  /adam-pruska/soukroma-konzultace. Druhá slouží také pro první setkání balíčku;
+  /adam-pruska/individualni-konzultace. Druhá slouží také pro první setkání balíčku;
   zvolená nabídka je rozlišená poznámkou a metadaty, bez automatické úhrady.
 
 ## Nové texty a červená varianta

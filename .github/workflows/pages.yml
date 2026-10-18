@@ -24,8 +24,8 @@ jobs:
     env:
       VITE_CAL_USERNAME: adam-pruska
       VITE_CAL_INTRO_SLUG: nezavazna-konzultace
-      VITE_CAL_INDIVIDUAL_SLUG: soukroma-konzultace
-      VITE_CAL_PACKAGE_SLUG: soukroma-konzultace
+      VITE_CAL_INDIVIDUAL_SLUG: individualni-konzultace
+      VITE_CAL_PACKAGE_SLUG: individualni-konzultace
       VITE_SUPABASE_URL: https://lsofzsartjesgwetcpzw.supabase.co
       VITE_SUPABASE_PUBLISHABLE_KEY: ${{ vars.VITE_SUPABASE_PUBLISHABLE_KEY }}
       VITE_ENABLE_EVENTS: 'true'

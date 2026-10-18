@@ -54,10 +54,10 @@ současně upravte oba překlady. Souhrnný řádek s neznámými počty byl ods
 
 ## Cal.com: aktuální nastavení a přesná pole
 
-Nastavené odkazy událostí (živé ověření 19. 10. 2026 vrací HTTP 404, čeká se na potvrzení aktuálních odkazů vlastníkem):
+Odkazy událostí potvrzené vlastníkem 19. 10. 2026:
 
 * `https://cal.com/adam-pruska/nezavazna-konzultace` — 30 minut.
-* `https://cal.com/adam-pruska/soukroma-konzultace` — 50 minut.
+* `https://cal.com/adam-pruska/individualni-konzultace` — 50 minut.
 
 Prohlížeč používá Supabase `admin-api/cal/*`. `CAL_API_KEY` zůstává pouze
 v Supabase Secrets. Podrobnosti a storno nejpozději 24 hodin předem pro obě strany

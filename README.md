@@ -37,7 +37,7 @@ Nasazení existujícího `admin-api` přes backend workflow zahrne také tyto en
 
 Veřejné nastavení je v `.env.example` a `.github/workflows/pages.yml`:
 profil `adam-pruska`, úvod `nezavazna-konzultace` (30 minut), individuální konzultace
-`soukroma-konzultace` (50 minut). Balíček používá stejnou událost jako individuální
+`individualni-konzultace` (50 minut). Balíček používá stejnou událost jako individuální
 konzultace a rezervuje první setkání. Server povoluje pouze tyto služby.
 `VITE_SUPABASE_URL` musí odpovídat nasazenému backendu.
 

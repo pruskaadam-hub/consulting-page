@@ -6,8 +6,8 @@ const origin = "https://api.cal.com/v2";
 const cutoff = 24 * 60 * 60 * 1000;
 const services: Record<string, { slug: string; minutes: number }> = {
   intro: { slug: "nezavazna-konzultace", minutes: 30 },
-  individual: { slug: "soukroma-konzultace", minutes: 50 },
-  package: { slug: "soukroma-konzultace", minutes: 50 },
+  individual: { slug: "individualni-konzultace", minutes: 50 },
+  package: { slug: "individualni-konzultace", minutes: 50 },
 };
 async function input(req: Request) {
   try {
@@ -30,8 +30,20 @@ async function cal(path: string, method = "GET", body?: unknown) {
     ...(body ? { body: JSON.stringify(body) } : {}),
   });
   if (!response.ok) {
+    const failure = await response.json().catch(() => null);
+    const message = String(failure?.error?.message ?? failure?.message ?? "")
+      .toLowerCase();
+    const detail = /event\s*type|eventtype/.test(message)
+      ? " Událost nebyla nalezena."
+      : /api.?key|token/.test(message)
+      ? " API klíč nebyl nalezen nebo přijat."
+      : /user/.test(message)
+      ? " Profil nebyl nalezen."
+      : /cannot (get|post)|route/.test(message)
+      ? " API cesta nebyla nalezena."
+      : "";
     throw new ApiError(
-      `Cal.com požadavek nebyl dokončen (HTTP ${response.status}).`,
+      `Cal.com požadavek nebyl dokončen (HTTP ${response.status}).${detail}`,
       response.status === 409 ? 409 : response.status >= 500 ? 502 : 400,
     );
   }

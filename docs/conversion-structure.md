@@ -46,7 +46,7 @@ kalendáři. Rozhraní má být vlastní, nikoli iframe s cizím layoutem. Dostu
 kolize a potvrzení musí pocházet z Cal.com. Konec procesu nesmí oznámit
 potvrzenou rezervaci pouze na základě lokálního formuláře.
 
-Vlastník dodal dvě veřejné události: nezavazna-konzultace a soukroma-konzultace.
+Vlastník dodal dvě veřejné události: nezavazna-konzultace a individualni-konzultace.
 Balíček používá druhou událost pro první 50minutové setkání; volba balíčku a
 cena nabídky jsou explicitně v poznámce a metadatech rezervace. Nedochází k
 automatické úhradě ani k rezervaci všech tří termínů. Dostupnost se ověřuje
