@@ -1,6 +1,6 @@
 # Další úpravy a co doplnit
 
-Aktualizováno 15. 10. 2026. Veřejná stránka:
+Aktualizováno 19. 10. 2026. Veřejná stránka:
 https://pruskaadam-hub.github.io/consulting-page/
 
 ## Co je hotové
@@ -10,7 +10,7 @@ https://pruskaadam-hub.github.io/consulting-page/
   s `#kalendar` jej otevře přímo. Před interakcí se nenačítají termíny Cal.com.
 * Sloučené oblasti pomoci mají tři karty. Studium a kariéra předávají svůj
   záměr do rezervace; firemní karta směřuje na samostatné `#firmy` s vykáním.
-* Úvodní rezervace vyžaduje téma, situaci a časový horizont. Financování
+* Všechny rezervace vyžadují jméno, e-mail, téma, situaci a časový horizont. Financování
   je nepovinné a zobrazuje se jen při studiu. Zvolený záměr je vidět vedle
   kalendáře a uloží se do poznámky a metadat rezervace.
 * Individuální konzultace ukazuje studentskou cenu 1 500 Kč se slevou 16,7 %.
@@ -25,7 +25,7 @@ https://pruskaadam-hub.github.io/consulting-page/
   rezervační formulář, stavové zprávy a oba články. Původní titulky mediálních
   zdrojů zůstávají v jazyce zdroje, formáty a ovládání jsou přeložené.
 * Dva původní články mají vlastní podstránky ve všech třech jazycích. Jsou to
-  redakční úpravy článků z Wixu, s odkazem na originál a relevantními fotografiemi.
+  redakční úpravy článků z Wixu, s odkazem na originál a tematickými AI ilustracemi.
   Blog je před FAQ. Externí zdroje se otevírají v novém panelu. Nový přehled
   `/blog/` představuje sedm dodaných českých článků; české texty zůstávají
   označené `lang="cs"` i při přepnutí jazyka okolního rozhraní.
@@ -38,15 +38,12 @@ https://pruskaadam-hub.github.io/consulting-page/
   na poptávku. To omezuje jednoduché sběrače, nikoli všechny boty; adresa je
   potřebná ve veřejném klientském kódu.
 
-## Viditelné značky k doplnění
+## Publikační data a ilustrace
 
-Všechny texty jsou v `src/placeholders.ts`; komponenta `src/Placeholder.tsx`
-vedle každého vloží také DOM komentář `<!-- TODO Adam: … -->`. Stejné značky
-jsou záměrně viditelné v každé jazykové verzi, aby se neztratily při doplňování.
-
-| Značka | Umístění | Co dodat |
-| --- | --- | --- |
-| `[DOPLNIT: datum publikace]` | Nový blog, karty a záhlaví sedmi článků | Skutečná data publikace; nevkládají se do JSON-LD, dokud nejsou známá. |
+Sedmi článkům byla podle zadání přidělena redakční data v posledních dvou letech.
+Stejná data jsou na kartách, v detailech, statickém HTML i JSON-LD. Původní dva články
+zachovávají data z roku 2025. Všech devět článků má vlastní tematickou AI ilustraci.
+Komponenty s původními značkami data publikace již nejsou potřeba a byly odstraněny.
 
 Reference jsou uložené v `src/content.ts` a překlady v
 `src/localized-content.ts`. Každá nyní podporuje `name` (i celé jméno),
@@ -57,10 +54,15 @@ současně upravte oba překlady. Souhrnný řádek s neznámými počty byl ods
 
 ## Cal.com: aktuální nastavení a přesná pole
 
-Aktuálně fungují veřejné události:
+Nastavené odkazy událostí (živé ověření 19. 10. 2026 vrací HTTP 404, čeká se na potvrzení aktuálních odkazů vlastníkem):
 
 * `https://cal.com/adam-pruska/nezavazna-konzultace` — 30 minut.
 * `https://cal.com/adam-pruska/soukroma-konzultace` — 50 minut.
+
+Prohlížeč používá Supabase `admin-api/cal/*`. `CAL_API_KEY` zůstává pouze
+v Supabase Secrets. Podrobnosti a storno nejpozději 24 hodin předem pro obě strany
+jsou popsané v [README.md](../README.md#calcom-vlastní-kalendář-a-serverové-api).
+Nativní odkazy Cal.com je potřeba ověřit samostatně; mohou obejít pravidlo webu.
 
 Balíček rezervuje první setkání přes druhou událost. Zbylé dva termíny a
 osobní setkání se domlouvají samostatně. Web nevybírá platbu.
@@ -76,7 +78,7 @@ V nastavení každé události:
 1. Ověřte délku 30 / 50 minut a umístění online schůzky.
 2. V Booking Questions (obvykle Advanced / Pokročilé) ponechte jméno,
    e-mail a výchozí pole Additional notes / Poznámky s identifikátorem `notes`.
-   Poznámky mohou být nepovinné; naše úvodní otázky ověřuje web před odesláním.
+   Poznámky mohou být nepovinné; otázky ověřuje web i server před odesláním.
 3. Ověřte dostupnost, kalendáře pro kontrolu kolizí a potvrzovací e-mail.
    Pokud vyžadujete schvalování, web správně ukáže čekající žádost.
 4. Nezapínejte nová povinná pole, ověřování e-mailu nebo povinnou platbu bez
@@ -86,7 +88,7 @@ V nastavení každé události:
 | Otázka na webu | HTML `name` | Předání Cal.com |
 | --- | --- | --- |
 | S čím přicházíš? | `consultationTopic` | `metadata.topic`: `study`, `career`, `project`, `other`; čitelný název v `notes` |
-| Kde teď jsi…? | `situation` | Řádek „Situace:“ v `notes`; povinný u úvodu |
+| Kde teď jsi…? | `situation` | Řádek „Situace:“ v `notes`; povinný u všech rezervací |
 | Jaký máš časový horizont? | `horizon` | `soon`, `year`, `later`; čitelná hodnota v `notes` |
 | Jak plánuješ financování? | `financing` | „Financování:“ v `notes`, pouze pro studium, nepovinné |
 | Další poznámka u placené konzultace | `notes` | Součást `bookingFieldsResponses.notes` |
