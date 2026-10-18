@@ -31,7 +31,7 @@ async function cal(path: string, method = "GET", body?: unknown) {
   });
   if (!response.ok) {
     throw new ApiError(
-      "Cal.com požadavek nebyl dokončen.",
+      `Cal.com požadavek nebyl dokončen (HTTP ${response.status}).`,
       response.status === 409 ? 409 : response.status >= 500 ? 502 : 400,
     );
   }
