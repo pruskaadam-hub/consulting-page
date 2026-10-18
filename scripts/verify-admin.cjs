@@ -29,6 +29,10 @@ const { HtmlValidate } = require("html-validate");
         env: {
           ...process.env,
           VITE_SITE_URL: "https://adampruska.cz/",
+          VITE_CAL_USERNAME: "adam-pruska",
+          VITE_CAL_INTRO_SLUG: "nezavazna-konzultace",
+          VITE_CAL_INDIVIDUAL_SLUG: "soukroma-konzultace",
+          VITE_CAL_PACKAGE_SLUG: "soukroma-konzultace",
           VITE_SUPABASE_PUBLISHABLE_KEY: "sb_publishable_fixture_only",
           VITE_SUPABASE_URL: "https://lsofzsartjesgwetcpzw.supabase.co",
           VITE_ENABLE_EVENTS: "true",
@@ -165,6 +169,8 @@ const { HtmlValidate } = require("html-validate");
             body: JSON.stringify(value),
           });
         if (method === "OPTIONS") return ok({}, 204);
+        if (method === "GET" && u.pathname.endsWith("/admin-api/cal/slots"))
+          return ok({ status: "success", data: {} });
         if (u.pathname.endsWith("/auth/v1/token")) {
           const body = req.postDataJSON();
           if (body.password === "wrong")
