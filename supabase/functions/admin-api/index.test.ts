@@ -1,3 +1,5 @@
+import { syncBookings, bookingRecord } from "../_shared/cal-sync.ts";
+import { bookingMailText, sendBookingConfirmation } from "../_shared/booking-mail.ts";
 import { handle } from "./index.ts";
 import { limitedText } from "../_shared/http.ts";
 import { hmacHex } from "../_shared/contracts.mjs";
@@ -746,3 +748,81 @@ Deno.test('Cal proxy keeps credentials server-side, validates intake and enforce
     if(previous===undefined)Deno.env.delete('CAL_API_KEY');else Deno.env.set('CAL_API_KEY',previous);
   }
 });
+
+Deno.test('Cal import and communication endpoints require admin access before contacting providers',async()=>{
+  const original=globalThis.fetch;let calls=0;
+  globalThis.fetch=()=>{calls++;throw new Error('Unexpected provider request');};
+  try {
+    for(const [path,method] of [['/cal/sync','POST'],['/cal/communication','GET']]) {
+      const response=await handle(new Request(url+path,{method}));assert(response.status===401);await response.body?.cancel();
+    }
+    assert(calls===0);
+  }finally{globalThis.fetch=original;}
+});
+Deno.test('Cal snapshots import accepted, pending and cancelled bookings through the service-only upsert',()=>withMailFixture(async()=>{
+  const original=globalThis.fetch;const records:Record<string,any>[]=[];
+  globalThis.fetch=(input,init)=>{
+    assert(String(input).includes('/rpc/apply_booking'));
+    assert(init?.headers && new Headers(init.headers).get('authorization')==='Bearer fixture-service-key');
+    records.push(JSON.parse(String(init?.body)));return Promise.resolve(Response.json(null));
+  };
+  const row={uid:'cal-fixture',title:'Consultation',start:'2030-06-01T10:00:00Z',attendees:[{name:'Fixture',email:'client@example.test'}]};
+  try {
+    const result=await syncBookings(async(path)=>{assert(path.includes('take=100') && path.includes('cancelled'));return {status:'success',data:['accepted','pending','cancelled'].map((status,index)=>({...row,uid:row.uid+index,status}))};});
+    assert(result.synced===3);assert(records.map(r=>r.p_status).join(',')==='accepted,pending,cancelled');
+    assert(records.every(r=>r.p_event_time===result.syncedAt));
+    let rejected=false;
+    try {await syncBookings(async()=>({status:'success',data:[{...row,status:'accepted'},{uid:'broken'}]}));}catch{rejected=true;}
+    assert(rejected && records.length===3,'Invalid snapshots must not partially import');
+    assert(bookingRecord({...row,status:'unconfirmed'},result.syncedAt).p_status==='pending');
+  }finally{globalThis.fetch=original;}
+}));
+Deno.test('Booking mail separates meeting and cancellation links, uses the domain sender, and is off by default',()=>withMailFixture(async()=>{
+  const previous=Deno.env.get('BOOKING_EMAIL_MODE');Deno.env.delete('BOOKING_EMAIL_MODE');
+  const original=globalThis.fetch;let calls=0,resendBody:any,mailIds:string[]=[];
+  const booking={uid:'mail-fixture',title:'Consultation',status:'accepted',start:'2030-06-01T10:00:00Z',meetingUrl:'https://meet.example.test/fixture',attendees:[{email:'client@example.test',timeZone:'Europe/Prague'}]};
+  globalThis.fetch=(input,init)=>{
+    calls++;
+    if(String(input)==='https://api.resend.com/emails') {resendBody=JSON.parse(String(init?.body));return Promise.resolve(Response.json({id:'fixture-delivery'}));}
+    assert(String(input).includes('/rest/v1/mail_outbox'));
+    if(init?.method==='POST')mailIds.push(JSON.parse(String(init.body)).id);
+    return Promise.resolve(new Response(null,{status:201}));
+  };
+  try {
+    assert((await sendBookingConfirmation(booking,'private-token','cs')).status==='cal');assert(calls===0);
+    const pending=bookingMailText({...booking,status:'pending'},'private-token','cs');assert(pending.subject.includes('čeká'));assert(!pending.text.includes(booking.meetingUrl));
+    Deno.env.set('BOOKING_EMAIL_MODE','app');
+    assert((await sendBookingConfirmation(booking,'private-token','cs')).status==='sent');
+    assert(resendBody.to.join(',')==='client@example.test');assert(resendBody.reply_to==='adam@adampruska.cz');assert(resendBody.from==='Adam Pruška <adam@adampruska.cz>');
+    assert(resendBody.text.includes(booking.meetingUrl) && resendBody.text.includes('?sprava-rezervace#private-token') && resendBody.text.includes('24 hodin'));
+    assert(!resendBody.text.includes('yahoo') && !resendBody.text.includes('pruskaadam@me.com'));
+    await sendBookingConfirmation(booking,'private-token','cs');assert(mailIds[0]===mailIds[1],'One booking status has one stable mail claim');
+  }finally{globalThis.fetch=original;if(previous===undefined)Deno.env.delete('BOOKING_EMAIL_MODE');else Deno.env.set('BOOKING_EMAIL_MODE',previous);}
+}));
+Deno.test('An uncertain confirmation email never turns an accepted booking into a retry',()=>withMailFixture(async()=>{
+  const original=globalThis.fetch,mode=Deno.env.get('BOOKING_EMAIL_MODE'),key=Deno.env.get('CAL_API_KEY');
+  Deno.env.set('BOOKING_EMAIL_MODE','app');Deno.env.set('CAL_API_KEY','fixture-cal-key');let creations=0;
+  const start=new Date(Date.now()+3*86400000).toISOString();
+  globalThis.fetch=(input,init)=>{
+    const target=String(input);
+    if(target==='https://api.cal.com/v2/bookings') {creations++;return Promise.resolve(Response.json({status:'success',data:{uid:'accepted-mail-failure',start,status:'accepted',meetingUrl:'https://meet.example.test/fixture',attendees:[{name:'Fixture',email:'client@example.test',timeZone:'Europe/Prague'}]}}));}
+    if(target.includes('/rpc/apply_booking'))return Promise.resolve(Response.json(null));
+    if(target.includes('/rest/v1/mail_outbox'))return Promise.resolve(new Response(null,{status:201}));
+    if(target==='https://api.resend.com/emails')return Promise.resolve(Response.json({error:'fixture failure'},{status:503}));
+    throw new Error('Unexpected provider request');
+  };
+  try {
+    const response=await handle(new Request(url+'/cal/bookings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:'adam-pruska',eventTypeSlug:'individualni-konzultace',serviceId:'individual',start,name:'Fixture',email:'client@example.test',timeZone:'Europe/Prague',consultationTopic:'career',situation:'Career planning',horizon:'soon'})}));
+    const result=await response.json();assert(response.status===200 && result.data.status==='accepted');assert(result.confirmationEmail==='uncertain' && result.cancellationToken && result.meetingUrl);assert(creations===1);
+  } finally {globalThis.fetch=original;if(mode===undefined)Deno.env.delete('BOOKING_EMAIL_MODE');else Deno.env.set('BOOKING_EMAIL_MODE',mode);if(key===undefined)Deno.env.delete('CAL_API_KEY');else Deno.env.set('CAL_API_KEY',key);}
+}));
+Deno.test('Public Cal readiness verifies authenticated read access without exposing account or booking data',()=>withMailFixture(async()=>{
+  const original=globalThis.fetch,previous=Deno.env.get('CAL_API_KEY');Deno.env.set('CAL_API_KEY','fixture-cal-key');let calls=0;
+  globalThis.fetch=(input,init)=>{
+    calls++;const target=String(input),headers=new Headers(init?.headers);assert(headers.get('authorization')==='Bearer fixture-cal-key');
+    if(target.endsWith('/v2/me')) {assert(headers.get('cal-api-version')==='2024-06-14');return Promise.resolve(Response.json({status:'success',data:{email:'private-host@example.test',username:'private-profile'}}));}
+    assert(target.includes('/bookings?take=1'));assert(headers.get('cal-api-version')==='2024-08-13');return Promise.resolve(Response.json({status:'success',data:[{uid:'private-booking',attendees:[{email:'private-client@example.test'}]}]}));
+  };
+  try{const response=await handle(new Request(url+'/cal/health'));const body=await response.text();assert(response.status===200 && calls===2);assert(body.includes('"bookingRead":true') && body.includes('"organizerAddressMatches":false'));assert(!body.includes('private-') && !body.includes('fixture-cal-key'));}
+  finally{globalThis.fetch=original;if(previous===undefined)Deno.env.delete('CAL_API_KEY');else Deno.env.set('CAL_API_KEY',previous);}
+}));

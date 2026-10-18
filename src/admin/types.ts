@@ -103,6 +103,7 @@ export type Integrations = {
   tax: boolean;
   stripe_mode: string;
   bookings: boolean;
+  booking_webhook_secret?: boolean;
   events: boolean;
   mailbox: string;
 };

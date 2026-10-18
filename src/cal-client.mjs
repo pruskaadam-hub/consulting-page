@@ -101,7 +101,7 @@ export function parseBooking(payload) {
   if (payload?.status !== 'success' || !booking || Array.isArray(booking) || typeof booking.uid !== 'string' || !booking.uid.trim() || !Number.isFinite(Date.parse(booking.start))) throw new BookingError('Potvrzení se nepodařilo ověřit. Zkontroluj prosím e-mail před opakováním rezervace.', 'uncertain');
   const status = String(booking.status || '').toLowerCase();
   if (!['accepted', 'pending'].includes(status)) throw new BookingError('Rezervaci se nepodařilo potvrdit. Zkontroluj prosím e-mail před opakováním.', 'uncertain');
-  return {uid:booking.uid, start:new Date(booking.start).toISOString(), status, cancellationToken:payload.cancellationToken || ''};
+  return {uid:booking.uid, start:new Date(booking.start).toISOString(), status, cancellationToken:payload.cancellationToken || '', meetingUrl:typeof payload.meetingUrl==='string' && /^https:\/\//.test(payload.meetingUrl) ? payload.meetingUrl : '', confirmationEmail:payload.confirmationEmail || 'cal'};
 }
 export async function createBooking(options, {fetchImpl = fetch} = {}) {
   const body = bookingPayload(options);

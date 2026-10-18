@@ -218,7 +218,8 @@ async function route(req: Request) {
       stripe_mode: config("STRIPE_SECRET_KEY", false).startsWith("sk_live_")
         ? "live"
         : "test",
-      bookings: Boolean(config("CAL_WEBHOOK_SECRET", false)),
+      bookings: Boolean(config("CAL_API_KEY", false)),
+      booking_webhook_secret: Boolean(config("CAL_WEBHOOK_SECRET", false)),
       events: Boolean(config("EVENTS_HMAC_SECRET", false)),
     });
   }

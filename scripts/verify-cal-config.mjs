@@ -21,6 +21,12 @@ const fetchWithOrigin=(url,init={})=>fetch(url,{...init,signal:AbortSignal.timeo
  return response;
 });
 async function verify(){
+const health=await fetch(`${process.env.VITE_SUPABASE_URL || 'https://lsofzsartjesgwetcpzw.supabase.co'}/functions/v1/admin-api/cal/health`,{signal:AbortSignal.timeout(30000),headers:{Origin:origin}});
+if(!health.ok){const result=await health.json().catch(()=>({}));throw new Error(`Authenticated Cal.com integration HTTP ${health.status}: ${result.error || 'unavailable'}`);}
+const readiness=await health.json();
+if(readiness.calendarConnected!==true || readiness.bookingRead!==true)throw new Error('Authenticated Cal.com account and booking read access are not ready.');
+console.log('Cal.com authenticated account and booking read access verified; no personal information logged.');
+if(readiness.organizerAddressMatches!==true)console.log('Organizer account address still needs to be aligned with adam@adampruska.cz in Cal.com.');
 for(const [name,slug,minutes] of types){
  if(!username || !slug)throw new Error(`Missing public Cal.com mapping: ${name}`);
  const slots=await loadSlots({username,eventTypeSlug:slug,year:now.getUTCFullYear(),month:now.getUTCMonth(),timeZone:'Europe/Prague',expectedMinutes:minutes},{fetchImpl:fetchWithOrigin});

@@ -90,6 +90,7 @@ const { HtmlValidate } = require("html-validate");
       sends = 0,
       events = [],
       gaRequests = 0;
+    const calBookings = [];
     const clients = [],
       invoices = [],
       orders = [],
@@ -169,6 +170,12 @@ const { HtmlValidate } = require("html-validate");
             body: JSON.stringify(value),
           });
         if (method === "OPTIONS") return ok({}, 204);
+        if(u.pathname.endsWith('/admin-api/cal/sync')) {
+          if(!calBookings.length)calBookings.push({uid:'cal-fixture',name:'Booking Fixture',email:'booking@example.test',title:'Individuální konzultace',starts_at:'2030-06-01T10:00:00Z',status:'accepted'});
+          return ok({synced:1,syncedAt:new Date().toISOString(),hasMore:false});
+        }
+        if(u.pathname.endsWith('/admin-api/cal/communication'))return ok({calendarEmail:'host@example.test',calendarUsername:'fixture-host',sender:'adam@adampruska.cz',mailRead:true,mailSend:true,mailProvider:'icloud',confirmationProvider:'cal.com',managementLinkEmail:false});
+
         if (method === "GET" && u.pathname.endsWith("/admin-api/cal/slots"))
           return ok({ status: "success", data: {} });
         if (u.pathname.endsWith("/auth/v1/token")) {
@@ -213,7 +220,7 @@ const { HtmlValidate } = require("html-validate");
               month_revenue: 0,
               pending: orders.length,
               clients: clients.length,
-              bookings: 0,
+              bookings: calBookings.length,
             });
           if (name === "rpc/issue_invoice_draft") {
             const body=req.postDataJSON(),data=body.p_data;
@@ -242,7 +249,7 @@ const { HtmlValidate } = require("html-validate");
             clients,
             orders,
             tasks,
-            bookings: [],
+            bookings: calBookings,
             invoices: invoices.map((item) => ({...item, orders:{status: orders.find((order) => order.id === item.order_id)?.status}})),
             stripe_invoices: orders.filter((o) => o.is_test).map((o) => ({
               id: "in_test_fixture", number: "TEST-1", status: "paid",
@@ -289,7 +296,7 @@ const { HtmlValidate } = require("html-validate");
             invoicing: false,
             tax: false,
             stripe_mode: "test",
-            bookings: false,
+            bookings: true,
             events: true,
             mailbox: "adam@adampruska.cz",
           });
@@ -395,6 +402,12 @@ const { HtmlValidate } = require("html-validate");
         );
       }
     }
+    await page.getByRole("navigation",{name:"Administrace"}).getByRole("button",{name:"Rezervace",exact:true}).click();
+    await page.getByRole('cell',{name:/Booking Fixture/}).waitFor();
+    await page.getByRole('button',{name:'Načíst rezervace z Cal.com',exact:true}).click();
+    await page.getByRole('button',{name:'Ověřit e-mailovou komunikaci',exact:true}).click();
+    await page.getByText('host@example.test',{exact:true}).waitFor();
+    await validate('Cal communication and imported booking');
     await page.getByRole("navigation", {name:"Administrace"}).getByRole("button", {name:"Faktury",exact:true}).click();
     await page.getByLabel("Existující objednávka", {exact:true}).check();
     assert.equal(await page.getByLabel("Objednávka k fakturaci", {exact:true}).isDisabled(), true);

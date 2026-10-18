@@ -515,6 +515,7 @@ function Workspace({
     [loading, setLoading] = useState(true),
     [notice, setNotice] = useState(""),
     [error, setError] = useState("");
+  const [calCommunication,setCalCommunication]=useState<{calendarEmail:string;calendarUsername:string;sender:string;mailRead:boolean;mailSend:boolean;mailProvider:string;confirmationProvider:string;managementLinkEmail:boolean} | null>(null);
   const [invoice, setInvoice] = useState<Invoice | null>(null),
     [paymentLink, setPaymentLink] = useState("");
   const [ga, setGa] = useState<{
@@ -524,6 +525,12 @@ function Workspace({
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "instant" });
   }, [section]);
+  const calLoaded=useRef(false);
+  useEffect(()=>{
+    if(section!=='bookings' || !integration?.bookings || busy || calLoaded.current)return;
+    calLoaded.current=true;
+    void work(()=>api('/cal/sync',{}),'Rezervace z Cal.com byly načteny.');
+  },[section,integration?.bookings,busy]);
   async function reload() {
     if (!db) return;
     const results = await Promise.all([
@@ -887,9 +894,11 @@ function Workspace({
             {section === "bookings" && (
               <Panel title="Rezervace z Cal.com">
                 <p>
-                  Posledních 100 rezervací. Přehled aktualizují podepsaná
-                  oznámení z Cal.com. Obě strany mohou rezervaci zrušit nejpozději 24 hodin předem.
+                  Přehled uložených rezervací z Cal.com. Nové rezervace z webu a jejich storna se ukládají přímo. Tlačítkem načteš také starší rezervace a změny provedené v Cal.com. Obě strany mohou rezervaci zrušit nejpozději 24 hodin předem.
                 </p>
+                <button type="button" disabled={busy || !integration?.bookings} onClick={()=>work(()=>api('/cal/sync',{}),'Přehled rezervací byl aktualizován.')}>Načíst rezervace z Cal.com</button>
+                <button type="button" disabled={busy || !integration?.bookings} onClick={()=>work(async()=>{setCalCommunication(await api('/cal/communication'));},'Nastavení komunikace načteno.')}>Ověřit e-mailovou komunikaci</button>
+                {calCommunication && <div className="admin-note"><h3>Rezervace a e-maily</h3><p>Účet Cal.com: <strong>{calCommunication.calendarEmail}</strong> ({calCommunication.calendarUsername})</p><p>Potvrzení rezervací: {calCommunication.confirmationProvider==='app' ? 'odesílá webová aplikace z adam@adampruska.cz' : 'odesílá Cal.com; aplikace druhé potvrzení neposílá'}.</p><p>Pošta administrace: <strong>{calCommunication.sender}</strong>. Čtení: {calCommunication.mailRead ? 'připojeno' : 'nenastaveno'}. Odesílání: {calCommunication.mailSend ? 'připraveno' : 'nenastaveno'}. {calCommunication.mailProvider==='icloud' && 'Schránka je v iCloudu, odesílání z administrace zajišťuje Resend.'}</p><p>{calCommunication.managementLinkEmail ? 'Potvrzení z webu obsahuje odkaz ke zrušení i dostupný odkaz na online schůzku.' : 'Soukromý odkaz ke zrušení se zobrazuje na webu. Automatický e-mail s tímto odkazem není zapnutý.'}</p><p>Příjemce oznámení, další adresy a pravidla v Cal.com nebo přeposílání v poštovní schránce je potřeba ověřit v příslušných účtech.</p></div>}
                 {s.bookings.length ? (
                   <div className="admin-table-scroll">
                     <table>
@@ -940,8 +949,8 @@ function Workspace({
                 ) : (
                   <Empty>
                     {integration?.bookings
-                      ? "Zatím nebyla přijata žádná rezervace."
-                      : "Je potřeba nastavit webhook v Cal.com. Starší rezervace se neimportují automaticky."}
+                      ? "Zatím tu nejsou uložené rezervace. Načti je z Cal.com tlačítkem výše."
+                      : "Připoj Cal.com API v Supabase Secrets a potom načti rezervace tlačítkem výše."}
                   </Empty>
                 )}
               </Panel>

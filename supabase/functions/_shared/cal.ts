@@ -1,3 +1,6 @@
+import { safeMeetingUrl, sendBookingConfirmation } from "./booking-mail.ts";
+import { saveBooking, syncBookings } from "./cal-sync.ts";
+import { mailStatus } from "./mail.ts";
 import { bookingPayload } from "../../../src/cal-client.mjs";
 import { ApiError, hmacHex, sameSignature } from "./contracts.mjs";
 import { config, requireAdmin } from "./auth.ts";
@@ -25,7 +28,9 @@ async function cal(path: string, method = "GET", body?: unknown) {
       "Content-Type": "application/json",
       "cal-api-version": path.startsWith("/slots")
         ? "2024-09-04"
-        : "2024-08-13",
+        : path.startsWith("/bookings")
+        ? "2024-08-13"
+        : "2024-06-14",
     },
     ...(body ? { body: JSON.stringify(body) } : {}),
   });
@@ -50,6 +55,54 @@ async function cal(path: string, method = "GET", body?: unknown) {
   return response.json();
 }
 export async function calRoute(req: Request, path: string) {
+  if (req.method === "GET" && path === "/cal/health") {
+    const profile = await cal("/me");
+    const bookings = await cal("/bookings?take=1&status=upcoming");
+    if (
+      profile?.status !== "success" ||
+      typeof profile.data?.email !== "string" ||
+      bookings?.status !== "success" || !Array.isArray(bookings.data)
+    ) {
+      throw new ApiError(
+        "Soukromé napojení Cal.com se nepodařilo ověřit.",
+        502,
+      );
+    }
+    return Response.json({
+      calendarConnected: true,
+      bookingRead: true,
+      organizerAddressMatches:
+        profile.data.email.toLowerCase() === "adam@adampruska.cz",
+    }, { headers: { "Cache-Control": "public,max-age=60" } });
+  }
+  if (req.method === "POST" && path === "/cal/sync") {
+    await requireAdmin(req);
+    return Response.json(await syncBookings((path) => cal(path)), {
+      headers: { "Cache-Control": "no-store" },
+    });
+  }
+  if (req.method === "GET" && path === "/cal/communication") {
+    await requireAdmin(req);
+    const result = await cal("/me");
+    if (
+      result?.status !== "success" || typeof result.data?.email !== "string"
+    ) throw new ApiError("Účet Cal.com se nepodařilo ověřit.", 502);
+    const mail = mailStatus();
+    return Response.json({
+      calendarEmail: result.data.email,
+      calendarUsername: result.data.username || "",
+      sender: mail.mailbox,
+      mailRead: mail.mail_read,
+      mailSend: mail.mail_send,
+      mailProvider: mail.mail_provider,
+      webhookSecretConfigured: Boolean(config("CAL_WEBHOOK_SECRET", false)),
+      confirmationProvider: config("BOOKING_EMAIL_MODE", false) === "app"
+        ? "app"
+        : "cal.com",
+      managementLinkEmail: config("BOOKING_EMAIL_MODE", false) === "app" &&
+        mail.mail_send && mail.mailbox.toLowerCase() === "adam@adampruska.cz",
+    }, { headers: { "Cache-Control": "no-store" } });
+  }
   if (req.method === "GET" && path === "/cal/slots") {
     const params = new URL(req.url).searchParams;
     const slug = params.get("eventTypeSlug");
@@ -94,16 +147,41 @@ export async function calRoute(req: Request, path: string) {
         "Doplň jméno, e-mail, téma, situaci a časový horizont.",
       );
     }
+    const observedAt = new Date().toISOString();
     const result = await cal("/bookings", "POST", body);
     if (!result.data?.uid || !Number.isFinite(Date.parse(result.data.start))) {
       throw new ApiError("Nepodařilo se ověřit potvrzení.", 502);
+    }
+    let adminSyncPending = false;
+    try {
+      await saveBooking({
+        ...result.data,
+        attendees: result.data.attendees || [body.attendee],
+      }, observedAt);
+    } catch {
+      adminSyncPending = true;
     }
     const tokenBody = encodeURIComponent(
       JSON.stringify({ uid: result.data.uid, start: result.data.start }),
     );
     const cancellationToken = tokenBody + "." +
       await hmacHex(config("CAL_API_KEY"), tokenBody);
-    return Response.json({ ...result, cancellationToken }, {
+    const normalizedBooking = {
+      ...result.data,
+      attendees: result.data.attendees || [body.attendee],
+    };
+    const confirmationEmail = await sendBookingConfirmation(
+      normalizedBooking,
+      cancellationToken,
+      options.language || "cs",
+    );
+    return Response.json({
+      ...result,
+      cancellationToken,
+      adminSyncPending,
+      confirmationEmail: confirmationEmail.status,
+      meetingUrl: safeMeetingUrl(result.data),
+    }, {
       headers: { "Cache-Control": "no-store" },
     });
   }
@@ -141,12 +219,21 @@ export async function calRoute(req: Request, path: string) {
         409,
       );
     }
-    return Response.json(
-      await cal("/bookings/" + encodeURIComponent(uid) + "/cancel", "POST", {
-        cancellationReason: "Zrušení rezervace nejpozději 24 hodin předem.",
-      }),
-      { headers: { "Cache-Control": "no-store" } },
+    const observedAt = new Date().toISOString();
+    const result = await cal(
+      "/bookings/" + encodeURIComponent(uid) + "/cancel",
+      "POST",
+      { cancellationReason: "Zrušení rezervace nejpozději 24 hodin předem." },
     );
+    let adminSyncPending = false;
+    try {
+      await saveBooking({ ...booking.data, status: "cancelled" }, observedAt);
+    } catch {
+      adminSyncPending = true;
+    }
+    return Response.json({ ...result, adminSyncPending }, {
+      headers: { "Cache-Control": "no-store" },
+    });
   }
   throw new ApiError("Neplatná operace.", 404);
 }

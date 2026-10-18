@@ -6,7 +6,7 @@ import { BookingError, cancelBooking, createBooking, dateKey, loadSlots, monthDa
 import {trackEvent} from './Analytics';
 
 type Slot = {start: string; end: string | null};
-type Confirmation = {uid: string; start: string; status: string; cancellationToken: string};
+type Confirmation = {uid: string; start: string; status: string; cancellationToken: string; meetingUrl: string; confirmationEmail: string};
 const localZone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'Europe/Prague';
 const zones = [...new Set([localZone, 'Europe/Prague', 'Europe/Zurich', 'Europe/London', 'America/New_York', 'UTC'])];
 type Props = {service:Service; language:Language; intentTopic:Topic; onTopicChange:(topic:Topic)=>void; onSubmittingChange:(busy:boolean)=>void};
@@ -83,6 +83,8 @@ export function Calendar({service, language, intentTopic, onTopicChange, onSubmi
     <p>{service.title}<br /><strong>{displayDate(confirmation.start)}</strong><br />{t.timezone}: {timeZone}</p>
     <p>{confirmation.status==='accepted' ? t.acceptedText : t.pendingText}</p>
     {service.id==='package' && <p>{t.packageConfirmed}</p>}
+    {confirmation.status==='accepted' && confirmation.meetingUrl && <p><a href={confirmation.meetingUrl} target="_blank" rel="noopener noreferrer">{language==='en'?'Join the online meeting':language==='sk'?'Pripojenie k online stretnutiu':'Připojení k online schůzce'}</a></p>}
+    {['unavailable','uncertain'].includes(confirmation.confirmationEmail) && <p>{language==='en'?'Your booking is saved, but email delivery could not be verified. Save the links below.':language==='sk'?'Rezervácia je uložená, ale doručenie e-mailu sa nepodarilo overiť. Ulož si odkazy nižšie.':'Rezervace je uložená, ale doručení e-mailu se nepodařilo ověřit. Ulož si odkazy níže.'}</p>}
     <p>{cancellationPolicy}</p>
     {confirmation.cancellationToken && <p><a href={`${location.pathname}?sprava-rezervace#${confirmation.cancellationToken}`} target="_blank" rel="noopener noreferrer">{language==='en' ? 'Save this private cancellation link' : language==='sk' ? 'Ulož si tento súkromný odkaz na zrušenie rezervácie' : 'Ulož si tento soukromý odkaz pro zrušení rezervace'}</a></p>}
     {confirmation.cancellationToken && Date.parse(confirmation.start)-Date.now()>=86400000 && <button type="button" className="text-link" disabled={submitting} onClick={async()=>{setSubmitting(true);setSubmitError('');try{await cancelBooking(confirmation.cancellationToken);setCancelled(true);}catch{setSubmitError(t.errorRejected);}finally{setSubmitting(false);}}}>{language==='en' ? 'Cancel booking' : language==='sk' ? 'Zrušiť rezerváciu' : 'Zrušit rezervaci'}</button>}

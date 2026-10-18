@@ -57,7 +57,8 @@ proto ho nesdílejte veřejně. Rotace `CAL_API_KEY` zneplatní staré odkazy.
 Pravidlo této aplikace neomezuje samostatné rozhraní Cal.com ani nativní odkazy
 v jeho e-mailech. Před ostrým provozem je potřeba zkontrolovat storno a změny termínu
 také v nastavení obou událostí Cal.com, aby tyto cesty neobcházely lhůtu webu.
-Odkaz pro správu web neposílá samostatným e-mailem; potvrzení schůzky nadále posílá Cal.com.
+Ve výchozím režimu odkaz pro správu web neposílá samostatným e-mailem; potvrzení posílá Cal.com.
+Volitelný režim vlastních potvrzení a sjednocení e-mailů popisuje docs/booking-communication.md.
 
 ## Ověření
 
@@ -118,3 +119,10 @@ token patří do stejnojmenného repository secret v GitHub Actions.
 Web obsahuje veřejný publishable klíč Supabase dodaný vlastníkem. GitHub Actions
 Variable `VITE_SUPABASE_PUBLISHABLE_KEY` jej může přepsat. Serverové klíče
 a heslo pošty patří výhradně do Supabase Secrets.
+
+
+## Rezervace, iCloud a potvrzovací e-maily
+
+Aktuální rozdělení odpovědností, synchronizace bez webhooku a postup pro jednotné
+klientské potvrzení: [docs/booking-communication.md](docs/booking-communication.md).
+Vlastní potvrzení je připravené za BOOKING_EMAIL_MODE=app, výchozí režim zůstává cal.
