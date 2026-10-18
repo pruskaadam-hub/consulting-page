@@ -40,7 +40,7 @@ S kariérou je to stejné. První stáž v průmyslu tě možná nebude bavit. P
 
 ### Přelož svou práci do jazyka firem
 
-Švýcarské firmy hledají často „plug-and-play“ kandidáty, kteří stejnou roli už dělali. Ochota brát lidi, kteří mění obor, podle zkušeností kariérních poradců klesá ([sulista.ch](https://www.sulista.ch/blog/the-swiss-hiring-paradox-a-skilled-labor-shortage-and-the-zero-gap-mentality)). Doktorand z labu je pro personalistu přesně takový „kariérní změnař“. Nemůžeš čekat, že si tvoje dovednosti přeloží sám. Musíš to udělat za něj.
+Při přechodu z akademie do firmy vysvětli, jak se tvoje zkušenosti hodí pro konkrétní roli. Propoj práci v laboratoři s tím, co firma potřebuje: řešením problémů, vyhodnocováním dat nebo vedením projektu. Nenechávej tento překlad jen na personalistovi.
 
 | Co děláš v laboratoři | Jak to zní v CV pro firmu |
 | --- | --- |
@@ -55,7 +55,7 @@ Každý řádek doplň o číslo. Firmy chtějí vidět výsledek, ne činnost.
 
 ### Průmysl není automaticky jistota
 
-Od akademie odchází hodně lidí kvůli jistotě. Jenže i průmysl má své vlny. V roce 2024 ohlásil Novartis zrušení zhruba 800 míst ve vývoji a Roche omezování týmu produktového vývoje, kde bylo ohrožených méně než 340 kmenových zaměstnanců. Za vlnami propouštění stojí konce patentů, drahý a nejistý vývoj, tlak na ceny a automatizace ([sulista.ch](https://www.sulista.ch/blog/what-are-the-reasons-for-the-downsizing-in-the-pharma-sector-and-how-can-we-cope-with-it)).
+Při rozhodování zvaž i stabilitu konkrétního zaměstnavatele a týmu. Samotný přechod do průmyslu ti jistotu nezaručí. Ptej se na financování projektů, očekávání od nové role a možnosti dalšího rozvoje.
 
 Není to důvod do průmyslu nejít. Je to důvod jít tam s otevřenýma očima. Jistotu ti nedá firma, ale to, co umíš a koho znáš. Proto se vyplatí učit se i po nástupu (analýza dat v Pythonu, práce s AI, projektové řízení) a nepřestat budovat kontakty, ani když práci zrovna máš.
 

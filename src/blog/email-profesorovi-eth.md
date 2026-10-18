@@ -74,7 +74,7 @@ A když přijde „bohužel nemáme místo“? Odpověz poděkováním a zeptej 
 
 Když tě pozve, máš vyhráno jen napůl. Pohovor bývá neformálnější, než čekáš, ale odborně do hloubky. Často zahrnuje prezentaci tvé diplomky, rozhovor se členy skupiny a někdy prohlídku laboratoře. Profesor zjišťuje dvě věci: jestli to zvládneš odborně a jestli s tebou bude skupině dobře.
 
-Pohovor skoro vždy začíná větou „Tell us about yourself“. Na ni si připrav 2 až 3 minuty podle jednoduché struktury, kterou doporučuje i švýcarský kariérní kouč Václav Sulista ([sulista.ch](https://www.sulista.ch/blog/how-can-you-introduce-yourself-at-the-job-interview-in-the-best-way)):
+Pohovor skoro vždy začíná větou „Tell us about yourself“. Na ni si připrav 2 až 3 minuty podle jednoduché struktury:
 
 1. **Jsem:** kdo jsi a kde teď stojíš. Dvě věty.
 2. **Umím:** to hlavní. Metody, výsledky diplomky, jeden konkrétní problém, který jsi vyřešil. Připrav si ke každému bodu detail, kdyby se doptali.

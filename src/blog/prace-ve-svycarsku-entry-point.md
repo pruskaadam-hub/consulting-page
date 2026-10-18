@@ -15,7 +15,7 @@ Všechny čtyři mají společné řešení: někdo, kdo za tebe ručí. Doporu�
 
 ### Pátá bariéra: mentalita „nulové mezery“
 
-Švýcarsko si stěžuje na nedostatek kvalifikovaných lidí, a přitom vybírá extrémně přísně. Kariérní kouč Václav Sulista z Basileje tomu říká švýcarský paradox náboru a popisuje „zero-gap“ mentalitu: firmy chtějí kandidáta, který odpovídá inzerátu skoro na 100 %, ideálně někoho, kdo stejnou práci dělal roky ve stejném oboru ([sulista.ch](https://www.sulista.ch/blog/the-swiss-hiring-paradox-a-skilled-labor-shortage-and-the-zero-gap-mentality)). Přihlášky navíc často nejdřív třídí software podle pevných kritérií.
+Při hledání práce ve Švýcarsku se zaměř na konkrétní požadavky každé pozice. Ukaž, jak na ně navazuje tvoje dosavadní praxe, a dolož své zkušenosti konkrétními výsledky. Čím snáz personalista pozná, proč se na danou roli hodíš, tím lépe.
 
 Pro tebe z toho plynou dvě věci. Zaprvé: pokud na inzerát sedíš jen napůl, portál tě skoro jistě vyřadí. Zadruhé: právě proto se vyplatí obejít filtr a mluvit přímo s hiring managerem. Člověk, který tě potkal, umí ocenit to, co robot nevidí: přenositelné dovednosti, rychlost učení, motivaci.
 

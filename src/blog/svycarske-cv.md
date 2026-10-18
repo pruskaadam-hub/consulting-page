@@ -56,7 +56,7 @@ Velké firmy v Basileji, Curychu i Ženěvě třídí přihlášky přes systém
 **Co dělat:**
 
 - Z inzerátu si vypiš 5 až 10 klíčových slov (metody, nástroje, certifikace) a použij je v CV přirozeně, stejnými slovy jako v inzerátu.
-- Nech si CV porovnat s inzerátem pomocí AI (ChatGPT, Claude). Ber to jako překlad tvé zkušenosti do jejich jazyka, ne jako vymýšlení. Zkušenost zůstává stejná, mění se rámování ([sulista.ch](https://www.sulista.ch/blog/cv-vs-linkedin-do-you-still-need-both)).
+- Nech si CV porovnat s inzerátem pomocí AI (ChatGPT, Claude). Ber to jako překlad tvé zkušenosti do jejich jazyka, ne jako vymýšlení. Zkušenost zůstává stejná, mění se rámování.
 - Používej jednoduchý layout bez tabulek a grafických ikon. Robot čte text, ne design.
 
 ### 9. LinkedIn není náhrada CV, ale jeho druhá polovina
