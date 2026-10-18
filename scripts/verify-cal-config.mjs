@@ -8,7 +8,7 @@ const username=process.env.VITE_CAL_USERNAME;
 const types=[['intro',process.env.VITE_CAL_INTRO_SLUG,30],['individual',process.env.VITE_CAL_INDIVIDUAL_SLUG,50],['package',process.env.VITE_CAL_PACKAGE_SLUG,50]];
 const now=new Date();
 const results=[];
-const fetchWithOrigin=(url,init={})=>fetch(url,{...init,signal:AbortSignal.timeout(20000),headers:{...init.headers,Origin:origin}}).then(response=>{
+const fetchWithOrigin=(url,init={})=>fetch(url,{...init,signal:AbortSignal.timeout(20000),headers:{...init.headers,Origin:origin}}).then(async response=>{
  if(!response.ok){const detail=await response.json().catch(()=>({}));throw new Error(`Cal.com availability returned HTTP ${response.status}: ${typeof detail.error==='string' ? detail.error : 'no diagnostic'}`);}
  const allowed=response.headers.get('access-control-allow-origin');
  if(allowed!=='*' && allowed!==origin)throw new Error('Cal.com does not allow browser access from the production origin. A server-side integration is required.');
