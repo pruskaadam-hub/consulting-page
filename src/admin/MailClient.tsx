@@ -190,14 +190,14 @@ export function MailClient({
       ? selected.messageId
       : "";
     setInReplyTo(parent);
-    setReferences(
-      [
-        ...(selected.references || "").split(/\s+/).filter((item) =>
-          safeId.test(item)
-        ),
-        parent,
-      ].filter(Boolean).slice(-5).join(" ").slice(-900),
-    );
+    const thread = [
+      ...(selected.references || "").split(/\s+/).filter((item) =>
+        safeId.test(item)
+      ),
+      parent,
+    ].filter(Boolean).slice(-5);
+    while (thread.length && thread.join(" ").length > 900) thread.shift();
+    setReferences(thread.join(" "));
     setUncertain(false);
     draftId.current = crypto.randomUUID();
     setCompose(true);

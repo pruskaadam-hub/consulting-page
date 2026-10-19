@@ -1004,3 +1004,9 @@ Deno.test("mail writes require administrator authorization before parsing input 
     const response=await handle(new Request(url+path,{method:"POST",body:"not-json"}));assert(response.status===401);await response.body?.cancel();
   }
 });
+
+Deno.test("message detail preserves the iCloud Seen flag",async()=>{
+  const source=new TextEncoder().encode("From: client@example.test\r\nTo: adam@adampruska.cz\r\nSubject: Fixture\r\n\r\nBody");
+  const fake={fetchOne:async(_uid:number,query:{source?:boolean})=>query.source?{source}:{uid:7,size:source.length,envelope:{to:[{address:"adam@adampruska.cz"}]},flags:new Set(["\\Seen"])}} as unknown as Parameters<typeof readWebsiteMail>[0];
+  const result=await readWebsiteMail(fake,7);assert(result.seen===true);
+});

@@ -207,6 +207,7 @@ export async function readWebsiteMail(
     return {
       uid,
       folder,
+      seen: info.flags?.has("\\Seen") || false,
       messageId: parsed.messageId || "",
       replyTo: parsed.replyTo?.find((item) => "address" in item)?.address ||
         parsed.from?.address || "",
