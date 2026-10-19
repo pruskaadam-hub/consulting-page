@@ -4,7 +4,7 @@ import { bookingMailText, sendBookingConfirmation } from "../_shared/booking-mai
 import { handle } from "./index.ts";
 import { limitedText } from "../_shared/http.ts";
 import { hmacHex } from "../_shared/contracts.mjs";
-import { mailboxError, mailStatus, sendMail } from "../_shared/mail.ts";
+import { mailboxError, mailStatus, readWebsiteMail, sendMail } from "../_shared/mail.ts";
 import {
   analyticsConfigured,
   analyticsReport,
@@ -856,4 +856,36 @@ Deno.test("IMAP diagnostics distinguish authentication from connectivity and nev
   assert(!mailboxError(new Error(secret)).message.includes(secret));
   const missing = mailboxError({message:secret});
   assert(missing.status === 502);
+});
+
+Deno.test("website inbox filters before limit, matches exact To/Cc and denies personal UID before reading source", async () => {
+  const envelope = (address: string, cc = false) => ({[cc ? "cc" : "to"]:[{address}]});
+  const rows = Array.from({length:80}, (_, i) => ({uid:i+1,envelope:envelope(i < 30 ? "ADAM@adampruska.cz" : "other@icloud.com"),flags:new Set()}));
+  rows[29].envelope = envelope("adam@adampruska.cz",true);
+  rows[79].envelope = envelope("other-adam@adampruska.cz");
+  let sourceReads = 0;
+  const fake = {
+    search: async (query: unknown, options: unknown) => {
+      assert(JSON.stringify(query).includes("adam@adampruska.cz"));
+      assert(JSON.stringify(options).includes("uid"));
+      return rows.map(row=>row.uid);
+    },
+    fetch: async function* (uids: number[]) {
+      for (const row of rows) if(uids.includes(row.uid)) yield row;
+    },
+    fetchOne: async (uid: number, query: {source?: boolean}) => {
+      if(query.source) { sourceReads++; throw new Error("Private source must not be fetched"); }
+      return {...rows.find(row=>row.uid===uid),size:10};
+    },
+  } as unknown as Parameters<typeof readWebsiteMail>[0];
+  const result = await readWebsiteMail(fake);
+  if (!result.messages) throw new Error("Missing message list");
+  assert(result.messages.length === 25);
+  assert(result.messages[0].uid === 30 && result.messages[24].uid === 6);
+  for(const uid of [80,79]) {
+    let denied=false;
+    try {await readWebsiteMail(fake,uid);}catch(error){denied=(error as {status:number}).status===404;}
+    assert(denied);
+  }
+  assert(sourceReads===0);
 });

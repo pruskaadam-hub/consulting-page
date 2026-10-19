@@ -57,28 +57,16 @@ export function mailboxError(error: unknown) {
   }
   return new ApiError("Načtení pošty selhalo při komunikaci IMAP. Zkontroluj protokoly funkce admin-api v Supabase; přihlašovací údaje neměň bez ověření příčiny.", 502);
 }
-export async function readMail(uid?: number) {
-  if (!mailStatus().mail_read) {
-    throw new ApiError("Nejprve připoj schránku v Supabase Secrets.", 503);
-  }
-  const value = settings();
-  const client = new ImapFlow({
-    host: value.provider === "icloud" ? "imap.mail.me.com" : "imap.forpsi.com",
-    port: 993,
-    secure: true,
-    auth: { user: value.username, pass: value.password },
-    logger: false,
-    connectionTimeout: 15000,
-    socketTimeout: 20000,
-  });
-  client.on("error", () => {}); // Connection failures are handled by the awaited operations.
-  try {
-    await client.connect();
-    const lock = await client.getMailboxLock("INBOX", { readOnly: true });
-    try {
+const WEBSITE_MAILBOX = "adam@adampruska.cz";
+function forWebsite(envelope?: { to?: { address?: string }[]; cc?: { address?: string }[] }) {
+  return [...(envelope?.to || []), ...(envelope?.cc || [])].some(
+    (recipient) => recipient.address?.trim().toLowerCase() === WEBSITE_MAILBOX,
+  );
+}
+export async function readWebsiteMail(client: Pick<ImapFlow, "search" | "fetch" | "fetchOne">, uid?: number) {
       if (uid) {
-        const info = await client.fetchOne(uid, { size: true }, { uid: true });
-        if (!info) throw new ApiError("Zpráva nebyla nalezena.", 404);
+        const info = await client.fetchOne(uid, { size: true, envelope: true }, { uid: true });
+        if (!info || !forWebsite(info.envelope)) throw new ApiError("Zpráva nebyla nalezena.", 404);
         if ((info.size || 0) > 5_000_000) {
           throw new ApiError(
             "Tuto velkou zprávu otevři ve své poštovní aplikaci.",
@@ -109,26 +97,45 @@ export async function readMail(uid?: number) {
         };
       }
       const messages = [];
-      const total = (client.mailbox && client.mailbox.exists) || 0;
-      if (total) {
-        for await (
-          const message of client.fetch(
-            `${Math.max(1, total - 24)}:*`,
-            { envelope: true, flags: true },
-          )
-        ) {
-          messages.push({
+      const found = await client.search({ or: [{ to: WEBSITE_MAILBOX }, { cc: WEBSITE_MAILBOX }] }, { uid: true });
+      const candidates = Array.isArray(found) ? [...found].sort((a, b) => b - a) : [];
+      // Search uses substring matching: verify exact recipients before returning anything.
+      for (let offset = 0; offset < candidates.length && messages.length < 25; offset += 50) {
+        const batch = [];
+        for await (const message of client.fetch(candidates.slice(offset, offset + 50), { envelope: true, flags: true }, { uid: true })) {
+          if (!forWebsite(message.envelope)) continue;
+          batch.push({
             uid: message.uid,
             subject: message.envelope?.subject || "(bez předmětu)",
             from: message.envelope?.from?.[0]?.address || "",
-            date: message.envelope?.date
-              ? new Date(message.envelope.date).toISOString()
-              : "",
+            date: message.envelope?.date ? new Date(message.envelope.date).toISOString() : "",
             seen: message.flags?.has("\\Seen") || false,
           });
         }
+        messages.push(...batch.sort((a, b) => b.uid - a.uid));
       }
-      return { messages: messages.reverse(), limit: 25 };
+      return { messages: messages.slice(0, 25), limit: 25 };
+}
+export async function readMail(uid?: number) {
+  if (!mailStatus().mail_read) {
+    throw new ApiError("Nejprve připoj schránku v Supabase Secrets.", 503);
+  }
+  const value = settings();
+  const client = new ImapFlow({
+    host: value.provider === "icloud" ? "imap.mail.me.com" : "imap.forpsi.com",
+    port: 993,
+    secure: true,
+    auth: { user: value.username, pass: value.password },
+    logger: false,
+    connectionTimeout: 15000,
+    socketTimeout: 20000,
+  });
+  client.on("error", () => {}); // Connection failures are handled by the awaited operations.
+  try {
+    await client.connect();
+    const lock = await client.getMailboxLock("INBOX", { readOnly: true });
+    try {
+      return await readWebsiteMail(client, uid);
     } finally {
       lock.release();
     }

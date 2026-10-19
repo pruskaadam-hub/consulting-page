@@ -1678,8 +1678,8 @@ function Mailbox({
             </p>
             {provider === "icloud" && (
               <p className="admin-small">
-                iCloud používá společnou doručenou poštu. Mohou se tu zobrazit
-                také zprávy pro tvé osobní adresy.
+                Zobrazují se jen zprávy, které mají adam@adampruska.cz
+                v poli Komu nebo Kopie.
               </p>
             )}
           </>
