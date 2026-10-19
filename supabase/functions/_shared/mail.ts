@@ -37,6 +37,26 @@ export function mailStatus() {
     mailbox: value.from || "adam@adampruska.cz",
   };
 }
+// Never forward provider diagnostics: they can contain mailbox data or credentials.
+export function mailboxError(error: unknown) {
+  if (error instanceof ApiError) return error;
+  const detail = (error && typeof error === "object" ? error : {}) as {
+    authenticationFailed?: boolean; serverResponseCode?: string; code?: string;
+  };
+  if (detail.authenticationFailed || detail.serverResponseCode === "AUTHENTICATIONFAILED") {
+    return new ApiError("Poštovní server odmítl přihlášení. V Supabase Secrets zkontroluj ICLOUD_USERNAME: použij adresu iCloud Mail (např. pruskaadam@me.com), nikoli přihlášení Apple účtu na Yahoo. ICLOUD_APP_PASSWORD musí být heslo pro aplikaci vytvořené v účtu Apple.", 502);
+  }
+  if (["ETIMEDOUT", "ETIMEOUT", "CONNECT_TIMEOUT", "GREETING_TIMEOUT", "SocketTimeout"].includes(detail.code || "")) {
+    return new ApiError("Vypršel čas spojení s poštovním serverem (IMAP přes TLS, port 993). Zkus načíst poštu později; tato chyba sama neznamená nesprávné heslo.", 504);
+  }
+  if (["ECONNREFUSED", "ECONNRESET", "ENOTFOUND", "EAI_AGAIN", "EHOSTUNREACH", "ENETUNREACH"].includes(detail.code || "")) {
+    return new ApiError("Supabase se nemůže spojit s poštovním serverem na portu 993. Zkontroluj dostupnost iCloudu a síťové spojení; tato chyba sama neznamená nesprávné heslo.", 502);
+  }
+  if (detail.code === "ETHROTTLE") {
+    return new ApiError("Poštovní server dočasně omezil připojení. Před dalším načtením chvíli počkej.", 503);
+  }
+  return new ApiError("Načtení pošty selhalo při komunikaci IMAP. Zkontroluj protokoly funkce admin-api v Supabase; přihlašovací údaje neměň bez ověření příčiny.", 502);
+}
 export async function readMail(uid?: number) {
   if (!mailStatus().mail_read) {
     throw new ApiError("Nejprve připoj schránku v Supabase Secrets.", 503);
@@ -51,6 +71,7 @@ export async function readMail(uid?: number) {
     connectionTimeout: 15000,
     socketTimeout: 20000,
   });
+  client.on("error", () => {}); // Connection failures are handled by the awaited operations.
   try {
     await client.connect();
     const lock = await client.getMailboxLock("INBOX", { readOnly: true });
@@ -111,6 +132,8 @@ export async function readMail(uid?: number) {
     } finally {
       lock.release();
     }
+  } catch (error) {
+    throw mailboxError(error);
   } finally {
     await client.logout().catch(() => {});
   }

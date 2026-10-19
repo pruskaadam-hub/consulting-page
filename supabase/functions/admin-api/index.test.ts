@@ -4,7 +4,7 @@ import { bookingMailText, sendBookingConfirmation } from "../_shared/booking-mai
 import { handle } from "./index.ts";
 import { limitedText } from "../_shared/http.ts";
 import { hmacHex } from "../_shared/contracts.mjs";
-import { mailStatus, sendMail } from "../_shared/mail.ts";
+import { mailboxError, mailStatus, sendMail } from "../_shared/mail.ts";
 import {
   analyticsConfigured,
   analyticsReport,
@@ -840,3 +840,20 @@ Deno.test('Mail readiness checks key and domain without sending a message or lea
     Deno.env.delete('RESEND_API_KEY');const before=calls;assert((await mailReadiness()).status==='missing_key' && calls===before);
   }finally{globalThis.fetch=original;}
 }));
+
+Deno.test("IMAP diagnostics distinguish authentication from connectivity and never expose provider details", () => {
+  const secret = "PRIVATE_PASSWORD_AND_MESSAGE";
+  const auth = mailboxError({authenticationFailed:true,response:secret,message:secret});
+  assert(auth.status === 502 && auth.message.includes("adresu iCloud Mail"));
+  assert(!auth.message.includes(secret));
+  for (const code of ["ETIMEDOUT", "CONNECT_TIMEOUT", "GREETING_TIMEOUT"]) {
+    const error = mailboxError({code,message:secret});
+    assert(error.status === 504 && !error.message.includes(secret));
+  }
+  const offline = mailboxError({code:"ECONNREFUSED",message:secret});
+  assert(offline.message.includes("portu 993") && !offline.message.includes(secret));
+  assert(mailboxError({code:"ETHROTTLE"}).status === 503);
+  assert(!mailboxError(new Error(secret)).message.includes(secret));
+  const missing = mailboxError({message:secret});
+  assert(missing.status === 502);
+});

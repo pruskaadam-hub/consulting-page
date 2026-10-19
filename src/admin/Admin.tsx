@@ -1686,7 +1686,7 @@ function Mailbox({
         ) : (
           <Empty>
             Příjem pošty zatím není připojený. V Supabase → Edge Functions → Secrets
-            ulož ICLOUD_USERNAME (přihlašovací adresu účtu iCloud) a
+            ulož ICLOUD_USERNAME (adresu iCloud Mail, např. pruskaadam@me.com, nikoli Yahoo přihlášení účtu Apple) a
             ICLOUD_APP_PASSWORD (heslo pro aplikaci vytvořené v účtu Apple).
             Nepoužívej běžné heslo účtu Apple. Potom obnov tuto stránku
             a klikni na „Načíst posledních 25 zpráv“. Resend není potřeba.
