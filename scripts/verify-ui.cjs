@@ -121,7 +121,7 @@ const path=require('node:path');
     assert.equal(await page.locator('.media-grid > a').count(),8);
     assert.equal(await page.locator('.native-calendar').count(),0);
     assert.equal(await page.locator('a[href^="mailto:"],a[href^="tel:"]').count(),0);
-    assert.equal(await page.locator('body').innerText().then(text=>text.includes('pruskaadam@me.com')),false);
+    assert.equal(await page.locator('body').innerText().then(text=>text.includes('adam@adampruska.cz')),false);
     assert.equal(await page.locator('#blog').evaluate(el=>el.compareDocumentPosition(document.querySelector('.faq'))&Node.DOCUMENT_POSITION_FOLLOWING ? true : false),true);
     const comments=await page.evaluate(()=>{const walker=document.createTreeWalker(document.body,NodeFilter.SHOW_COMMENT);let node,count=0;while(node=walker.nextNode())if(node.textContent.includes('TODO Adam:'))count++;return count;});
     assert.equal(comments,0,'publication dates no longer contain editorial placeholders');
@@ -183,7 +183,7 @@ const path=require('node:path');
  await go();await page.locator('.help-card').nth(2).getByRole('link').click();
  assert.equal(new URL(page.url()).hash,'#firmy');assert.equal(await page.locator('.native-calendar').count(),0);
  await page.getByRole('button',{name:'Zobrazit e-mail',exact:true}).first().click();
- assert.ok(await page.getByRole('link',{name:'pruskaadam[at]me.com',exact:true}).first().isVisible());
+ assert.ok(await page.getByRole('link',{name:'adam[at]adampruska.cz',exact:true}).first().isVisible());
  await page.getByRole('button',{name:'Zobrazit telefon',exact:true}).first().click();
  assert.ok(await page.getByRole('link',{name:'+420 735 891 769',exact:true}).first().isVisible());
  for(const relative of ['','sk/','en/']){

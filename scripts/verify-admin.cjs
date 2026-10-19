@@ -592,9 +592,8 @@ const { HtmlValidate } = require("html-validate");
       else await page.getByText("Příjem pošty zatím není připojený.", { exact: false }).waitFor();
       assert.equal(await page.getByRole("button", { name: "Načíst posledních 25 zpráv" }).count(), read ? 1 : 0);
       const submit = page.getByRole("button", { name: "Odeslat zprávu" });
-      if (send) await submit.waitFor();
-      else await page.getByText("Odesílání zatím není připojené.", { exact: false }).waitFor();
-      assert.equal(await submit.isDisabled(), !send);
+      if (send) {await submit.waitFor();assert.equal(await submit.isDisabled(),false);}
+      else {await page.getByRole('link',{name:'Otevřít iCloud Mail ↗',exact:true}).waitFor();assert.equal(await submit.count(),0);await page.getByText('Resend pro tuto variantu není potřeba.',{exact:false}).waitFor();}
     }
     mailRead = mailSend = true;
     await page.reload();

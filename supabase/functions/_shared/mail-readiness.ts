@@ -68,3 +68,10 @@ export async function mailReadiness() {
     };
   }
 }
+
+export async function bookingMailReadiness() {
+  if ((config("BOOKING_EMAIL_MODE", false) || "cal") !== "app") {
+    return { status: "cal_managed", configured: true, domainVerified: null };
+  }
+  return mailReadiness();
+}

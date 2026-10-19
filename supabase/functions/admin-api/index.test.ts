@@ -826,7 +826,7 @@ Deno.test('Public Cal readiness verifies authenticated read access without expos
     if(target.endsWith('/v2/me')) {assert(headers.get('cal-api-version')==='2024-06-14');return Promise.resolve(Response.json({status:'success',data:{email:'private-host@example.test',username:'private-profile'}}));}
     assert(target.includes('/bookings?take=1'));assert(headers.get('cal-api-version')==='2024-08-13');return Promise.resolve(Response.json({status:'success',data:[{uid:'private-booking',attendees:[{email:'private-client@example.test'}]}]}));
   };
-  try{const response=await handle(new Request(url+'/cal/health'));const body=await response.text();assert(response.status===200 && calls===3);assert(body.includes('"bookingRead":true') && body.includes('"organizerAddressMatches":false'));assert(!body.includes('private-') && !body.includes('fixture-cal-key'));}
+  try{const response=await handle(new Request(url+'/cal/health'));const body=await response.text();assert(response.status===200 && calls===2);assert(body.includes('"bookingRead":true') && body.includes('"organizerAddressMatches":false') && body.includes('cal_managed'));assert(!body.includes('private-') && !body.includes('fixture-cal-key'));}
   finally{globalThis.fetch=original;if(previous===undefined)Deno.env.delete('CAL_API_KEY');else Deno.env.set('CAL_API_KEY',previous);}
 }));
 Deno.test('Mail readiness checks key and domain without sending a message or leaking domain lists',()=>withMailFixture(async()=>{

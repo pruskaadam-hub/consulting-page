@@ -1,4 +1,19 @@
-# Rezervace a jednotná e-mailová komunikace
+# Aktuální varianta: Cal.com a iCloud, bez Resend
+
+Vlastník zvolil 19. 10. 2026 komunikaci přímo přes Cal.com. Veřejný kontakt webu je
+adam@adampruska.cz. Všechny kontaktní odkazy a poptávky dokumentů používají tuto adresu.
+Rezervační potvrzení zůstávají v Cal.com (výchozí BOOKING_EMAIL_MODE=cal).
+Běžná pošta se vyřizuje v iCloud Mail; administrace nabízí přímý odkaz na schránku.
+Chybějící Resend není v této variantě chybou propojení rezervací.
+Přístup pro čtení schránky v administraci nadále vyžaduje přihlašovací údaje iCloud IMAP.
+
+E-mail účtu Cal.com a identita pořadatele kalendářových pozvánek jsou samostatná
+nastavení. Změna veřejného kontaktu webu nemění hlavní e-mail účtu Cal.com ani Apple ID.
+Diagnostika porovnává skutečný e-mail účtu Cal.com s adam@adampruska.cz.
+
+Níže je referenční dokumentace volitelné vlastní šablony, kterou tato varianta nepoužívá.
+
+## Referenční dokumentace vlastní šablony
 
 Požadované nastavení vlastníka z 19. 10. 2026:
 
@@ -78,3 +93,7 @@ Ověření „Mail readiness“ pouze čte nastavení domény v Resend; neposíl
 `ready` ověřenou doménu. `key_scope_unknown` znamená, že klíč nemá oprávnění
 číst domény; neznamená automaticky nefunkční odesílání. Soukromý seznam domén
 ani API klíče se do diagnostiky nevracejí.
+
+### Čtení iCloud pošty v administraci
+
+V Supabase → Edge Functions → Secrets ulož `ICLOUD_USERNAME` (skutečné přihlášení k iCloudu, případně `pruskaadam@me.com`) a `ICLOUD_APP_PASSWORD` (heslo pro aplikaci z account.apple.com → Přihlášení a zabezpečení). Běžné heslo Apple nepoužívej. Volitelné `MAIL_PROVIDER=icloud` a `MAIL_FROM_EMAIL=adam@adampruska.cz` odpovídají výchozím hodnotám. Po obnovení administrace otevři Poštu a načti posledních 25 zpráv. IMAP používá TLS a schránku otevírá pouze pro čtení; zprávy se nekopírují do databáze. iCloud má společnou doručenou poštu i pro osobní adresy. Čtení nevyžaduje Resend, odpovědi otevři v iCloud Mail.

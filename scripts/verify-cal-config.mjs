@@ -27,7 +27,8 @@ const readiness=await health.json();
 if(readiness.calendarConnected!==true || readiness.bookingRead!==true)throw new Error('Authenticated Cal.com account and booking read access are not ready.');
 console.log('Cal.com authenticated account and booking read access verified; no personal information logged.');
 if(readiness.organizerAddressMatches!==true)console.log('::notice title=Calendar identity::Organizer account address still needs to be aligned with adam@adampruska.cz in Cal.com.');
-const mailStates=['ready','missing_key','sender_mismatch','missing_credentials','smtp_unverified','key_rejected','key_scope_unknown','check_unavailable','domain_missing','domain_pending'];
+console.log(`::notice title=Inbox readiness::${readiness.inboxConfigured === true ? "configured" : "missing"}`);
+const mailStates=['cal_managed','ready','missing_key','sender_mismatch','missing_credentials','smtp_unverified','key_rejected','key_scope_unknown','check_unavailable','domain_missing','domain_pending'];
 if(mailStates.includes(readiness.mailDelivery?.status))console.log(`::notice title=Mail readiness::${readiness.mailDelivery.status}`);
 for(const [name,slug,minutes] of types){
  if(!username || !slug)throw new Error(`Missing public Cal.com mapping: ${name}`);

@@ -898,7 +898,7 @@ function Workspace({
                 </p>
                 <button type="button" disabled={busy || !integration?.bookings} onClick={()=>work(()=>api('/cal/sync',{}),'Přehled rezervací byl aktualizován.')}>Načíst rezervace z Cal.com</button>
                 <button type="button" disabled={busy || !integration?.bookings} onClick={()=>work(async()=>{setCalCommunication(await api('/cal/communication'));},'Nastavení komunikace načteno.')}>Ověřit e-mailovou komunikaci</button>
-                {calCommunication && <div className="admin-note"><h3>Rezervace a e-maily</h3><p>Účet Cal.com: <strong>{calCommunication.calendarEmail}</strong> ({calCommunication.calendarUsername})</p><p>Potvrzení rezervací: {calCommunication.confirmationProvider==='app' ? 'odesílá webová aplikace z adam@adampruska.cz' : 'odesílá Cal.com; aplikace druhé potvrzení neposílá'}.</p><p>Pošta administrace: <strong>{calCommunication.sender}</strong>. Čtení: {calCommunication.mailRead ? 'připojeno' : 'nenastaveno'}. Odesílání: {calCommunication.mailSend ? 'připraveno' : 'nenastaveno'}. {calCommunication.mailProvider==='icloud' && 'Schránka je v iCloudu, odesílání z administrace zajišťuje Resend.'}</p><p>Ověření odesílání: {({ready:'doména Resend je ověřená',missing_key:'chybí RESEND_API_KEY v Supabase',sender_mismatch:'odesílatel není adam@adampruska.cz',key_rejected:'Resend klíč nebyl přijat',key_scope_unknown:'tento klíč neumožňuje ověřit domény; zkontroluj doménu v Resend',domain_missing:'doména adampruska.cz není v Resend přidaná',domain_pending:'doména čeká na ověření DNS',smtp_unverified:'SMTP je nastavené, odeslání nebylo testováno',missing_credentials:'chybí přístup k odesílání',check_unavailable:'stav služby se nepodařilo ověřit'} as Record<string,string>)[calCommunication.mailDelivery?.status || ''] || 'stav nebyl ověřen'}.</p><p>{calCommunication.managementLinkEmail ? 'Potvrzení z webu obsahuje odkaz ke zrušení i dostupný odkaz na online schůzku.' : 'Soukromý odkaz ke zrušení se zobrazuje na webu. Automatický e-mail s tímto odkazem není zapnutý.'}</p><p>Příjemce oznámení, další adresy a pravidla v Cal.com nebo přeposílání v poštovní schránce je potřeba ověřit v příslušných účtech.</p></div>}
+                {calCommunication && <div className="admin-note"><h3>Rezervace a e-maily</h3><p>Účet Cal.com: <strong>{calCommunication.calendarEmail}</strong> ({calCommunication.calendarUsername})</p><p>Potvrzení rezervací: {calCommunication.confirmationProvider==='app' ? 'odesílá webová aplikace z adam@adampruska.cz' : 'odesílá Cal.com; aplikace druhé potvrzení neposílá'}.</p><p>Pošta administrace: <strong>{calCommunication.sender}</strong>. Čtení: {calCommunication.mailRead ? 'připojeno' : 'nenastaveno'}. Odesílání: {calCommunication.mailSend ? 'připraveno' : 'nenastaveno'}. {calCommunication.mailProvider==='icloud' && 'Běžnou poštu vyřizuj v iCloud Mail. Rezervační potvrzení spravuje Cal.com.'}</p><p>Ověření odesílání: {({cal_managed:'rezervační potvrzení posílá Cal.com, Resend není potřeba',ready:'doména Resend je ověřená',missing_key:'chybí RESEND_API_KEY v Supabase',sender_mismatch:'odesílatel není adam@adampruska.cz',key_rejected:'Resend klíč nebyl přijat',key_scope_unknown:'tento klíč neumožňuje ověřit domény; zkontroluj doménu v Resend',domain_missing:'doména adampruska.cz není v Resend přidaná',domain_pending:'doména čeká na ověření DNS',smtp_unverified:'SMTP je nastavené, odeslání nebylo testováno',missing_credentials:'chybí přístup k odesílání',check_unavailable:'stav služby se nepodařilo ověřit'} as Record<string,string>)[calCommunication.mailDelivery?.status || ''] || 'stav nebyl ověřen'}.</p><p>{calCommunication.managementLinkEmail ? 'Potvrzení z webu obsahuje odkaz ke zrušení i dostupný odkaz na online schůzku.' : 'Soukromý odkaz ke zrušení se zobrazuje na webu. Automatický e-mail s tímto odkazem není zapnutý.'}</p><p>Příjemce oznámení, další adresy a pravidla v Cal.com nebo přeposílání v poštovní schránce je potřeba ověřit v příslušných účtech.</p></div>}
                 {s.bookings.length ? (
                   <div className="admin-table-scroll">
                     <table>
@@ -1517,7 +1517,7 @@ function Workspace({
 function Connections({ integration }: { integration: Integrations | null }) {
   const connections: [string, boolean | undefined, string?][] = [
     ["Příjem pošty", integration?.mail_read ?? integration?.mail],
-    ["Odesílání pošty", integration?.mail_send ?? integration?.mail],
+    integration?.mail_provider==='icloud' ? ["Odesílání běžné pošty",true,"V iCloud Mail"] : ["Odesílání pošty", integration?.mail_send ?? integration?.mail],
     ["GA4: sběr dat na webu", /^G-[A-Z0-9]+$/.test(import.meta.env.VITE_GA4_MEASUREMENT_ID || "")],
     ["GA4: přehledy v administraci", integration?.analytics],
     ...(integration?.payment_mode === "stripe" ? [
@@ -1685,8 +1685,11 @@ function Mailbox({
           </>
         ) : (
           <Empty>
-            Příjem pošty zatím není připojený. Dokonči nastavení schránky
-            a ulož přístupové údaje v Supabase Secrets.
+            Příjem pošty zatím není připojený. V Supabase → Edge Functions → Secrets
+            ulož ICLOUD_USERNAME (přihlašovací adresu účtu iCloud) a
+            ICLOUD_APP_PASSWORD (heslo pro aplikaci vytvořené v účtu Apple).
+            Nepoužívej běžné heslo účtu Apple. Potom obnov tuto stránku
+            a klikni na „Načíst posledních 25 zpráv“. Resend není potřeba.
           </Empty>
         )}
         {error && (
@@ -1722,7 +1725,7 @@ function Mailbox({
                 Příloha: {a.name}
               </p>
             ))}
-            <button
+            {sendConnected ? <button
               className="admin-outline"
               type="button"
               onClick={() => {
@@ -1735,20 +1738,21 @@ function Mailbox({
               }}
             >
               Odpovědět
-            </button>
+            </button> : <a href="https://www.icloud.com/mail/" target="_blank" rel="noopener noreferrer">Odpovědět v iCloud Mail ↗</a>}
           </article>
         )}
       </Panel>
       <Panel title="Nová zpráva">
         {!sendConnected && (
           <Empty>
-            Odesílání zatím není připojené. {provider === "icloud"
-              ? "Ověř doménu v Resend a přidej jeho API klíč do Supabase Secrets."
-              : "Ulož přístupové údaje schránky do Supabase Secrets."}
+            {provider === "icloud"
+              ? "Běžné zprávy posílej ze schránky adam@adampruska.cz v iCloudu. Rezervační potvrzení odesílá Cal.com; Resend pro tuto variantu není potřeba."
+              : "Odesílání zatím není připojené. Ulož přístupové údaje schránky do Supabase Secrets."}
           </Empty>
         )}
+        {provider==='icloud' && <p><a href="https://www.icloud.com/mail/" target="_blank" rel="noopener noreferrer">Otevřít iCloud Mail ↗</a></p>}
         <p className="admin-small">Odesílatel: Adam Pruška &lt;{mailbox}&gt;</p>
-        <form onSubmit={send}>
+        {(sendConnected || provider!=='icloud') && <form onSubmit={send}>
           <label className="admin-field">
             <span>Komu</span>
             <input
@@ -1795,7 +1799,7 @@ function Mailbox({
               přehledu odesílání.
             </p>
           )}
-        </form>
+        </form>}
       </Panel>
       <Panel title="Přehled odesílání">
         <p className="admin-small">

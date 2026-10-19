@@ -53,7 +53,7 @@ export async function readMail(uid?: number) {
   });
   try {
     await client.connect();
-    const lock = await client.getMailboxLock("INBOX");
+    const lock = await client.getMailboxLock("INBOX", { readOnly: true });
     try {
       if (uid) {
         const info = await client.fetchOne(uid, { size: true }, { uid: true });
