@@ -886,3 +886,22 @@ Deno.test("website inbox filters before limit, matches exact To/Cc and denies pe
   }
   assert(sourceReads===0);
 });
+
+Deno.test("mail diagnostics expose only allowlisted stage and type, never arbitrary error text or code", () => {
+  const secret="PRIVATE_ADDRESS_AND_PASSWORD";
+  const error=mailboxError({name:"TypeError",message:secret,code:secret},"list");
+  assert(error.message.includes("MAIL3/list/TypeError/other"));
+  assert(!error.message.includes(secret));
+  assert(!mailboxError({name:secret,code:secret,message:secret},secret).message.includes(secret));
+});
+Deno.test("malformed envelope recipients and invalid dates do not break a filtered inbox", async () => {
+  const fake = {
+    mailbox:{exists:2},
+    fetch:async function*(){
+      yield {uid:1,envelope:{to:[null,{address:17}]}};
+      yield {uid:2,envelope:{to:[null,{address:"adam@adampruska.cz"}],date:"invalid-date"}};
+    },
+  } as unknown as Parameters<typeof readWebsiteMail>[0];
+  const result=await readWebsiteMail(fake);
+  assert(result.messages?.length===1 && result.messages[0].date==="");
+});

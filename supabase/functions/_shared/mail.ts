@@ -38,10 +38,10 @@ export function mailStatus() {
   };
 }
 // Never forward provider diagnostics: they can contain mailbox data or credentials.
-export function mailboxError(error: unknown) {
+export function mailboxError(error: unknown, stage = "unknown") {
   if (error instanceof ApiError) return error;
   const detail = (error && typeof error === "object" ? error : {}) as {
-    authenticationFailed?: boolean; serverResponseCode?: string; code?: string;
+    authenticationFailed?: boolean; serverResponseCode?: string; code?: string; name?: string; message?: string;
   };
   if (detail.authenticationFailed || detail.serverResponseCode === "AUTHENTICATIONFAILED") {
     return new ApiError("Poštovní server odmítl přihlášení. V Supabase Secrets zkontroluj ICLOUD_USERNAME: použij adresu iCloud Mail (např. pruskaadam@me.com), nikoli přihlášení Apple účtu na Yahoo. ICLOUD_APP_PASSWORD musí být heslo pro aplikaci vytvořené v účtu Apple.", 502);
@@ -55,13 +55,24 @@ export function mailboxError(error: unknown) {
   if (detail.code === "ETHROTTLE") {
     return new ApiError("Poštovní server dočasně omezil připojení. Před dalším načtením chvíli počkej.", 503);
   }
-  return new ApiError("Načtení pošty selhalo při komunikaci IMAP. Zkontroluj protokoly funkce admin-api v Supabase; přihlašovací údaje neměň bez ověření příčiny.", 502);
+  const kinds = ["TypeError", "RangeError", "NotSupportedError", "Error"];
+  const codes = ["ConnectionClosed", "NoConnection", "CommandFailed", "InvalidSequence", "InvalidSearchQuery", "UnexpectedClose", "ERR_STREAM_PREMATURE_CLOSE", "ERR_INVALID_ARG_TYPE", "ERR_NOT_IMPLEMENTED", "EPROTO", "ETLS"];
+  const kind = codes.includes(detail.code || "") ? detail.code : kinds.includes(detail.name || "") ? detail.name : "unknown";
+  const hint = typeof detail.message === "string" && /Invalid time value/.test(detail.message) ? "date" : typeof detail.message === "string" && /not iterable/.test(detail.message) ? "iterable" : typeof detail.message === "string" && /Cannot read properties of null/.test(detail.message) ? "null" : "other";
+  const safeStage = ["connect", "inbox", "list", "detail", "unknown"].includes(stage) ? stage : "unknown";
+  const diagnostic = `MAIL3/${safeStage}/${kind}/${hint}`;
+  console.error("Mailbox operation failed", diagnostic);
+  return new ApiError(`Načtení pošty selhalo. Diagnostický kód: ${diagnostic}. Přihlašovací údaje zatím neměň.`, 502);
 }
 const WEBSITE_MAILBOX = "adam@adampruska.cz";
 function forWebsite(envelope?: { to?: { address?: string }[]; cc?: { address?: string }[] }) {
-  return [...(envelope?.to || []), ...(envelope?.cc || [])].some(
-    (recipient) => recipient.address?.trim().toLowerCase() === WEBSITE_MAILBOX,
-  );
+  const recipients = [envelope?.to, envelope?.cc].flatMap(items => Array.isArray(items) ? items : []);
+  return recipients.some(recipient => typeof recipient?.address === "string" && recipient.address.trim().toLowerCase() === WEBSITE_MAILBOX);
+}
+function mailDate(value: unknown) {
+  if (!value || (typeof value !== "string" && typeof value !== "number" && !(value instanceof Date))) return "";
+  const date = new Date(value);
+  return Number.isFinite(date.getTime()) ? date.toISOString() : "";
 }
 export async function readWebsiteMail(client: Pick<ImapFlow, "mailbox" | "fetch" | "fetchOne">, uid?: number) {
       if (uid) {
@@ -109,7 +120,7 @@ export async function readWebsiteMail(client: Pick<ImapFlow, "mailbox" | "fetch"
             uid: message.uid,
             subject: message.envelope?.subject || "(bez předmětu)",
             from: message.envelope?.from?.[0]?.address || "",
-            date: message.envelope?.date ? new Date(message.envelope.date).toISOString() : "",
+            date: mailDate(message.envelope?.date),
             seen: message.flags?.has("\\Seen") || false,
           });
         }
@@ -132,16 +143,19 @@ export async function readMail(uid?: number) {
     socketTimeout: 20000,
   });
   client.on("error", () => {}); // Connection failures are handled by the awaited operations.
+  let stage = "connect";
   try {
     await client.connect();
+    stage = "inbox";
     const lock = await client.getMailboxLock("INBOX", { readOnly: true });
     try {
+      stage = uid ? "detail" : "list";
       return await readWebsiteMail(client, uid);
     } finally {
       lock.release();
     }
   } catch (error) {
-    throw mailboxError(error);
+    throw mailboxError(error, stage);
   } finally {
     await client.logout().catch(() => {});
   }
