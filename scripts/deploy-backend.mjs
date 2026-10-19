@@ -110,3 +110,22 @@ if (deployment.status !== 0) process.exit(deployment.status ?? 1);
 console.log(
   "Backend deployed. Configure Auth, allowed origins and provider secrets according to docs/admin-setup.md.",
 );
+
+// Verify fixed iCloud TLS transports from the actual Edge runtime. No mailbox login or email send.
+try {
+  const keysResponse = await fetch(`https://api.supabase.com/v1/projects/${ref}/api-keys`, {
+    headers:{Authorization:`Bearer ${token}`},signal:AbortSignal.timeout(15000),
+  });
+  if (!keysResponse.ok) throw new Error("Key lookup unavailable");
+  const keys = await keysResponse.json();
+  const service = keys.find(item => item.name === "service_role")?.api_key;
+  if (!service) throw new Error("Server credential unavailable");
+  const response = await fetch(`https://${ref}.supabase.co/functions/v1/admin-api/mail/verify-transport`, {
+    method:"POST",headers:{Authorization:`Bearer ${service}`},signal:AbortSignal.timeout(30000),
+  });
+  if (!response.ok) throw new Error("Probe unavailable");
+  const result = await response.json();
+  console.log(`::notice title=iCloud TLS transports::IMAP993=${result.imapTls === true}; SMTP465=${result.smtpTls465 === true}`);
+} catch {
+  console.log("::warning title=iCloud TLS transports::Runtime transport verification unavailable; no messages sent.");
+}

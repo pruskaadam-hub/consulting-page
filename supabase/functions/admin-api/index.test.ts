@@ -905,3 +905,10 @@ Deno.test("malformed envelope recipients and invalid dates do not break a filter
   const result=await readWebsiteMail(fake);
   assert(result.messages?.length===1 && result.messages[0].date==="");
 });
+
+Deno.test("mail deployment probe denies missing and non-service credentials before opening any socket", async () => {
+  for(const token of ["", "not-a-service-token"]) {
+    const response=await handle(new Request(url+"/mail/verify-transport",{method:"POST",headers:token?{Authorization:`Bearer ${token}`}:{}}));
+    assert(response.status===401); await response.body?.cancel();
+  }
+});
