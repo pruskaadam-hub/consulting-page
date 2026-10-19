@@ -27,12 +27,13 @@ export function mailInput(body) {
   const subject = text(body.subject, 200, "předmět");
   if (/[\r\n\0]/.test(subject))
     throw new ApiError("Předmět nesmí obsahovat zalomení řádků.");
-  return {
-    id: body.id,
-    to: email(body.to),
-    subject,
-    text: text(body.text, 20000, "zpráva"),
-  };
+  const result = {id: body.id, to: email(body.to), subject, text: text(body.text, 20000, "zpráva")};
+  for (const field of ["inReplyTo", "references"]) {
+    if (body[field] === undefined || body[field] === "") continue;
+    if (typeof body[field] !== "string" || body[field].length > 900 || !/^<[A-Za-z0-9.!#$%&'*+\/=?^_`{|}~@-]+>(?: <[A-Za-z0-9.!#$%&'*+\/=?^_`{|}~@-]+>)*$/.test(body[field])) throw new ApiError("Neplatný odkaz na původní zprávu.");
+    result[field] = body[field];
+  }
+  return result;
 }
 export function eventInput(body) {
   if (

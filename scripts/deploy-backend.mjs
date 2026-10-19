@@ -63,6 +63,7 @@ for (const [version, filename] of [
   ["202610150003", "202610150003_invoice_due_dates.sql"],
   ["202610150004", "202610150004_service_invoices.sql"],
   ["202610150005", "202610150005_invoice_identity.sql"],
+  ["202610190001", "202610190001_mail_client.sql"],
 ]) {
   const applied = await query(
     `select version from public.admin_backend_versions where version='${version}'`,
@@ -111,21 +112,23 @@ console.log(
   "Backend deployed. Configure Auth, allowed origins and provider secrets according to docs/admin-setup.md.",
 );
 
+let mailProbeStage = "keys";
 // Verify fixed iCloud TLS transports from the actual Edge runtime. No mailbox login or email send.
 try {
-  const keysResponse = await fetch(`https://api.supabase.com/v1/projects/${ref}/api-keys`, {
+  const keysResponse = await fetch(`https://api.supabase.com/v1/projects/${ref}/api-keys?reveal=true`, {
     headers:{Authorization:`Bearer ${token}`},signal:AbortSignal.timeout(15000),
   });
-  if (!keysResponse.ok) throw new Error("Key lookup unavailable");
+  if (!keysResponse.ok) {mailProbeStage=`keys-http-${keysResponse.status}`;throw new Error("Key lookup unavailable");}
   const keys = await keysResponse.json();
   const service = keys.find(item => item.name === "service_role")?.api_key;
-  if (!service) throw new Error("Server credential unavailable");
+  if (!service) {mailProbeStage="service-key-missing";throw new Error("Server credential unavailable");}
+  mailProbeStage="invoke";
   const response = await fetch(`https://${ref}.supabase.co/functions/v1/admin-api/mail/verify-transport`, {
-    method:"POST",headers:{Authorization:`Bearer ${service}`},signal:AbortSignal.timeout(30000),
+    method:"POST",headers:{Authorization:`Bearer ${service}`},signal:AbortSignal.timeout(60000),
   });
-  if (!response.ok) throw new Error("Probe unavailable");
+  if (!response.ok) {mailProbeStage=`invoke-http-${response.status}`;throw new Error("Probe unavailable");}
   const result = await response.json();
-  console.log(`::notice title=iCloud TLS transports::IMAP993=${result.imapTls === true}; SMTP465=${result.smtpTls465 === true}`);
+  console.log(`::notice title=iCloud TLS transports::IMAP993=${result.imapTls === true}; SMTP465=${result.smtpTls465 === true}; IMAP_LOGIN=${result.imapLogin === true}; INBOX=${result.inbox === true}; SENT=${result.sent === true}; SMTP_AUTH=${result.smtpAuth === true}`);
 } catch {
-  console.log("::warning title=iCloud TLS transports::Runtime transport verification unavailable; no messages sent.");
+  console.log(`::warning title=iCloud TLS transports::Runtime transport verification unavailable (${mailProbeStage}); no messages sent.`);
 }

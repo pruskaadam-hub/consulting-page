@@ -1,10 +1,14 @@
+import { NativeImap } from "../_shared/mail-imap.ts";
+import { MailWire } from "../_shared/mail-wire.ts";
+import { mailSource, submitSmtp, SmtpFailure } from "../_shared/mail-smtp.ts";
+import PostalMime from "npm:postal-mime@4.0.5";
 import { mailReadiness } from "../_shared/mail-readiness.ts";
 import { syncBookings, bookingRecord } from "../_shared/cal-sync.ts";
 import { bookingMailText, sendBookingConfirmation } from "../_shared/booking-mail.ts";
 import { handle } from "./index.ts";
 import { limitedText } from "../_shared/http.ts";
 import { hmacHex } from "../_shared/contracts.mjs";
-import { mailboxError, mailStatus, readWebsiteMail, sendMail } from "../_shared/mail.ts";
+import { mailboxError, mailStatus, readWebsiteMail, sendMail, sendIcloudMail } from "../_shared/mail.ts";
 import {
   analyticsConfigured,
   analyticsReport,
@@ -45,6 +49,7 @@ Deno.test(
 async function withMailFixture(run: () => void | Promise<void>) {
   const values: Record<string, string> = {
     MAIL_PROVIDER: "icloud",
+    MAIL_DELIVERY_PROVIDER: "resend",
     MAIL_FROM_EMAIL: "adam@adampruska.cz",
     ICLOUD_USERNAME: "owner@icloud.com",
     ICLOUD_APP_PASSWORD: "fixture-app-password",
@@ -860,7 +865,7 @@ Deno.test("IMAP diagnostics distinguish authentication from connectivity and nev
 
 Deno.test("website inbox filters before limit, matches exact To/Cc and denies personal UID before reading source", async () => {
   const envelope = (address: string, cc = false) => ({[cc ? "cc" : "to"]:[{address}]});
-  const rows = Array.from({length:180}, (_, i) => ({uid:i+1,envelope:envelope(i < 30 ? "ADAM@adampruska.cz" : "other@icloud.com"),flags:new Set()}));
+  const rows = Array.from({length:180}, (_, i) => ({uid:i+1,seq:i+1,envelope:envelope(i < 30 ? "ADAM@adampruska.cz" : "other@icloud.com"),flags:new Set()}));
   rows[29].envelope = envelope("adam@adampruska.cz",true);
   rows[179].envelope = envelope("other-adam@adampruska.cz");
   let sourceReads = 0;
@@ -912,3 +917,60 @@ Deno.test("mail deployment probe denies missing and non-service credentials befo
     assert(response.status===401); await response.body?.cancel();
   }
 });
+
+function wireFixture(input:string, fragment=13) {
+  let offset=0;const bytes=new TextEncoder().encode(input);const writes:Uint8Array[]=[];let closed=false;
+  return {wire:new MailWire({read:async buffer=>{const count=Math.min(fragment,buffer.length,bytes.length-offset);if(!count)return null;buffer.set(bytes.subarray(offset,offset+count));offset+=count;return count;},write:async data=>{writes.push(data.slice());return data.length;},close:()=>{closed=true;}}),text:()=>writes.map(item=>new TextDecoder().decode(item)).join(""),closed:()=>closed};
+}
+Deno.test("native IMAP handles fragmented literal headers, special Sent folders and never marks a fetched message read", async()=>{
+  const headers="From: Client <client@example.test>\r\nTo: adam@adampruska.cz\r\nSubject: Fixture mail\r\nDate: Mon, 19 Oct 2026 12:00:00 +0200\r\n\r\n";
+  const length=new TextEncoder().encode(headers).length;
+  const fixture=wireFixture(`* OK ready\r\nA1 OK login\r\n* 1 EXISTS\r\n* OK [UIDVALIDITY 99] valid\r\nA2 OK selected\r\n* 1 FETCH (UID 42 RFC822.SIZE 900 FLAGS () BODY[HEADER.FIELDS (FROM TO CC SUBJECT DATE)] {${length}}\r\n${headers})\r\nA3 OK fetched\r\n* LIST (\\Sent) "/" "Sent Messages"\r\nA4 OK folders\r\n* 3 EXISTS\r\nA5 OK selected\r\n`,3);
+  const client=await NativeImap.open("fixture@me.com","fixture-password",async()=>fixture.wire);
+  await client.select("inbox");
+  const result=await readWebsiteMail(client);
+  assert(result.messages?.length===1 && result.messages[0].uid===42);
+  assert(result.messages![0].subject==="Fixture mail");
+  await client.select("sent");assert(client.mailbox && client.mailbox.exists===3);
+  assert(fixture.text().includes('EXAMINE "Sent Messages"'));
+  assert(fixture.text().includes("BODY.PEEK[HEADER.FIELDS"));
+  assert(!fixture.text().includes(" STORE "));
+  client.close();assert(fixture.closed());
+});
+Deno.test("sent mail filtering includes website sender only, contact filter and pagination do not expose personal messages",async()=>{
+  const rows=Array.from({length:70},(_,i)=>({seq:i+1,uid:i+100,envelope:{from:[{address:i%2?"adam@adampruska.cz":"private@me.com"}],to:[{address:"client@example.test"}]},flags:new Set()}));
+  const client={mailbox:{exists:70},fetch:async function*(range:string){const [a,b]=range.split(":").map(Number);yield*rows.slice(a-1,b);}} as unknown as Parameters<typeof readWebsiteMail>[0];
+  const first=await readWebsiteMail(client,undefined,{folder:"sent",contact:"client@example.test"});
+  assert(first.messages?.length===25 && first.messages.every(row=>row.from==="adam@adampruska.cz"));
+  assert(first.nextCursor===20);
+  const second=await readWebsiteMail(client,undefined,{folder:"sent",cursor:first.nextCursor!});
+  assert(second.messages?.length===10 && second.nextCursor===null);
+  assert(!second.messages!.some(row=>first.messages!.some(old=>old.uid===row.uid)));
+});
+Deno.test("native SMTP generates valid Czech MIME, fixes sender, threads replies and submits only after authentication",async()=>{
+  const message={...mailMessage,subject:"Přihláška a konzultace",text:"Dobrý den,\nzkouška.",inReplyTo:"<parent@example.test>",references:"<parent@example.test>"};
+  const source=mailSource(message);const parsed=await PostalMime.parse(source);
+  assert(parsed.from?.address==="adam@adampruska.cz" && parsed.subject===message.subject);
+  assert(parsed.text?.includes("Dobrý den") && parsed.inReplyTo===message.inReplyTo);
+  const fixture=wireFixture("220 ready\r\n250-host\r\n250 AUTH PLAIN\r\n235 authenticated\r\n250 sender\r\n250 recipient\r\n354 data\r\n250 queued\r\n");
+  await submitSmtp("fixture@me.com","fixture-password",message,source,async(host,port)=>{assert(host==="smtp.mail.me.com" && port===465);return fixture.wire;});
+  const sent=fixture.text();assert(sent.indexOf("AUTH PLAIN")<sent.indexOf("MAIL FROM"));
+  assert(sent.includes("MAIL FROM:<adam@adampruska.cz>"));assert(sent.endsWith(".\r\nQUIT\r\n"));
+});
+Deno.test("SMTP rejection and a connection loss after DATA have distinct delivery certainty; no automatic retry",async()=>{
+  for(const [response,uncertain] of [["220 ready\r\n250 host\r\n535 auth rejected\r\n",false],["220 ready\r\n250 host\r\n235 auth\r\n250 sender\r\n250 recipient\r\n354 data\r\n",true],["220 ready\r\n250 host\r\n235 auth\r\n250 sender\r\n250 recipient\r\n354 data\r\n550 refused\r\n",false]] as const) {
+    const fixture=wireFixture(response);let error:unknown;
+    try{await submitSmtp("fixture","password",mailMessage,mailSource(mailMessage),async()=>fixture.wire);}catch(e){error=e;}
+    assert(error instanceof SmtpFailure && error.uncertain===uncertain);
+    assert((fixture.text().match(/AUTH PLAIN/g)||[]).length===1 && fixture.closed());
+  }
+});
+Deno.test("accepted iCloud SMTP is never retried if saving the Sent copy fails",()=>withMailFixture(async()=>{
+  const original=globalThis.fetch;let submits=0;const states:string[]=[];
+  globalThis.fetch=async(input,init)=>{assert(String(input).includes("/rest/v1/mail_outbox"));const body=JSON.parse(String(init?.body));states.push(body.status);return new Response(null,{status:201});};
+  try {
+    const result=await sendIcloudMail(mailMessage,{submit:async()=>{submits++;},open:async()=>{throw new Error("private diagnostics");}});
+    assert(result.status==="sent" && result.warning?.includes("Kopii"));assert(submits===1 && states.join(",")==="sending,sent");
+    assert(!result.warning?.includes("private"));
+  }finally{globalThis.fetch=original;}
+}));

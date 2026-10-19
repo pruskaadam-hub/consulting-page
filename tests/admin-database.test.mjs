@@ -22,6 +22,7 @@ before(async () => {
   await pg.exec(await readFile(new URL("../supabase/migrations/202610150003_invoice_due_dates.sql", import.meta.url), "utf8"));
   await pg.exec(await readFile(new URL("../supabase/migrations/202610150004_service_invoices.sql", import.meta.url), "utf8"));
   await pg.exec(await readFile(new URL("../supabase/migrations/202610150005_invoice_identity.sql", import.meta.url), "utf8"));
+  await pg.exec(await readFile(new URL("../supabase/migrations/202610190001_mail_client.sql", import.meta.url), "utf8"));
   await pg.exec(
     await readFile(
       new URL("../supabase/appoint-owner.sql", import.meta.url),
@@ -532,4 +533,18 @@ test("zero VAT for a payer requires the specific explanation on the immutable in
   const issued=(await as("authenticated",owner,"aal2",()=>pg.query(draftSql,[crypto.randomUUID(),JSON.stringify(data)]))).rows[0];
   assert.equal(issued.tax_note,data.tax_note);
   assert.equal(issued.tax_minor,0);
+});
+
+test("mail delivery reconciliation is owner readable and service writable only",async()=>{
+  await pg.exec("reset role");
+  const id=crypto.randomUUID();
+  await pg.query("insert into public.mail_outbox(id,recipient,subject,status,transport,source) values($1,'client@example.test','Fixture','sent','icloud_smtp','RFC822 fixture')",[id]);
+  await pg.exec(`set role authenticated;set request.jwt.claims='{"sub":"${owner}","aal":"aal2"}'`);
+  assert.equal((await pg.query("select source from public.mail_outbox where id=$1",[id])).rows.length,1);
+  await assert.rejects(pg.query("update public.mail_outbox set sent_copy_saved=true where id=$1",[id]));
+  await pg.exec(`set request.jwt.claims='{"sub":"${outsider}","aal":"aal2"}'`);
+  assert.equal((await pg.query("select * from public.mail_outbox where id=$1",[id])).rows.length,0);
+  await pg.exec("reset role;set role service_role");
+  await pg.query("update public.mail_outbox set sent_copy_saved=true,source=null where id=$1",[id]);
+  await pg.exec("reset role");
 });

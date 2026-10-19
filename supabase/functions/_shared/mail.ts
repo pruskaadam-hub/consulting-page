@@ -1,4 +1,5 @@
-import { ImapFlow } from "npm:imapflow@2.4.0";
+import { NativeImap, type InboxReader, type MailFolder } from "./mail-imap.ts";
+import { mailSource, submitSmtp, SmtpFailure, MAIL_ADDRESS } from "./mail-smtp.ts";
 import nodemailer from "npm:nodemailer@10.1.1";
 import PostalMime from "npm:postal-mime@4.0.5";
 import { ApiError, mailInput } from "./contracts.mjs";
@@ -25,16 +26,14 @@ function settings() {
 export function mailStatus() {
   const value = settings();
   const read = Boolean(value.username && value.password);
-  const send = Boolean(
-    value.validFrom &&
-      (value.provider === "icloud" ? config("RESEND_API_KEY", false) : read),
-  );
+  const send = Boolean(value.provider === "icloud" && config("MAIL_DELIVERY_PROVIDER", false) === "resend" ? value.validFrom && config("RESEND_API_KEY", false) : read);
   return {
     mail: read && send,
     mail_read: read,
     mail_send: send,
     mail_provider: value.provider,
-    mailbox: value.from || "adam@adampruska.cz",
+    mailbox: value.provider === "icloud" ? MAIL_ADDRESS : value.from,
+    mail_transport: value.provider === "icloud" && config("MAIL_DELIVERY_PROVIDER", false) !== "resend" ? "icloud_smtp" : "legacy",
   };
 }
 // Never forward provider diagnostics: they can contain mailbox data or credentials.
@@ -65,7 +64,8 @@ export function mailboxError(error: unknown, stage = "unknown") {
   return new ApiError(`Načtení pošty selhalo. Diagnostický kód: ${diagnostic}. Přihlašovací údaje zatím neměň.`, 502);
 }
 const WEBSITE_MAILBOX = "adam@adampruska.cz";
-function forWebsite(envelope?: { to?: { address?: string }[]; cc?: { address?: string }[] }) {
+function forWebsite(envelope?: { from?: { address?: string }[]; to?: { address?: string }[]; cc?: { address?: string }[] }, folder:MailFolder="inbox") {
+  if(folder==="sent") return envelope?.from?.some(item=>item?.address?.toLowerCase()===WEBSITE_MAILBOX) || false;
   const recipients = [envelope?.to, envelope?.cc].flatMap(items => Array.isArray(items) ? items : []);
   return recipients.some(recipient => typeof recipient?.address === "string" && recipient.address.trim().toLowerCase() === WEBSITE_MAILBOX);
 }
@@ -74,10 +74,11 @@ function mailDate(value: unknown) {
   const date = new Date(value);
   return Number.isFinite(date.getTime()) ? date.toISOString() : "";
 }
-export async function readWebsiteMail(client: Pick<ImapFlow, "mailbox" | "fetch" | "fetchOne">, uid?: number) {
+export async function readWebsiteMail(client: InboxReader, uid?: number, options:{folder?:MailFolder;cursor?:number;contact?:string}={}) {
+      const folder=options.folder || "inbox";
       if (uid) {
         const info = await client.fetchOne(uid, { size: true, envelope: true }, { uid: true });
-        if (!info || !forWebsite(info.envelope)) throw new ApiError("Zpráva nebyla nalezena.", 404);
+        if (!info || !forWebsite(info.envelope,folder)) throw new ApiError("Zpráva nebyla nalezena.", 404);
         if ((info.size || 0) > 5_000_000) {
           throw new ApiError(
             "Tuto velkou zprávu otevři ve své poštovní aplikaci.",
@@ -95,6 +96,10 @@ export async function readWebsiteMail(client: Pick<ImapFlow, "mailbox" | "fetch"
         const parsed = await PostalMime.parse(message.source);
         return {
           uid,
+          folder,
+          messageId: parsed.messageId || "",
+          replyTo: parsed.replyTo?.find(item=>"address" in item)?.address || parsed.from?.address || "",
+          references: parsed.references || "",
           subject: parsed.subject || "(bez předmětu)",
           from: parsed.from?.address || "",
           to: parsed.to?.map((item) => item.address).join(", ") || "",
@@ -111,13 +116,23 @@ export async function readWebsiteMail(client: Pick<ImapFlow, "mailbox" | "fetch"
       const total = client.mailbox ? client.mailbox.exists : 0;
       // Reuse the original working sequence FETCH, without recipient SEARCH.
       // Only matching envelopes leave the backend.
-      for (let end = total; end > 0 && messages.length < 25; end -= 100) {
+      let nextCursor: number | null = null;
+      let scanned = 0;
+      for (let end = Math.min(options.cursor || total,total); end > 0 && messages.length < 25 && scanned < 500; end -= 50) {
         const batch = [];
-        const range = `${Math.max(1, end - 99)}:${end}`;
+        const start = Math.max(1,end-49);
+        const range = `${start}:${end}`;
+        scanned += end-start+1;
+        nextCursor = start>1 ? start-1 : null;
         for await (const message of client.fetch(range, { envelope: true, flags: true })) {
-          if (!forWebsite(message.envelope)) continue;
+          if (!forWebsite(message.envelope,folder)) continue;
+          const peers = folder === "inbox" ? message.envelope?.from : [...(message.envelope?.to || []),...(message.envelope?.cc || [])];
+          if(options.contact && !peers?.some(item=>item.address?.toLowerCase()===options.contact)) continue;
           batch.push({
             uid: message.uid,
+            seq: message.seq,
+            folder,
+            to: message.envelope?.to?.map(item=>item?.address).filter(Boolean).join(", ") || "",
             subject: message.envelope?.subject || "(bez předmětu)",
             from: message.envelope?.from?.[0]?.address || "",
             date: mailDate(message.envelope?.date),
@@ -126,41 +141,69 @@ export async function readWebsiteMail(client: Pick<ImapFlow, "mailbox" | "fetch"
         }
         messages.push(...batch.sort((a, b) => b.uid - a.uid));
       }
-      return { messages: messages.slice(0, 25), limit: 25 };
+      const page=messages.slice(0,25);
+      if(messages.length>25) nextCursor=Math.max(0,page[page.length-1].seq-1) || null;
+      return { messages: page, limit: 25, nextCursor, folder };
 }
-export async function readMail(uid?: number) {
-  if (!mailStatus().mail_read) {
-    throw new ApiError("Nejprve připoj schránku v Supabase Secrets.", 503);
-  }
-  const value = settings();
-  const client = new ImapFlow({
-    host: value.provider === "icloud" ? "imap.mail.me.com" : "imap.forpsi.com",
-    port: 993,
-    secure: true,
-    auth: { user: value.username, pass: value.password },
-    logger: false,
-    connectionTimeout: 15000,
-    socketTimeout: 20000,
-  });
-  client.on("error", () => {}); // Connection failures are handled by the awaited operations.
-  let stage = "connect";
+export async function readMail(uid?: number, options:{folder?:MailFolder;cursor?:number;contact?:string}={}) {
+  if (!mailStatus().mail_read) throw new ApiError("Nejprve připoj schránku v Supabase Secrets.",503);
+  const value=settings();let client:NativeImap|undefined;let stage="connect";
   try {
-    await client.connect();
-    stage = "inbox";
-    const lock = await client.getMailboxLock("INBOX", { readOnly: true });
-    try {
-      stage = uid ? "detail" : "list";
-      return await readWebsiteMail(client, uid);
-    } finally {
-      lock.release();
-    }
-  } catch (error) {
-    throw mailboxError(error, stage);
-  } finally {
-    await client.logout().catch(() => {});
-  }
+    client=await NativeImap.open(value.username.trim(),value.password.trim(),undefined,value.provider==="icloud"?"imap.mail.me.com":"imap.forpsi.com");
+    stage="inbox";await client.select(options.folder || "inbox");
+    stage=uid?"detail":"list";
+    return await readWebsiteMail(client,uid,options);
+  } catch(error){throw mailboxError(error,stage);}
+  finally {client?.close();}
 }
-export async function sendMail(body: unknown) {
+export async function sendMail(body:unknown) {
+  if(settings().provider==="icloud" && config("MAIL_DELIVERY_PROVIDER",false)!=="resend") return sendIcloudMail(body);
+  return sendLegacyMail(body);
+}
+export async function sendIcloudMail(body:unknown, dependencies={submit:submitSmtp,open:NativeImap.open}) {
+  const message=mailInput(body);
+  const value=settings();
+  if(!value.username || !value.password)throw new ApiError("Připoj iCloud v Supabase Secrets.",503);
+  const source=mailSource(message);
+  const db=serviceClient();
+  const claim=await db.from("mail_outbox").insert({id:message.id,recipient:message.to,subject:message.subject,status:"sending",message_id:`<${message.id}@adampruska.cz>`,transport:"icloud_smtp",source:new TextDecoder().decode(source)});
+  if(claim.error)throw new ApiError("Tato zpráva už byla předána k odeslání. Zkontroluj Odeslané a přehled odesílání.",409);
+  try {await dependencies.submit(value.username.trim(),value.password.trim(),message,source);}
+  catch(error) {
+    const uncertain=!(error instanceof SmtpFailure) || error.uncertain;
+    await db.from("mail_outbox").update({status:uncertain?"uncertain":"failed",source:uncertain?new TextDecoder().decode(source):null}).eq("id",message.id);
+    throw new ApiError(error instanceof SmtpFailure?error.message:"Výsledek odeslání není jistý. Před dalším pokusem zkontroluj Odeslané.",502);
+  }
+  // SMTP 250 is final: a subsequent IMAP/DB failure must never cause a second send.
+  const saved=await db.from("mail_outbox").update({status:"sent"}).eq("id",message.id);
+  let client:NativeImap|undefined;
+  try {
+    client=await dependencies.open(value.username.trim(),value.password.trim());
+    if(!await client.hasSent(`<${message.id}@adampruska.cz>`))await client.appendSent(source);
+    const synced=await db.from("mail_outbox").update({status:"sent",sent_copy_saved:true,source:null}).eq("id",message.id);
+    if(synced.error) return {status:"sent",warning:"Zpráva byla odeslána a uložena v iCloudu. Aktualizace přehledu odesílání selhala."};
+    return {status:"sent"};
+  } catch {
+    return {status:"sent",warning:saved.error?"Zpráva byla odeslána, ale uložení stavu a kopie v iCloudu se nepodařilo potvrdit. Neodesílej ji znovu.":"Zpráva byla odeslána. Kopii do iCloud Odeslaných doplníš tlačítkem Synchronizovat odeslané kopie; zprávu znovu neposílej."};
+  } finally {client?.close();}
+}
+export async function syncSentCopies() {
+  const db=serviceClient();
+  const result=await db.from("mail_outbox").select("id,message_id,source").eq("status","sent").eq("sent_copy_saved",false).eq("transport","icloud_smtp").not("source","is",null).limit(10);
+  if(result.error)throw new ApiError("Frontu odeslaných kopií se nepodařilo načíst.",502);
+  if(!result.data?.length)return {synced:0};
+  const value=settings();const client=await NativeImap.open(value.username.trim(),value.password.trim());let synced=0;
+  try {
+    for(const item of result.data) {
+      if(!await client.hasSent(item.message_id))await client.appendSent(new TextEncoder().encode(item.source));
+      const saved=await db.from("mail_outbox").update({sent_copy_saved:true,source:null}).eq("id",item.id);
+      if(saved.error)throw new ApiError("Kopie je v iCloudu, ale stav se nepodařilo uložit.",502);
+      synced++;
+    }
+    return {synced};
+  }finally{client.close();}
+}
+async function sendLegacyMail(body: unknown) {
   const message = mailInput(body);
   if (!mailStatus().mail_send) {
     throw new ApiError(
@@ -265,4 +308,15 @@ export async function sendMail(body: unknown) {
   } finally {
     transport?.close();
   }
+}
+
+export async function setMailSeen(uid:number,folder:MailFolder,seen:boolean) {
+  const value=settings();const client=await NativeImap.open(value.username.trim(),value.password.trim());
+  try {
+    await client.select(folder,false);
+    const row=await client.fetchOne(uid,{envelope:true},{uid:true});
+    if(!row || !forWebsite(row.envelope,folder))throw new ApiError("Zpráva nebyla nalezena.",404);
+    await client.command(`UID STORE ${uid} ${seen?"+":"-"}FLAGS.SILENT (\\Seen)`,"seen");
+    return {seen};
+  }finally{client.close();}
 }
