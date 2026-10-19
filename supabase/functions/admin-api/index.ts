@@ -202,11 +202,9 @@ async function route(req: Request) {
     return json({ received: true });
   }
   if (path === "/mail/verify-transport" && req.method === "POST") {
-    const expected = config("SUPABASE_SERVICE_ROLE_KEY", false);
-    const supplied = req.headers.get("authorization")?.match(/^Bearer\s+(.+)$/i)?.[1] || "";
-    if (!expected || !supplied || !sameSignature(await hmacHex("mail-probe", supplied), await hmacHex("mail-probe", expected))) {
-      throw new ApiError("Vyžaduje se serverové oprávnění.", 401);
-    }
+    const expected=config("MAIL_DEPLOY_CHECK_SECRET",false);
+    const supplied=req.headers.get("x-mail-deploy-key") || "";
+    if(!expected || !sameSignature(supplied,expected))throw new ApiError("Vyžaduje se serverové oprávnění.",401);
     return json(await probeMailTransport());
   }
   const { client } = await requireAdmin(req);

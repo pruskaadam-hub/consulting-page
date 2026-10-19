@@ -1,3 +1,4 @@
+import { randomBytes } from "node:crypto";
 // Run only with the owner's Supabase management token supplied through secure settings.
 import { readFile } from "node:fs/promises";
 import { spawnSync } from "node:child_process";
@@ -92,6 +93,10 @@ const events = await ensureEventsSecret({ projectRef: ref, token });
 console.log(events.created
   ? "First-party events secret configured."
   : "First-party events secret already configured; preserved.");
+const mailCheckKey = randomBytes(32).toString("hex");
+const mailCheckSaved = await fetch(`https://api.supabase.com/v1/projects/${ref}/secrets`, {method:"POST",headers:{Authorization:`Bearer ${token}`,"Content-Type":"application/json"},body:JSON.stringify([{name:"MAIL_DEPLOY_CHECK_SECRET",value:mailCheckKey}]),signal:AbortSignal.timeout(15000)});
+if(!mailCheckSaved.ok) throw new Error(`Cannot configure mail transport verification (HTTP ${mailCheckSaved.status}).`);
+await mailCheckSaved.body?.cancel();
 const deployment = spawnSync(
   "npx",
   [
@@ -112,22 +117,19 @@ console.log(
   "Backend deployed. Configure Auth, allowed origins and provider secrets according to docs/admin-setup.md.",
 );
 
-let mailProbeStage = "keys";
-// Verify fixed iCloud TLS transports from the actual Edge runtime. No mailbox login or email send.
+// Only booleans are returned by the deployment check. The random credential is never logged.
+let mailProbeStage = "invoke";
 try {
-  const keysResponse = await fetch(`https://api.supabase.com/v1/projects/${ref}/api-keys?reveal=true`, {
-    headers:{Authorization:`Bearer ${token}`},signal:AbortSignal.timeout(15000),
-  });
-  if (!keysResponse.ok) {mailProbeStage=`keys-http-${keysResponse.status}`;throw new Error("Key lookup unavailable");}
-  const keys = await keysResponse.json();
-  const service = keys.find(item => item.name === "service_role")?.api_key;
-  if (!service) {mailProbeStage="service-key-missing";throw new Error("Server credential unavailable");}
-  mailProbeStage="invoke";
-  const response = await fetch(`https://${ref}.supabase.co/functions/v1/admin-api/mail/verify-transport`, {
-    method:"POST",headers:{Authorization:`Bearer ${service}`},signal:AbortSignal.timeout(60000),
-  });
-  if (!response.ok) {mailProbeStage=`invoke-http-${response.status}`;throw new Error("Probe unavailable");}
-  const result = await response.json();
+  let response;
+  for(let attempt=0;attempt<4;attempt++) {
+    response=await fetch(`https://${ref}.supabase.co/functions/v1/admin-api/mail/verify-transport`, {
+      method:"POST",headers:{"x-mail-deploy-key":mailCheckKey},signal:AbortSignal.timeout(90000),
+    });
+    if(response.ok || ![401,404,503].includes(response.status))break;
+    await response.body?.cancel();await new Promise(resolve=>setTimeout(resolve,1500));
+  }
+  if (!response?.ok) {mailProbeStage=`invoke-http-${response?.status || "unavailable"}`;throw new Error("Probe unavailable");}
+  const result=await response.json();
   console.log(`::notice title=iCloud TLS transports::IMAP993=${result.imapTls === true}; SMTP465=${result.smtpTls465 === true}; IMAP_LOGIN=${result.imapLogin === true}; INBOX=${result.inbox === true}; SENT=${result.sent === true}; SMTP_AUTH=${result.smtpAuth === true}`);
 } catch {
   console.log(`::warning title=iCloud TLS transports::Runtime transport verification unavailable (${mailProbeStage}); no messages sent.`);
