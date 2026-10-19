@@ -63,7 +63,7 @@ function forWebsite(envelope?: { to?: { address?: string }[]; cc?: { address?: s
     (recipient) => recipient.address?.trim().toLowerCase() === WEBSITE_MAILBOX,
   );
 }
-export async function readWebsiteMail(client: Pick<ImapFlow, "search" | "fetch" | "fetchOne">, uid?: number) {
+export async function readWebsiteMail(client: Pick<ImapFlow, "mailbox" | "fetch" | "fetchOne">, uid?: number) {
       if (uid) {
         const info = await client.fetchOne(uid, { size: true, envelope: true }, { uid: true });
         if (!info || !forWebsite(info.envelope)) throw new ApiError("Zpráva nebyla nalezena.", 404);
@@ -97,12 +97,13 @@ export async function readWebsiteMail(client: Pick<ImapFlow, "search" | "fetch" 
         };
       }
       const messages = [];
-      const found = await client.search({ or: [{ to: WEBSITE_MAILBOX }, { cc: WEBSITE_MAILBOX }] }, { uid: true });
-      const candidates = Array.isArray(found) ? [...found].sort((a, b) => b - a) : [];
-      // Search uses substring matching: verify exact recipients before returning anything.
-      for (let offset = 0; offset < candidates.length && messages.length < 25; offset += 50) {
+      const total = client.mailbox ? client.mailbox.exists : 0;
+      // Reuse the original working sequence FETCH, without recipient SEARCH.
+      // Only matching envelopes leave the backend.
+      for (let end = total; end > 0 && messages.length < 25; end -= 100) {
         const batch = [];
-        for await (const message of client.fetch(candidates.slice(offset, offset + 50), { envelope: true, flags: true }, { uid: true })) {
+        const range = `${Math.max(1, end - 99)}:${end}`;
+        for await (const message of client.fetch(range, { envelope: true, flags: true })) {
           if (!forWebsite(message.envelope)) continue;
           batch.push({
             uid: message.uid,
