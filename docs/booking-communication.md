@@ -24,7 +24,7 @@ Požadované nastavení vlastníka z 19. 10. 2026:
 | Odpovědi na vlastní klientské potvrzení | adam@adampruska.cz |
 | Příjemce klientského potvrzení | E-mail vyplněný klientem při rezervaci |
 | Čtení schránky v administraci | iCloud IMAP |
-| Odesílání z administrace při iCloudu | Resend HTTPS s ověřenou doménou |
+| Odesílání z administrace při iCloudu | iCloud SMTP přes relay; do jejího připojení ukládání do iCloud Konceptů |
 
 Při testu na jiné vlastní adrese je tento účet klientem, zatímco účet Cal.com
 je pořadatelem. Zpráva v každé z těchto schránek tedy může být očekávaná.
@@ -57,7 +57,7 @@ soukromý odkaz ke zrušení, lhůtu 24 hodin a informaci o platbě fakturou.
 Čekající žádost není označená za potvrzenou schůzku.
 
 Jedno UID rezervace a stav mají jeden stabilní identifikátor zprávy. Odesílání
-používá existující outbox a idempotenci Resend. Nejistý výsledek se automaticky
+používá existující outbox s jedinečným ID odeslání. Nejistý výsledek se automaticky
 neopakuje; klient dostane odkazy na webu a upozornění na neověřené doručení.
 Synchronizace historických rezervací žádné e-maily neposílá.
 
@@ -70,9 +70,9 @@ Synchronizace historických rezervací žádné e-maily neposílá.
 3. U pozvánky iCloudu ověřit identitu pořadatele a případné přeposílání.
    Nezaměňovat přihlašovací Apple ID s adresou, ze které má být vystavena pozvánka.
    Účet Apple se nesmí měnit naslepo jen kvůli jednomu poli Reply-To.
-4. V Resend ověřit doménu adampruska.cz a oprávnění odesílat z požadované adresy.
+4. Ověřit iCloud IMAP a SMTP přihlášení podle [mail-icloud.md](mail-icloud.md).
    V Supabase nastavit MAIL_FROM_EMAIL=adam@adampruska.cz a RESEND_API_KEY.
-   Heslo pro aplikaci ICLOUD_APP_PASSWORD slouží čtení iCloudu, nenahrazuje Resend.
+   ICLOUD_APP_PASSWORD slouží přihlášení pro čtení i odesílání.
    ICLOUD_USERNAME může zůstat přihlašovacím jménem schránky; není to pole odesílatele.
 5. Zkontrolovat SITE_URL: musí být skutečná veřejná adresa webu, protože z ní
    vznikají odkazy pro správu v e-mailu.
@@ -88,12 +88,15 @@ Po nastavení provést jednu výslovně dohodnutou testovací rezervaci: zkontro
 adresáta pořadatele, klientské potvrzení, Reply-To, funkčnost obou odkazů a storno.
 Automatické testy tyto zprávy neposílají a nevytvářejí živé rezervace.
 
-Ověření „Mail readiness“ pouze čte nastavení domény v Resend; neposílá e-maily.
+Ověření „Mail readiness“ pro nativní iCloud kontroluje přítomnost přihlašovacích údajů; skutečné spojení a přihlášení ověřuje nasazení bez odeslání e-mailu.
 `missing_key` znamená chybějící RESEND_API_KEY, `domain_pending` čekající DNS,
 `ready` ověřenou doménu. `key_scope_unknown` znamená, že klíč nemá oprávnění
 číst domény; neznamená automaticky nefunkční odesílání. Soukromý seznam domén
 ani API klíče se do diagnostiky nevracejí.
 
-### Čtení iCloud pošty v administraci
+### Poštovní klient v administraci
 
-V Supabase → Edge Functions → Secrets ulož `ICLOUD_USERNAME` (adresa iCloud Mail, např. `pruskaadam@me.com`; nikoli Yahoo adresa používaná jako přihlášení k účtu Apple) a `ICLOUD_APP_PASSWORD` (heslo pro aplikaci z account.apple.com → Přihlášení a zabezpečení). Běžné heslo Apple nepoužívej. Volitelné `MAIL_PROVIDER=icloud` a `MAIL_FROM_EMAIL=adam@adampruska.cz` odpovídají výchozím hodnotám. Po obnovení administrace otevři Poštu a načti posledních 25 zpráv. IMAP používá TLS a schránku otevírá pouze pro čtení; zprávy se nekopírují do databáze. Z této společné schránky backend vrací pouze zprávy s přesnou adresou `adam@adampruska.cz` v Komu nebo Kopii; kontrola platí i pro detail podle UID. Vyhledává před omezením na 25 zpráv. Zprávy pouze se skrytou kopií se nezobrazují. Čtení nevyžaduje Resend, odpovědi otevři v iCloud Mail.
+Nastavení, synchronizaci obou složek, odpovědi, kontakty a bezpečné doplnění
+odeslaných kopií popisuje [mail-icloud.md](mail-icloud.md). Psaní běžných zpráv
+v administraci nenahrazuje rezervační potvrzení Cal.com a nemění pořadatele
+kalendářních pozvánek ani jeho Reply-To.

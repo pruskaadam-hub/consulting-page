@@ -130,7 +130,7 @@ try {
   }
   if (!response?.ok) {mailProbeStage=`invoke-http-${response?.status || "unavailable"}`;throw new Error("Probe unavailable");}
   const result=await response.json();
-  console.log(`::notice title=iCloud TLS transports::IMAP993=${result.imapTls === true}; SMTP465=${result.smtpTls465 === true}; IMAP_LOGIN=${result.imapLogin === true}; INBOX=${result.inbox === true}; SENT=${result.sent === true}; SMTP_AUTH=${result.smtpAuth === true}`);
+  console.log(`::notice title=iCloud TLS transports::IMAP993=${result.imapTls === true}; SMTP465=${result.smtpTls465 === true}; IMAP_LOGIN=${result.imapLogin === true}; INBOX=${result.inbox === true}; SENT=${result.sent === true}; SMTP_AUTH=${result.smtpAuth === true}; INBOX_LIST=${result.inboxList === true}; SENT_LIST=${result.sentList === true}; DRAFTS=${result.drafts === true}`);
 } catch {
   console.log(`::warning title=iCloud TLS transports::Runtime transport verification unavailable (${mailProbeStage}); no messages sent.`);
 }

@@ -10,7 +10,14 @@ import {
 } from "../_shared/contracts.mjs";
 import { config, requireAdmin, serviceClient } from "../_shared/auth.ts";
 import { analyticsConfigured, analyticsReport } from "../_shared/google.ts";
-import { mailStatus, readMail, sendMail, syncSentCopies, setMailSeen } from "../_shared/mail.ts";
+import {
+  mailStatus,
+  readMail,
+  saveMailDraft,
+  sendMail,
+  setMailSeen,
+  syncSentCopies,
+} from "../_shared/mail.ts";
 import { limitedText } from "../_shared/http.ts";
 
 const site = () =>
@@ -202,9 +209,11 @@ async function route(req: Request) {
     return json({ received: true });
   }
   if (path === "/mail/verify-transport" && req.method === "POST") {
-    const expected=config("MAIL_DEPLOY_CHECK_SECRET",false);
-    const supplied=req.headers.get("x-mail-deploy-key") || "";
-    if(!expected || !sameSignature(supplied,expected))throw new ApiError("Vyžaduje se serverové oprávnění.",401);
+    const expected = config("MAIL_DEPLOY_CHECK_SECRET", false);
+    const supplied = req.headers.get("x-mail-deploy-key") || "";
+    if (!expected || !sameSignature(supplied, expected)) {
+      throw new ApiError("Vyžaduje se serverové oprávnění.", 401);
+    }
     return json(await probeMailTransport());
   }
   const { client } = await requireAdmin(req);
@@ -239,19 +248,42 @@ async function route(req: Request) {
       throw new ApiError("Neplatná zpráva.");
     }
     const folder = url.searchParams.get("folder") || "inbox";
-    if(folder!=="inbox" && folder!=="sent")throw new ApiError("Neplatná složka.");
-    const cursor=url.searchParams.get("cursor");
-    if(cursor && !/^[1-9]\d{0,9}$/.test(cursor))throw new ApiError("Neplatná stránka pošty.");
-    const contact=url.searchParams.get("contact")?.trim().toLowerCase();
-    if(contact && (contact.length>254 || !/^[^\s<>@,;]+@[^\s<>@,;]+\.[^\s<>@,;]+$/.test(contact)))throw new ApiError("Neplatný kontakt.");
-    return json(await readMail(rawUid ? Number(rawUid) : undefined,{folder,cursor:cursor?Number(cursor):undefined,contact}));
+    if (folder !== "inbox" && folder !== "sent") {
+      throw new ApiError("Neplatná složka.");
+    }
+    const cursor = url.searchParams.get("cursor");
+    if (cursor && !/^[1-9]\d{0,9}$/.test(cursor)) {
+      throw new ApiError("Neplatná stránka pošty.");
+    }
+    const contact = url.searchParams.get("contact")?.trim().toLowerCase();
+    if (
+      contact &&
+      (contact.length > 254 ||
+        !/^[^\s<>@,;]+@[^\s<>@,;]+\.[^\s<>@,;]+$/.test(contact))
+    ) throw new ApiError("Neplatný kontakt.");
+    return json(
+      await readMail(rawUid ? Number(rawUid) : undefined, {
+        folder,
+        cursor: cursor ? Number(cursor) : undefined,
+        contact,
+      }),
+    );
   }
-  if(req.method === "POST" && path === "/mail/seen") {
-    const input=await payload(req,1000);
-    if(!Number.isSafeInteger(input.uid) || input.uid<=0 || input.uid>4294967295 || !["inbox","sent"].includes(input.folder) || typeof input.seen!=="boolean")throw new ApiError("Neplatná zpráva.");
-    return json(await setMailSeen(input.uid,input.folder,input.seen));
+  if (req.method === "POST" && path === "/mail/seen") {
+    const input = await payload(req, 1000);
+    if (
+      !Number.isSafeInteger(input.uid) || input.uid <= 0 ||
+      input.uid > 4294967295 || !["inbox", "sent"].includes(input.folder) ||
+      typeof input.seen !== "boolean"
+    ) throw new ApiError("Neplatná zpráva.");
+    return json(await setMailSeen(input.uid, input.folder, input.seen));
   }
-  if (req.method === "POST" && path === "/mail/sync-sent") return json(await syncSentCopies());
+  if (req.method === "POST" && path === "/mail/draft") {
+    return json(await saveMailDraft(await payload(req)));
+  }
+  if (req.method === "POST" && path === "/mail/sync-sent") {
+    return json(await syncSentCopies());
+  }
   if (req.method === "POST" && path === "/mail") {
     return json(await sendMail(await payload(req)));
   }

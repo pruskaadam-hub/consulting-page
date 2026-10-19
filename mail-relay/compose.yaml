@@ -1,0 +1,17 @@
+services:
+  icloud-relay:
+    build:
+      context: ..
+      dockerfile: mail-relay/Dockerfile
+    restart: unless-stopped
+    environment:
+      MAIL_RELAY_SECRET: ${MAIL_RELAY_SECRET:?Set a random shared secret of 32+ characters}
+      ICLOUD_USERNAME: ${ICLOUD_USERNAME:?Set the iCloud Mail address}
+      ICLOUD_APP_PASSWORD: ${ICLOUD_APP_PASSWORD:?Set an Apple app-specific password}
+      RELAY_STORE_DIR: /data/receipts
+    ports:
+      - "127.0.0.1:8080:8080"
+    volumes:
+      - relay-receipts:/data
+volumes:
+  relay-receipts:

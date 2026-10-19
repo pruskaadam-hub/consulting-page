@@ -6,13 +6,13 @@ GitHub může původní adresu přesměrovat na nastavenou vlastní doménu.
 
 Projekt Supabase: `lsofzsartjesgwetcpzw`, URL `https://lsofzsartjesgwetcpzw.supabase.co`.
 Správce: `pruskaadam@me.com`. Obchodní pošta: `adam@adampruska.cz` přes iCloud+,
-odesílání z administrace přes Resend. FORPSI spravuje DNS domény.
+odesílání z administrace přes iCloud SMTP relay; bez relay ukládání do iCloud Konceptů. FORPSI spravuje DNS domény.
 
 ## Co je připravené a co vyžaduje účty
 
 Zdrojový kód obsahuje přihlášení, povinné TOTP ověření, databázová oprávnění,
 klienty, objednávky, příjmy, rezervace, úkoly, ruční faktury s tiskem do PDF,
-poštu iCloud/Resend, GA4 a propojení Stripe Payments, Invoicing a Tax.
+poštu iCloud, GA4 a propojení Stripe Payments, Invoicing a Tax.
 
 Zveřejnění statické stránky administrace nevytvoří tabulky ani nenasadí Edge
 Function do Supabase. Před živým používáním musí být provedené kroky níže.
@@ -136,7 +136,9 @@ Tyto hodnoty patří výhradně do **Edge Functions → Secrets**:
 | `MAIL_FROM_EMAIL` | `adam@adampruska.cz`, doména musí být ověřená pro odesílání |
 | `ICLOUD_USERNAME` | Přihlašovací adresa iCloud Mail |
 | `ICLOUD_APP_PASSWORD` | Heslo pro konkrétní aplikaci vytvořené u Applu |
-| `RESEND_API_KEY` | Klíč pro odesílání z ověřené domény přes HTTPS |
+| `MAIL_RELAY_URL` | HTTPS základní adresa samostatné iCloud SMTP relay |
+| `MAIL_RELAY_SECRET` | Sdílený klíč SMTP relay, alespoň 32 znaků |
+| `RESEND_API_KEY` | Jen pro explicitní starší variantu `MAIL_DELIVERY_PROVIDER=resend`; aktuální klient jej nepotřebuje |
 | `GA4_PROPERTY_ID` | Volitelné přepsání číselného ID služby; výchozí je `559071834` |
 | `GOOGLE_SERVICE_ACCOUNT_JSON` | JSON služebního účtu pouze pro čtení Analytics |
 | `STRIPE_SECRET_KEY` | Nejdřív testovací serverový klíč Stripe |
@@ -150,7 +152,7 @@ Tyto hodnoty patří výhradně do **Edge Functions → Secrets**:
 Supabase samo dodává `SUPABASE_URL`, `SUPABASE_ANON_KEY` a serverový
 `SUPABASE_SERVICE_ROLE_KEY`. Nikdy nekopírujte service_role do webu.
 
-Aktuální postup pro iCloud+ a Resend je v [mail-icloud.md](mail-icloud.md).
+Aktuální postup pro iCloud poštovní klient je v [mail-icloud.md](mail-icloud.md).
 Příjem a odesílání mají samostatné stavy. Bez schránky FORPSI není možné
 použít její přístupové údaje; pro iCloud platí nové proměnné v tabulce.
 

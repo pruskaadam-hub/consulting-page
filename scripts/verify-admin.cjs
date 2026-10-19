@@ -300,6 +300,9 @@ const { HtmlValidate } = require("html-validate");
             events: true,
             mailbox: "adam@adampruska.cz",
           });
+        if (u.pathname.endsWith("/admin-api/mail/draft")) return ok({saved:true});
+        if (u.pathname.endsWith("/admin-api/mail/sync-sent")) return ok({synced:1});
+        if (u.pathname.endsWith("/admin-api/mail/seen")) return ok({seen:JSON.parse(req.postData()).seen});
         if (u.pathname.endsWith("/admin-api/mail")) {
           if (method === "POST") {
             sends++;
@@ -309,7 +312,10 @@ const { HtmlValidate } = require("html-validate");
             return ok({
               uid: 1,
               subject: "Fixture email",
-              from: "client@example.test",
+              from: u.searchParams.get("folder")==="sent"?"adam@adampruska.cz":"client@example.test",
+              to: u.searchParams.get("folder")==="sent"?"client@example.test":"adam@adampruska.cz",
+              replyTo:"client@example.test",messageId:"<fixture@example.test>",references:"",seen:false,
+              date:new Date().toISOString(),
               text: 'Plain text <img src="https://tracker.invalid/x" onerror="alert(1)">',
               attachments: [],
             });
@@ -318,7 +324,8 @@ const { HtmlValidate } = require("html-validate");
               {
                 uid: 1,
                 subject: "Fixture email",
-                from: "client@example.test",
+                from: u.searchParams.get("folder")==="sent"?"adam@adampruska.cz":"client@example.test",
+                to:u.searchParams.get("folder")==="sent"?"client@example.test":"adam@adampruska.cz",seen:false,
                 date: new Date().toISOString(),
               },
             ],
@@ -561,9 +568,7 @@ const { HtmlValidate } = require("html-validate");
       .getByRole("navigation", { name: "Administrace" })
       .getByRole("button", { name: "Pošta", exact: true })
       .click();
-    await page
-      .getByRole("button", { name: "Načíst posledních 25 zpráv" })
-      .click();
+    await page.getByRole("button", { name: "Obnovit poštu", exact:true }).waitFor();
     await page.getByRole("button", { name: /Fixture email/ }).click();
     await page.locator(".admin-mail-message pre").waitFor();
     assert.match(
@@ -572,28 +577,55 @@ const { HtmlValidate } = require("html-validate");
     );
     assert.equal(await page.locator('img[src*="tracker.invalid"]').count(), 0);
     await page.getByRole("button", { name: "Odpovědět", exact: true }).click();
+    await validate("Mail client reply desktop");
+    await page.screenshot({path:"/tmp/mail-client-desktop.png",fullPage:true});
+    await page.setViewportSize({width:375,height:850});
+    await validate("Mail client reply mobile");
+    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1),false);
+    await page.screenshot({path:"/tmp/mail-client-mobile.png",fullPage:true});
+    await page.setViewportSize({width:1280,height:900});
     await page
       .getByLabel("Zpráva", { exact: true })
       .fill("Fixture only, never sent.");
     await page.getByRole("button", { name: "Odeslat zprávu" }).click();
     await page
       .getByRole("status")
-      .filter({ hasText: "přijata poštovním serverem" })
+      .filter({ hasText: "odeslána přes iCloud" })
       .waitFor();
     assert.equal(sends, 1);
     assert.equal(events.length, 0);
+    await page.getByRole("button",{name:"Odeslané",exact:true}).click();
+    await page.getByRole("button",{name:/Fixture email/}).click();
+    await page.getByText("Od: adam@adampruska.cz",{exact:true}).waitFor();
+    assert.equal(await page.getByRole("button",{name:"Odpovědět",exact:true}).count(),0);
+    await page.getByRole("button",{name:"Označit jako přečtené",exact:true}).click();
+    await page.getByRole("button",{name:"Označit jako nepřečtené",exact:true}).waitFor();
+    await page.getByRole("button",{name:"Synchronizovat odeslané kopie",exact:true}).click();
+    await page.getByRole("status").filter({hasText:"Synchronizace dokončena"}).waitFor();
+    await page.getByRole("navigation",{name:"Administrace"}).getByRole("button",{name:"Klienti",exact:true}).click();
+    await page.getByRole("button",{name:"Napsat e-mail",exact:true}).first().click();
+    await page.getByRole("heading",{name:"Nová zpráva",exact:true}).waitFor();
+    assert.equal(await page.getByLabel("Komu",{exact:true}).inputValue(),clients[0].email);
+    await page.getByRole("navigation",{name:"Administrace"}).getByRole("button",{name:"Klienti",exact:true}).click();
+    await page.getByRole("button",{name:"Korespondence",exact:true}).first().click();
+    assert.equal(await page.getByLabel("Korespondence kontaktu").inputValue(),clients[0].email);
     for (const [read, send] of [[false, true], [true, false]]) {
-      mailRead = read;
-      mailSend = send;
+      mailRead=read;mailSend=send;
       await page.reload();
-      await page.getByRole("navigation", { name: "Administrace" })
-        .getByRole("button", { name: "Pošta", exact: true }).click();
-      if (read) await page.getByRole("button", { name: "Načíst posledních 25 zpráv" }).waitFor();
-      else await page.getByText("Příjem pošty zatím není připojený.", { exact: false }).waitFor();
-      assert.equal(await page.getByRole("button", { name: "Načíst posledních 25 zpráv" }).count(), read ? 1 : 0);
-      const submit = page.getByRole("button", { name: "Odeslat zprávu" });
-      if (send) {await submit.waitFor();assert.equal(await submit.isDisabled(),false);}
-      else {await page.getByRole('link',{name:'Otevřít iCloud Mail ↗',exact:true}).waitFor();assert.equal(await submit.count(),0);await page.getByText('Resend pro tuto variantu není potřeba.',{exact:false}).waitFor();}
+      await page.getByRole("navigation", {name:"Administrace"}).getByRole("button",{name:"Pošta",exact:true}).click();
+      if(read)await page.getByRole("button",{name:"Obnovit poštu",exact:true}).waitFor();
+      else await page.getByText("Příjem pošty zatím není připojený.",{exact:false}).waitFor();
+      await page.getByRole("button",{name:"Napsat zprávu",exact:true}).click();
+      const submit=page.getByRole("button",{name:"Odeslat zprávu",exact:true});
+      assert.equal(await submit.isDisabled(),!send);
+      if(read && !send) {
+        await page.getByLabel("Komu",{exact:true}).fill("draft@example.test");
+        await page.getByLabel("Předmět",{exact:true}).fill("Draft fixture");
+        await page.getByLabel("Zpráva",{exact:true}).fill("Draft for iCloud, never sent.");
+        await page.getByRole("button",{name:"Uložit koncept do iCloudu",exact:true}).click();
+        await page.getByRole("status").filter({hasText:"Koncept je uložený"}).waitFor();
+        assert.equal(sends,1);
+      }
     }
     mailRead = mailSend = true;
     await page.reload();

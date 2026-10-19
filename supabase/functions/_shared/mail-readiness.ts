@@ -9,6 +9,13 @@ export async function mailReadiness() {
       domainVerified: null,
     };
   }
+  if (["icloud_smtp", "icloud_relay"].includes(mail.mail_transport)) {
+    return {
+      status: mail.mail_send ? "smtp_unverified" : "missing_credentials",
+      configured: mail.mail_send,
+      domainVerified: null,
+    };
+  }
   if (mail.mail_provider !== "icloud") {
     return {
       status: mail.mail_send ? "smtp_unverified" : "missing_credentials",

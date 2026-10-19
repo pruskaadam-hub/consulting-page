@@ -75,6 +75,8 @@ export type Task = {
   done: boolean;
 };
 export type Outbox = {
+  transport?: string;
+  sent_copy_saved?: boolean;
   id: string;
   recipient: string;
   subject: string;
@@ -125,6 +127,12 @@ export type Snapshot = {
   };
 };
 export type Message = {
+  to?:string;
+  folder?:"inbox"|"sent";
+  seen?:boolean;
+  messageId?:string;
+  replyTo?:string;
+  references?:string;
   uid: number;
   subject: string;
   from: string;

@@ -1,95 +1,93 @@
-# Firemní pošta přes iCloud+ a Supabase
+# Poštovní klient adam@adampruska.cz
 
-Cílová adresa je `adam@adampruska.cz`. FORPSI spravuje DNS domény,
-GitHub Pages hostuje web, iCloud Mail přijímá poštu a HTTPS API Resend
-odesílá zprávy z chráněné administrace. Vlastník potvrdil předplatné iCloud+.
-Doména u Applu, ověření Resend a skutečné doručení zatím nejsou ověřené.
+Administrace `/admin/` → **Pošta** používá iCloud jako hlavní úložiště pošty.
+Příjem a složky čte přes nativní IMAP/TLS 993. Živá kontrola potvrdila
+přihlášení a existenci Doručených i Odeslaných. Resend není potřeba.
 
-## 1. Přidejte doménu do iCloudu
+Přímé odesílání přes iCloud vyžaduje [SMTP relay](../mail-relay/README.md)
+mimo Supabase: port 465 je ze současného Edge runtime nedostupný a port
+587 Supabase blokuje. Do připojení relay zůstává přímé odesílací tlačítko
+vypnuté. Zprávu lze napsat v administraci, uložit do iCloud Konceptů a odeslat
+v iCloud Mail. Po odeslání se synchronizuje do Odeslaných v administraci.
 
-Na https://www.icloud.com/icloudplus/ otevřete **Vlastní e-mailová doména**,
-přidejte `adampruska.cz` a vytvořte adresu `adam@adampruska.cz`.
-Pokud na doméně dosud žádná schránka neexistovala, při průvodci nepřidávejte
-neexistující schránku jako již používanou adresu k ověření.
+## Přihlašovací údaje
 
-Do DNS ve FORPSI přeneste přesné názvy a hodnoty MX, TXT a DKIM/CNAME,
-které zobrazí Apple. Ověřovací hodnoty jsou konkrétní pro účet; tento návod
-je nevymýšlí. Nahraďte případné staré MX záznamy pro stejnou doménu.
-Zachovejte A záznamy pro GitHub Pages, CNAME `www` i ověření vlastnictví
-domény pro GitHub. Není potřeba měnit nameservery.
+V Supabase → Edge Functions → Secrets:
 
-Dokončete ověření u Applu. V iCloud Mail ověřte příjem a ruční odeslání
-z nové adresy na svou druhou schránku.
-
-## 2. Připojte příjem do administrace
-
-Na https://account.apple.com/ v části přihlášení a zabezpečení vytvořte
-**heslo pro konkrétní aplikaci** pro administraci webu. Vyžaduje se
-dvoufaktorové zabezpečení Apple účtu. Použijte toto samostatné heslo;
-hlavní heslo Apple účtu do aplikace neukládejte.
-
-V [Supabase Edge Functions → Secrets](https://supabase.com/dashboard/project/lsofzsartjesgwetcpzw/functions/secrets)
-uložte:
-
-| Name | Value |
+| Název | Hodnota |
 | --- | --- |
-| `MAIL_PROVIDER` | `icloud` |
-| `MAIL_FROM_EMAIL` | `adam@adampruska.cz` |
-| `ICLOUD_USERNAME` | Přihlašovací adresa iCloud Mail, například `pruskaadam@me.com` |
-| `ICLOUD_APP_PASSWORD` | Nově vytvořené heslo pro konkrétní aplikaci |
+| `MAIL_PROVIDER` | `icloud` (výchozí) |
+| `ICLOUD_USERNAME` | Adresa iCloud Mail, v tomto účtu `pruskaadam@me.com` |
+| `ICLOUD_APP_PASSWORD` | Heslo pro aplikaci z account.apple.com |
 
-Backend se připojí výhradně k `imap.mail.me.com:993` s ověřeným TLS.
-iCloud má společnou doručenou poštu, takže administrace může zobrazit
-i osobní zprávy pro jiné adresy tohoto účtu. Přístup vyžaduje vlastníka
-a dokončené MFA. Přílohy a HTML verze zůstávají v poštovní aplikaci.
+Přihlašovací jméno Apple účtu na Yahoo není adresa schránky pro IMAP.
+Odesílatel klienta je pevně `Adam Pruška <adam@adampruska.cz>` a Reply-To
+je stejná adresa. Běžné Apple heslo do aplikace nepatří. Hesla se neukládají
+v prohlížeči ani v GitHub repozitáři; používá je pouze serverová funkce.
 
-## 3. Připojte odesílání přes Resend
+## Složky a synchronizace
 
-Apple uvádí pro SMTP port 587. Hostované Supabase Edge Functions blokují
-odchozí porty 25 a 587, proto přímé odesílání přes iCloud SMTP nepoužíváme.
-Resend voláme přes HTTPS na `https://api.resend.com/emails`.
+- **Doručené:** jen zprávy s přesnou adresou `adam@adampruska.cz` v Komu
+  nebo Kopii. Zprávy pouze se skrytou kopií se nezobrazují.
+- **Odeslané:** složka s IMAP příznakem `\\Sent`, případně standardní
+  `Sent Messages` / `Sent`. Zobrazuje jen zprávy s danou adresou odesílatele,
+  včetně zpráv poslaných z iCloudu na webu, telefonu nebo počítači.
+- Seznam se obnoví při otevření Pošty, návratu do okna, tlačítkem **Obnovit
+  poštu** a jednou za minutu, pokud je okno viditelné.
+- Stránka obsahuje maximálně 25 odpovídajících zpráv. Prochází nejvýše 500
+  hlaviček na požadavek a nabídne **Načíst další zprávy**, pokud zbývají další.
+- Příznak přečtení lze změnit a ukládá se přímo do iCloudu. Samotné otevření
+  používá `BODY.PEEK`, takže zprávu automaticky neoznačí jako přečtenou.
+- Obsah se zobrazuje jako prostý text; HTML, vzdálené obrázky ani přílohy se
+  automaticky nespouštějí. Zprávy nad 5 MB je potřeba otevřít v iCloud Mail.
 
-1. Založte účet na https://resend.com/ a zkontrolujte aktuální tarif a limity.
-2. V Domains přidejte `adampruska.cz` pro odesílání. Vložte do DNS ve FORPSI
-   přesně zobrazené záznamy DKIM a SPF/Return-Path. Kořenové MX pro příjem
-   ponechte Applu. Příjem přes Resend nezapínejte.
-3. Pro jeden název v DNS nesmí být více TXT záznamů začínajících `v=spf1`.
-   Záznam Resend pro samostatný název typu `send` je jiný než kořenový SPF
-   pro iCloud. Při shodě názvu slučte povolené zdroje do jednoho SPF.
-4. Po úspěšném ověření domény vytvořte API klíč s oprávněním **Sending access**,
-   omezený na tuto doménu, a uložte ho v Supabase Secrets jako `RESEND_API_KEY`.
+Nejde o nepřetržitou synchronizaci na pozadí zavřeného prohlížeče. Běžná pošta
+zůstává v iCloudu, administrace ji při otevření načítá z aktuálního stavu.
 
-Klient uvidí `Adam Pruška <adam@adampruska.cz>`. Reply-To míří na stejnou
-adresu a odpovědi díky MX dorazí do iCloudu. Zprávy odeslané přes Resend
-se automaticky nekopírují do složky Odeslané v iCloudu. Přehled administrace
-eviduje příjemce, předmět, stav a ID; obsah rozepsané zprávy do databáze neukládá.
-Poštu přes Resend zpracovává také tento poskytovatel; zohledněte to při
-nastavení svého účtu a informování klientů.
+## Psaní, odpovědi a kontakty
 
-## 4. Nasazení a ověření
+**Napsat zprávu** otevře formulář s našeptávačem z kontaktů. V sekci **Klienti**
+jsou tlačítka **Napsat e-mail** a **Korespondence**. Filtr kontaktu funguje pro
+obě složky. Z detailu zprávy lze uložit nový kontakt nebo otevřít kontakty.
+Odpovědi používají Reply-To původní zprávy a hlavičky Message-ID,
+In-Reply-To a References pro seskupení vláken v iCloudu.
+Rozepsaný text je do uložení jen v paměti otevřené administrace. Tlačítko
+**Uložit koncept do iCloudu** uloží novou zprávu do serverové složky Koncepty
+s příznakem Draft. Potom ji lze otevřít a odeslat v iCloud Mail. Další úpravy
+uloženého konceptu prováděj v iCloudu; webový formulář se po uložení vyprázdní.
 
-Publikování webu z `main` nejprve volá workflow **Deploy Supabase backend**.
-Stejné workflow lze spustit ručně v Actions. Používá existující GitHub Secret
-`SUPABASE_ACCESS_TOKEN`. Nastavení schránky a Resend patří do Supabase Secrets,
-ne do GitHub proměnných pro veřejné sestavení a ne do chatu.
+## Bezpečné odeslání a kopie
 
-V administraci zkontrolujte samostatné stavy **Příjem pošty** a **Odesílání
-pošty**. „Nastaveno“ znamená přítomnost konfigurace, nikoli ověřené přihlášení
-nebo doručení. Načtěte zprávy, odešlete jeden test na svou jinou adresu,
-zkontrolujte doručení a odpovězte zpět do iCloudu. Automatické testy žádnou
-skutečnou zprávu neposílají. Při nejistém výsledku se odeslání neopakuje
-automaticky; ověřte ho v Resend a v přehledu odesílání.
+Před SMTP se založí jedinečný záznam v `mail_outbox`. Stejné ID nemůže spustit
+druhé odeslání. Po potvrzení SMTP 250 je zpráva odeslaná; chyba při ukládání
+kopie už nikdy nezpůsobí druhé odeslání.
 
-## Alternativa FORPSI
+Kopie se přidá do iCloud Odeslaných přes IMAP APPEND. Když se uložení kopie
+nezdaří, MIME zdroj zůstane dočasně v chráněném outboxu a lze použít
+**Synchronizovat odeslané kopie**. Tato operace kontroluje Message-ID a pouze
+doplňuje kopie, neposílá žádný nový e-mail. Po úspěchu se dočasný zdroj smaže.
+Přehled administrace načítá jen metadata, nikoli MIME zdroje.
 
-Starší připojení zůstává dostupné pouze při `MAIL_PROVIDER=forpsi`
-a vyplněných `FORPSI_USERNAME` a `FORPSI_PASSWORD`. Vlastník aktuálně
-schránku FORPSI nemá; toto nastavení proto nepoužívejte pro iCloud.
+Při přerušení spojení po SMTP DATA zůstane stav **Ověřit odeslání**; před
+jakýmkoliv opakováním je potřeba ověřit Odeslané a doručení. Při jednoznačném
+odmítnutí je stav **Neodesláno**. Přijetí poštovním serverem nepotvrzuje doručení
+adresátovi. Automatické testy skutečné zprávy neposílají.
 
-## Zdroje
+## Oprávnění a provoz
 
-- [Apple: nastavení serverů iCloud Mail](https://support.apple.com/102525)
-- [Apple: hesla pro konkrétní aplikace](https://support.apple.com/102654)
-- [Supabase: odesílání přes Resend](https://supabase.com/docs/guides/functions/examples/send-emails)
-- [Supabase: omezení Edge Functions](https://supabase.com/docs/guides/functions/limits)
-- [Resend: ověření domény](https://resend.com/docs/dashboard/domains/introduction)
+Veškerá uživatelská API vyžadují účet správce a MFA. Kontrola adresy se provádí
+na serveru pro seznam, detail i změnu přečtení. Cesty složek, SMTP host ani
+port se nepřebírají z uživatelského požadavku.
+
+Nasazení vytváří oddělené `MAIL_DEPLOY_CHECK_SECRET` jen pro kontrolu pevných
+poštovních transportů. Tento endpoint vrací pouze booleany TLS, přihlášení a
+nalezení složek; nevrací poštu ani hesla. Diagnostický klíč nedává přístup
+k uživatelskému mail API a při dalším nasazení se obmění.
+
+Starší explicitní varianta `MAIL_DELIVERY_PROVIDER=resend` a `MAIL_PROVIDER=forpsi`
+zůstává zachována pro existující konfigurace. Pro aktuální iCloud klient tyto
+přepínače nenastavuj.
+
+Pro relay patří do Supabase pouze `MAIL_RELAY_URL` a `MAIL_RELAY_SECRET`.
+`ICLOUD_SMTP_DIRECT=true` je experimentální explicitní volba pro prostředí,
+kde funguje 465; v aktuálním projektu ji nepoužívej.

@@ -1,3 +1,4 @@
+import { MailClient, type MailContext } from "./MailClient";
 import {
   useEffect,
   useRef,
@@ -11,7 +12,6 @@ import type {
   Business,
   Invoice,
   Integrations,
-  Message,
   Snapshot,
 } from "./types";
 import { internalUrl } from "../routes";
@@ -508,6 +508,7 @@ function Workspace({
   logout: () => Promise<void>;
   email: string;
 }) {
+  const [mailContext,setMailContext]=useState<MailContext|null>(null);
   const [section, setSection] = useState<Section>("overview"),
     [snapshot, setSnapshot] = useState<Snapshot | null>(null),
     [integration, setIntegration] = useState<Integrations | null>(null);
@@ -561,7 +562,7 @@ function Workspace({
         .limit(100),
       db
         .from("mail_outbox")
-        .select("*")
+        .select("id,recipient,subject,status,created_at,transport,sent_copy_saved")
         .order("created_at", { ascending: false })
         .limit(25),
       db.from("business_settings").select("*").eq("id", true).single(),
@@ -972,6 +973,10 @@ function Workspace({
                           {c.address || "Fakturační adresa není vyplněná."}
                         </span>
                       </div>
+                      <div className="mail-contact-actions">
+                        <button className="admin-outline" type="button" onClick={()=>{setMailContext({email:c.email,mode:"compose",nonce:Date.now()});setSection("mail");}}>Napsat e-mail</button>
+                        <button className="admin-outline" type="button" onClick={()=>{setMailContext({email:c.email,mode:"history",nonce:Date.now()});setSection("mail");}}>Korespondence</button>
+                      </div>
                     </div>
                   ))}
                   {!s.clients.length && (
@@ -1329,11 +1334,13 @@ function Workspace({
               </>
             )}
             {section === "mail" && (
-              <Mailbox
+              <MailClient
                 readConnected={Boolean(integration?.mail_read ?? integration?.mail)}
                 sendConnected={Boolean(integration?.mail_send ?? integration?.mail)}
-                provider={integration?.mail_provider || "icloud"}
-                mailbox={integration?.mailbox || "adam@adampruska.cz"}
+                clients={s.clients}
+                context={mailContext}
+                onOpenContacts={()=>setSection("clients")}
+                onAddContact={async email=>{await mutate("clients",{name:email,email,address:"",ico:"",vat_id:"",notes:""});}}
                 outbox={s.outbox}
                 refresh={reload}
               />
@@ -1517,7 +1524,7 @@ function Workspace({
 function Connections({ integration }: { integration: Integrations | null }) {
   const connections: [string, boolean | undefined, string?][] = [
     ["Příjem pošty", integration?.mail_read ?? integration?.mail],
-    integration?.mail_provider==='icloud' ? ["Odesílání běžné pošty",true,"V iCloud Mail"] : ["Odesílání pošty", integration?.mail_send ?? integration?.mail],
+    ["Odesílání pošty přes iCloud", integration?.mail_send ?? integration?.mail],
     ["GA4: sběr dat na webu", /^G-[A-Z0-9]+$/.test(import.meta.env.VITE_GA4_MEASUREMENT_ID || "")],
     ["GA4: přehledy v administraci", integration?.analytics],
     ...(integration?.payment_mode === "stripe" ? [
@@ -1589,236 +1596,5 @@ function EventSummary() {
         <Empty>Zatím nejsou zaznamenané události.</Empty>
       )}
     </Panel>
-  );
-}
-function Mailbox({
-  readConnected,
-  sendConnected,
-  provider,
-  mailbox,
-  outbox,
-  refresh,
-}: {
-  readConnected: boolean;
-  sendConnected: boolean;
-  provider: "icloud" | "forpsi";
-  mailbox: string;
-  outbox: Snapshot["outbox"];
-  refresh: () => Promise<void>;
-}) {
-  const [messages, setMessages] = useState<Message[]>([]),
-    [selected, setSelected] = useState<Message | null>(null),
-    [to, setTo] = useState(""),
-    [subject, setSubject] = useState(""),
-    [body, setBody] = useState("");
-  const [busy, setBusy] = useState(false),
-    [error, setError] = useState(""),
-    [notice, setNotice] = useState(""),
-    [uncertain, setUncertain] = useState(false);
-  const messageId = useRef(crypto.randomUUID());
-  async function load(uid?: number) {
-    setBusy(true);
-    setError("");
-    try {
-      const result = await api("/mail" + (uid ? `?uid=${uid}` : ""));
-      if (uid) setSelected(result);
-      else setMessages(result.messages);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Poštu se nepodařilo načíst.");
-    } finally {
-      setBusy(false);
-    }
-  }
-  async function send(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (busy || uncertain) return;
-    setBusy(true);
-    setError("");
-    setNotice("");
-    try {
-      const result = await api("/mail", {
-        id: messageId.current,
-        to,
-        subject,
-        text: body,
-      });
-      setNotice(
-        result.warning || "Zpráva byla přijata poštovním serverem k odeslání.",
-      );
-      setBody("");
-      messageId.current = crypto.randomUUID();
-      await refresh();
-    } catch (e) {
-      setUncertain(true);
-      setError(
-        e instanceof Error
-          ? e.message
-          : "Výsledek odeslání je nejistý. Před dalším pokusem zkontroluj poštu.",
-      );
-    } finally {
-      setBusy(false);
-    }
-  }
-  return (
-    <>
-      <Panel title={mailbox}>
-        {readConnected ? (
-          <>
-            <button
-              className="admin-outline"
-              type="button"
-              disabled={busy}
-              onClick={() => void load()}
-            >
-              Načíst posledních 25 zpráv
-            </button>
-            <p className="admin-small">
-              Zprávy se zobrazují jako prostý text. Přílohy a HTML verzi otevři
-              ve své poštovní aplikaci.
-            </p>
-            {provider === "icloud" && (
-              <p className="admin-small">
-                Zobrazují se jen zprávy, které mají adam@adampruska.cz
-                v poli Komu nebo Kopie.
-              </p>
-            )}
-          </>
-        ) : (
-          <Empty>
-            Příjem pošty zatím není připojený. V Supabase → Edge Functions → Secrets
-            ulož ICLOUD_USERNAME (adresu iCloud Mail, např. pruskaadam@me.com, nikoli Yahoo přihlášení účtu Apple) a
-            ICLOUD_APP_PASSWORD (heslo pro aplikaci vytvořené v účtu Apple).
-            Nepoužívej běžné heslo účtu Apple. Potom obnov tuto stránku
-            a klikni na „Načíst posledních 25 zpráv“. Resend není potřeba.
-          </Empty>
-        )}
-        {error && (
-          <p className="admin-alert" role="alert">
-            {error}
-          </p>
-        )}
-        {notice && (
-          <p className="admin-notice" role="status">
-            {notice}
-          </p>
-        )}
-        <div className="admin-mail-list">
-          {messages.map((m) => (
-            <button
-              key={m.uid}
-              type="button"
-              disabled={busy}
-              onClick={() => void load(m.uid)}
-            >
-              <strong>{m.subject}</strong>
-              <span>{m.from}</span>
-            </button>
-          ))}
-        </div>
-        {selected && (
-          <article className="admin-mail-message">
-            <h3>{selected.subject}</h3>
-            <p>Od: {selected.from}</p>
-            <pre>{selected.text}</pre>
-            {selected.attachments?.map((a, i) => (
-              <p className="admin-small" key={i}>
-                Příloha: {a.name}
-              </p>
-            ))}
-            {sendConnected ? <button
-              className="admin-outline"
-              type="button"
-              onClick={() => {
-                setTo(selected.from);
-                setSubject(
-                  selected.subject.startsWith("Re:")
-                    ? selected.subject
-                    : `Re: ${selected.subject}`,
-                );
-              }}
-            >
-              Odpovědět
-            </button> : <a href="https://www.icloud.com/mail/" target="_blank" rel="noopener noreferrer">Odpovědět v iCloud Mail ↗</a>}
-          </article>
-        )}
-      </Panel>
-      <Panel title="Nová zpráva">
-        {!sendConnected && (
-          <Empty>
-            {provider === "icloud"
-              ? "Běžné zprávy posílej ze schránky adam@adampruska.cz v iCloudu. Rezervační potvrzení odesílá Cal.com; Resend pro tuto variantu není potřeba."
-              : "Odesílání zatím není připojené. Ulož přístupové údaje schránky do Supabase Secrets."}
-          </Empty>
-        )}
-        {provider==='icloud' && <p><a href="https://www.icloud.com/mail/" target="_blank" rel="noopener noreferrer">Otevřít iCloud Mail ↗</a></p>}
-        <p className="admin-small">Odesílatel: Adam Pruška &lt;{mailbox}&gt;</p>
-        {(sendConnected || provider!=='icloud') && <form onSubmit={send}>
-          <label className="admin-field">
-            <span>Komu</span>
-            <input
-              type="email"
-              value={to}
-              onChange={(e) => setTo(e.target.value)}
-              required
-              maxLength={254}
-              disabled={!sendConnected || busy || uncertain}
-            />
-          </label>
-          <label className="admin-field">
-            <span>Předmět</span>
-            <input
-              type="text"
-              value={subject}
-              onChange={(e) => setSubject(e.target.value)}
-              required
-              maxLength={200}
-              disabled={!sendConnected || busy || uncertain}
-            />
-          </label>
-          <label className="admin-field">
-            <span>Zpráva</span>
-            <textarea
-              rows={8}
-              value={body}
-              onChange={(e) => setBody(e.target.value)}
-              required
-              maxLength={20000}
-              disabled={!sendConnected || busy || uncertain}
-            />
-          </label>
-          <button
-            className="button primary"
-            type="submit"
-            disabled={!sendConnected || busy || uncertain}
-          >
-            {busy ? "Odesílám…" : "Odeslat zprávu"}
-          </button>
-          {uncertain && (
-            <p className="admin-small">
-              Automatické opakování je zablokované. Ověř výsledek u poskytovatele pošty a v
-              přehledu odesílání.
-            </p>
-          )}
-        </form>}
-      </Panel>
-      <Panel title="Přehled odesílání">
-        <p className="admin-small">
-          Zprávy odeslané z této administrace. Přijetí poskytovatelem nepotvrzuje doručení
-          adresátovi.
-        </p>
-        {outbox.map((item) => (
-          <div className="admin-list-row" key={item.id}>
-            <div>
-              <strong>{item.subject}</strong>
-              <span>{item.recipient}</span>
-            </div>
-            <Status value={item.status} />
-          </div>
-        ))}
-        {!outbox.length && (
-          <Empty>Z administrace zatím nebyla odeslána žádná zpráva.</Empty>
-        )}
-      </Panel>
-    </>
   );
 }

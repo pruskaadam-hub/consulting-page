@@ -8,7 +8,7 @@ import { bookingMailText, sendBookingConfirmation } from "../_shared/booking-mai
 import { handle } from "./index.ts";
 import { limitedText } from "../_shared/http.ts";
 import { hmacHex } from "../_shared/contracts.mjs";
-import { mailboxError, mailStatus, readWebsiteMail, sendMail, sendIcloudMail } from "../_shared/mail.ts";
+import { mailboxError, mailStatus, readWebsiteMail, sendMail, sendIcloudMail, deliverIcloud } from "../_shared/mail.ts";
 import {
   analyticsConfigured,
   analyticsReport,
@@ -50,6 +50,7 @@ async function withMailFixture(run: () => void | Promise<void>) {
   const values: Record<string, string> = {
     MAIL_PROVIDER: "icloud",
     MAIL_DELIVERY_PROVIDER: "resend",
+    ICLOUD_SMTP_DIRECT:"",
     MAIL_FROM_EMAIL: "adam@adampruska.cz",
     ICLOUD_USERNAME: "owner@icloud.com",
     ICLOUD_APP_PASSWORD: "fixture-app-password",
@@ -974,3 +975,32 @@ Deno.test("accepted iCloud SMTP is never retried if saving the Sent copy fails",
     assert(!result.warning?.includes("private"));
   }finally{globalThis.fetch=original;}
 }));
+
+Deno.test("native iCloud sends use existing app credentials and never require a Resend key",()=>withMailFixture(()=>{
+  Deno.env.delete("MAIL_DELIVERY_PROVIDER");Deno.env.delete("RESEND_API_KEY");Deno.env.set("ICLOUD_SMTP_DIRECT","true");
+  const status=mailStatus();assert(status.mail_send && status.mail_read && status.mail_transport==="icloud_smtp");
+  Deno.env.delete("ICLOUD_APP_PASSWORD");assert(!mailStatus().mail_send);
+}));
+
+Deno.test("drafts use the Drafts special folder and Draft flag, never the Sent folder",async()=>{
+  const fixture=wireFixture('* OK ready\r\nA1 OK login\r\n* LIST (\\Sent) "/" "Sent Messages"\r\n* LIST (\\Drafts) "/" "Drafts"\r\nA2 OK folders\r\n+ Ready for literal\r\nA3 OK [APPENDUID 10 42] appended\r\n');
+  const client=await NativeImap.open("fixture@me.com","password",async()=>fixture.wire);
+  await client.appendTo("drafts",new TextEncoder().encode("test MIME\r\n"));
+  assert(fixture.text().includes('APPEND "Drafts" (\\Draft \\Seen)'));
+  assert(!fixture.text().includes('APPEND "Sent Messages"'));
+  client.close();
+});
+
+Deno.test("relay sends only validated message fields over HTTPS with a server-only credential",()=>withMailFixture(async()=>{
+  const previousUrl=Deno.env.get("MAIL_RELAY_URL"),previousKey=Deno.env.get("MAIL_RELAY_SECRET"),original=globalThis.fetch;
+  Deno.env.delete("MAIL_DELIVERY_PROVIDER");Deno.env.set("MAIL_RELAY_URL","https://relay.example.test");Deno.env.set("MAIL_RELAY_SECRET","fixture-private-relay-secret-long-enough");
+  let calls=0;
+  globalThis.fetch=async(input,init)=>{calls++;assert(String(input)==="https://relay.example.test/send");assert(new Headers(init?.headers).get("Authorization")==="Bearer fixture-private-relay-secret-long-enough");const body=JSON.parse(String(init?.body));assert(body.to===mailMessage.to && !JSON.stringify(body).includes("fixture-password"));return Response.json({status:"sent"});};
+  try{assert(mailStatus().mail_send && mailStatus().mail_transport==="icloud_relay");await deliverIcloud("private@me.com","fixture-password",mailMessage,mailSource(mailMessage));assert(calls===1);}
+  finally{globalThis.fetch=original;if(previousUrl===undefined)Deno.env.delete("MAIL_RELAY_URL");else Deno.env.set("MAIL_RELAY_URL",previousUrl);if(previousKey===undefined)Deno.env.delete("MAIL_RELAY_SECRET");else Deno.env.set("MAIL_RELAY_SECRET",previousKey);}
+}));
+Deno.test("mail writes require administrator authorization before parsing input or contacting services",async()=>{
+  for(const path of ["/mail/draft","/mail/seen","/mail/sync-sent"]) {
+    const response=await handle(new Request(url+path,{method:"POST",body:"not-json"}));assert(response.status===401);await response.body?.cancel();
+  }
+});
